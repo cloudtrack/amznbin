@@ -11,14 +11,18 @@ class _Base(object):
         self._iters = 0
 
         # Input
-        # TODO: change target format 
-        image_size = 224
-        self.image = tf.Variable(tf.random_normal([FLAGS.batch_size,
+        # TODO: change format 
+        self.batch_size = 128
+        self.image_size = 224
+
+        self.image = tf.Variable(tf.random_normal([batch_size,
                                                    image_size,
                                                    image_size, 3],
                                                    dtype=tf.float32,
                                                    stddev=1e-1))
-        self.target = tf.placeholder(tf.float32, [None])
+
+        self.class_size = 1000
+        self.target = tf.placeholder(tf.float32, [None, self.class_size])
 
         # Call methods to initialize variables and operations 
         self._init_vars()
@@ -62,15 +66,12 @@ class ALEXNET(_Base):
     def _init_vars(self):
         """ Build layers of the model """
 
-        _pred = self.build_layers(self.image)
-        self.pred = tf.squeeze(_pred, squeeze_dims=[1])
+        self.pred = tf.squezze(self.build_layers(self.image), squeeze_dims=[1])
 
     def _init_ops(self):
         """ Calculates loss and performs gradient descent """
         # Loss     
-        loss = tf.reduce_sum(tf.square(tf.subtract(self.target, self.pred)), reduction_indices=[0])
-                    
-        self.loss = 
+        self.loss = tf.reduce_sum(tf.square(tf.subtract(self.target, self.pred)), reduction_indices=[0])
 
         # Optimizer
         self.optimizer = tf.train.AdamOptimizer(self.learning_rate)
@@ -196,8 +197,8 @@ class ALEXNET(_Base):
         fc8b = tf.Variable(tf.constant(0.0, shape=[1000], dtype=tf.float32), trainable=True, name='biases')
         fc8 = tf.nn.xw_plus_b(fc7, fc8W, fc8b)
         
-        prob = tf.nn.softmax(fc8)
+        #prob = tf.nn.softmax(fc8)
 
-        return prob
+        return fc8
 
 
