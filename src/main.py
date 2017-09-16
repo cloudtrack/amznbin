@@ -4,7 +4,7 @@ import pandas as pd
 import numpy as np
 from time import time
 from scipy import sparse
-from models import VGG16, ALEXNET, INCEPTION
+from models import ALEXNET #, VGG16, INCEPTION
 
 def load_data():
     """
@@ -33,12 +33,11 @@ def train(model, sess, saver, train_data, valid_data, batch_size, max_iters, use
     for i in range(max_iters):
         t1 = time()
         batch = train_data.sample(batch_size) if batch_size else train_data
-        batch_add = add.sample(batch_size) if (batch_size & (len(add) > batch_size)) else add
         model.train_iteration(batch, batch_add)
+
         # Evaluate
-        train_error = model.eval_loss(batch, batch_add)
-        train_rmse, _, _, train_rmse_c, _, _ = model.eval_rmse(batch, batch_add)
-        valid_rmse, label, pred, _, _, _ = model.eval_rmse(valid_data, add)
+        train_error, train_rsme = model.eval_loss(batch['image'], batch['target'])
+        valid_rmse, _ = model.eval_rmse(valid_data['image'], valid_data['target'])
         print(model.model_filename)
         print("train loss: %.4f, train rmse: %.4f, valid rmse: %.4f in %ds" % (train_error, train_rmse, valid_rmse, time() - t1))
 
@@ -86,7 +85,7 @@ if __name__ == '__main__':
                         help='the mode to run the program in', default='train')
     parser.add_argument('--model-params', metavar='MODEL_PARAMS_JSON', type=str, default='{}',
                         help='JSON string containing model params: D, Dprime, hidden_layer_num, hidden_units_per_layer, learning_rate, dropoutkeep, lam, alpha, model name')
-    parser.add_argument('--batch', metavar='BATCH_SIZE', type=int, default=4000,
+    parser.add_argument('--batch', metavar='BATCH_SIZE', type=int, default=128,
                         help='the batch size to use when doing gradient descent')
     parser.add_argument('--no-early', type=str2bool, default=False, help='disable early stopping')
     parser.add_argument('--early-stop-max-iter', metavar='EARLY_STOP_MAX_ITER', type=int, default=300,
@@ -112,8 +111,7 @@ if __name__ == '__main__':
             # Process data
             print("Reading in data")
 
-            # TODO: train_filename, valid_filename, test_filename? 
-            train_data, valid_data, test_data, = load_data(dataset, train_filename, valid_filename, test_filename)
+            train_data, valid_data, test_data = load_data()
 
             # Define computation graph & Initialize
             print('Building network & initializing variables')
@@ -134,19 +132,19 @@ if __name__ == '__main__':
             
             print('Loading best checkpointed model')
             saver.restore(sess, model.model_filename)
-            TRAIN, VALID, TEST = test(model, sess, saver, test_data, test_data_coldstart, train_data, valid_data, add, args.show_test_instance)
+            # TRAIN, VALID, TEST = test(model, sess, saver, test_data, test_data_coldstart, train_data, valid_data, add, args.show_test_instance)
 
-            if(args.outfile == 'modelname') :
-                outfile = model.model_filename
-            else :
-                outfile = args.outfile
-            if os.path.exists('out/'+outfile+'.txt') == False:
-                with open('out/'+outfile+'.txt', 'w') as myfile:
-                    myfile.close()
-                os.chmod('out/'+outfile+'.txt', 0o777)
-            with open('out/'+outfile+'.txt', "a") as myfile:
-                myfile.write(model.model_filename+(' %.4f %.4f %.4f %ds\n' % (TRAIN, VALID, TEST, traintime)))
-                myfile.close()
+            # if(args.outfile == 'modelname') :
+            #     outfile = model.model_filename
+            # else :
+            #     outfile = args.outfile
+            # if os.path.exists('out/'+outfile+'.txt') == False:
+            #     with open('out/'+outfile+'.txt', 'w') as myfile:
+            #         myfile.close()
+            #     os.chmod('out/'+outfile+'.txt', 0o777)
+            # with open('out/'+outfile+'.txt', "a") as myfile:
+            #     myfile.write(model.model_filename+(' %.4f %.4f %.4f %ds\n' % (TRAIN, VALID, TEST, traintime)))
+            #     myfile.close()
     else:
         raise Exception("Mode '{}' not available".format(mode))
 
