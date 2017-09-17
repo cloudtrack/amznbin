@@ -66,7 +66,7 @@ class ALEXNET(_Base):
     def _init_vars(self):
         """ Build layers of the model """
 
-        self.pred = tf.squezze(self.build_layers(self.image), squeeze_dims=[1])
+        self.pred = tf.squeeze(self.build_layers(self.image), squeeze_dims=[1])
 
     def _init_ops(self):
         """ Calculates loss and performs gradient descent """
