@@ -4,8 +4,10 @@ import time
 from time import time
 
 import tensorflow as tf
+from numpy.distutils.fcompiler import str2bool
 
 from models import ALEXNET  # , VGG16, INCEPTION
+
 
 def load_data():
     """
@@ -16,6 +18,7 @@ def load_data():
     # since we will use batch learning we can deprecate this function and directly feed images in batches
 
     return train_data, valid_data, test_data
+
 
 def train(model, sess, saver, train_data, valid_data, batch_size, max_iters, use_early_stop, early_stop_max_iter):
     """
@@ -41,7 +44,7 @@ def train(model, sess, saver, train_data, valid_data, batch_size, max_iters, use
         valid_rmse, _ = model.eval_rmse(valid_data['image'], valid_data['target'])
         print(model.model_filename)
         print("train loss: %.4f, train rmse: %.4f, valid rmse: %.4f in %ds" % (
-        train_error, train_rmse, valid_rmse, time() - t1))
+            train_error, train_rmse, valid_rmse, time() - t1))
 
         # Checkpointing/early stopping
         if use_early_stop:
@@ -60,6 +63,7 @@ def train(model, sess, saver, train_data, valid_data, batch_size, max_iters, use
         else:
             saver.save(sess, model.model_filename)
 
+
 def test(model, sess, saver, test_data, train_data, valid_data, log=False):
     """
     Tester
@@ -76,6 +80,7 @@ def test(model, sess, saver, test_data, train_data, valid_data, log=False):
     print('%.4f %.4f %.4f' % (train_rmse, valid_rmse, test_rmse))
 
     return train_rmse, valid_rmse, test_rmse
+
 
 if __name__ == '__main__':
     """ Main function. Parses arguments """
