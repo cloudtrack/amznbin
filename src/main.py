@@ -1,10 +1,11 @@
-import argparse, json, time, os, math
-import tensorflow as tf
-import pandas as pd
-import numpy as np
+import argparse
+import json
+import time
 from time import time
-from scipy import sparse
-from models import ALEXNET #, VGG16, INCEPTION
+
+import tensorflow as tf
+
+from models import ALEXNET  # , VGG16, INCEPTION
 
 def load_data():
     """
@@ -39,7 +40,8 @@ def train(model, sess, saver, train_data, valid_data, batch_size, max_iters, use
         train_error, train_rsme = model.eval_loss(batch['image'], batch['target'])
         valid_rmse, _ = model.eval_rmse(valid_data['image'], valid_data['target'])
         print(model.model_filename)
-        print("train loss: %.4f, train rmse: %.4f, valid rmse: %.4f in %ds" % (train_error, train_rmse, valid_rmse, time() - t1))
+        print("train loss: %.4f, train rmse: %.4f, valid rmse: %.4f in %ds" % (
+        train_error, train_rmse, valid_rmse, time() - t1))
 
         # Checkpointing/early stopping
         if use_early_stop:
@@ -62,7 +64,7 @@ def test(model, sess, saver, test_data, train_data, valid_data, log=False):
     """
     Tester
     """
-    train_rmse, _  = model.eval_rmse(train_data['image'], train_data['target'])
+    train_rmse, _ = model.eval_rmse(train_data['image'], train_data['target'])
     valid_rmse, _ = model.eval_rmse(valid_data['image'], valid_data['target'])
     if log:
         print("Final train RMSE: {}".format(train_rmse))
@@ -72,7 +74,7 @@ def test(model, sess, saver, test_data, train_data, valid_data, log=False):
     if log:
         print("Final test RMSE: {}".format(test_rmse))
     print('%.4f %.4f %.4f' % (train_rmse, valid_rmse, test_rmse))
-    
+
     return train_rmse, valid_rmse, test_rmse
 
 if __name__ == '__main__':
@@ -102,10 +104,10 @@ if __name__ == '__main__':
     mode = args.mode
     model_params = json.loads(args.model_params)
     batch_size = args.batch
-    use_early_stop = not(args.no_early)
+    use_early_stop = not (args.no_early)
     early_stop_max_iter = args.early_stop_max_iter
     max_iters = args.max_iters
-    
+
     if mode in ('train', 'test'):
         with tf.Session() as sess:
             # Process data
@@ -128,8 +130,9 @@ if __name__ == '__main__':
             traintime = 0
             if mode == 'train':
                 traintime = train(model, sess, saver, train_data, valid_data, batch_size=batch_size,
-                    max_iters=max_iters, use_early_stop=use_early_stop, early_stop_max_iter=early_stop_max_iter)
-            
+                                  max_iters=max_iters, use_early_stop=use_early_stop,
+                                  early_stop_max_iter=early_stop_max_iter)
+
             print('Loading best checkpointed model')
             saver.restore(sess, model.model_filename)
             # TRAIN, VALID, TEST = test(model, sess, saver, test_data, test_data_coldstart, train_data, valid_data, add, args.show_test_instance)
@@ -147,4 +150,3 @@ if __name__ == '__main__':
             #     myfile.close()
     else:
         raise Exception("Mode '{}' not available".format(mode))
-
