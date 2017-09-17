@@ -86,10 +86,14 @@ if __name__ == '__main__':
     """ Main function. Parses arguments """
     # Set up command line params
     parser = argparse.ArgumentParser(description='Trains/evaluates model.')
+
+    # Required
     parser.add_argument('--model', metavar='MODEL_NAME', type=str, choices=['VGG16', 'ALEXNET', 'INCEPTION'],
                         help='the name of the model to use', required=True)
     parser.add_argument('--mode', metavar='MODE', type=str, choices=['train', 'test'],
-                        help='the mode to run the program in', default='train')
+                        help='the mode to run the program in', default='train', required=True)
+
+    # Optional
     parser.add_argument('--model-params', metavar='MODEL_PARAMS_JSON', type=str, default='{}',
                         help='JSON string containing model params: D, Dprime, hidden_layer_num, hidden_units_per_layer, learning_rate, dropoutkeep, lam, alpha, model name')
     parser.add_argument('--batch', metavar='BATCH_SIZE', type=int, default=128,
@@ -105,7 +109,7 @@ if __name__ == '__main__':
     # Parse args
     args = parser.parse_args()
     # Global args
-    model_name = args.model_name
+    model_name = args.model
     mode = args.mode
     model_params = json.loads(args.model_params)
     batch_size = args.batch
@@ -113,45 +117,42 @@ if __name__ == '__main__':
     early_stop_max_iter = args.early_stop_max_iter
     max_iters = args.max_iters
 
-    if mode in ('train', 'test'):
-        with tf.Session() as sess:
-            # Process data
-            print("Reading in data")
+    with tf.Session() as sess:
+        # Process data
+        print("Reading in data")
 
-            train_data, valid_data, test_data = load_data()
+        train_data, valid_data, test_data = load_data()
 
-            # Define computation graph & Initialize
-            print('Building network & initializing variables')
-            if model_name == 'ALEXNET':
-                model = ALEXNET()
-            # elif model_name == 'VGG16' :
-            #     model = VGG16()
-            # else :
-            #     model = INCEPTION()
+        # Define computation graph & Initialize
+        print('Building network & initializing variables')
+        if model_name == 'ALEXNET':
+            model = ALEXNET()
+        # elif model_name == 'VGG16' :
+        #     model = VGG16()
+        # else :
+        #     model = INCEPTION()
 
-            model.init_sess(sess)
-            saver = tf.train.Saver()
-            # Train
-            traintime = 0
-            if mode == 'train':
-                traintime = train(model, sess, saver, train_data, valid_data, batch_size=batch_size,
-                                  max_iters=max_iters, use_early_stop=use_early_stop,
-                                  early_stop_max_iter=early_stop_max_iter)
+        model.init_sess(sess)
+        saver = tf.train.Saver()
+        # Train
+        traintime = 0
+        if mode == 'train':
+            traintime = train(model, sess, saver, train_data, valid_data, batch_size=batch_size,
+                              max_iters=max_iters, use_early_stop=use_early_stop,
+                              early_stop_max_iter=early_stop_max_iter)
 
-            print('Loading best checkpointed model')
-            saver.restore(sess, model.model_filename)
-            # TRAIN, VALID, TEST = test(model, sess, saver, test_data, test_data_coldstart, train_data, valid_data, add, args.show_test_instance)
+        print('Loading best checkpointed model')
+        saver.restore(sess, model.model_filename)
+        # TRAIN, VALID, TEST = test(model, sess, saver, test_data, test_data_coldstart, train_data, valid_data, add, args.show_test_instance)
 
-            # if(args.outfile == 'modelname') :
-            #     outfile = model.model_filename
-            # else :
-            #     outfile = args.outfile
-            # if os.path.exists('out/'+outfile+'.txt') == False:
-            #     with open('out/'+outfile+'.txt', 'w') as myfile:
-            #         myfile.close()
-            #     os.chmod('out/'+outfile+'.txt', 0o777)
-            # with open('out/'+outfile+'.txt', "a") as myfile:
-            #     myfile.write(model.model_filename+(' %.4f %.4f %.4f %ds\n' % (TRAIN, VALID, TEST, traintime)))
-            #     myfile.close()
-    else:
-        raise Exception("Mode '{}' not available".format(mode))
+        # if(args.outfile == 'modelname') :
+        #     outfile = model.model_filename
+        # else :
+        #     outfile = args.outfile
+        # if os.path.exists('out/'+outfile+'.txt') == False:
+        #     with open('out/'+outfile+'.txt', 'w') as myfile:
+        #         myfile.close()
+        #     os.chmod('out/'+outfile+'.txt', 0o777)
+        # with open('out/'+outfile+'.txt', "a") as myfile:
+        #     myfile.write(model.model_filename+(' %.4f %.4f %.4f %ds\n' % (TRAIN, VALID, TEST, traintime)))
+        #     myfile.close()
