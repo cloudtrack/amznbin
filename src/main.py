@@ -6,6 +6,7 @@ from time import time
 import tensorflow as tf
 from numpy.distutils.fcompiler import str2bool
 
+from dataset import read_data_sets
 from models import ALEXNET  # , VGG16, INCEPTION
 
 
@@ -17,7 +18,8 @@ def load_data():
     # one thing that concerns me is that it is not possible to load all data at once. (not enough memory space) 
     # since we will use batch learning we can deprecate this function and directly feed images in batches
 
-    return train_data, valid_data, test_data
+    data = read_data_sets('dataset')
+    return data.train, data.validation, data.test
 
 
 def train(model, sess, saver, train_data, valid_data, batch_size, max_iters, use_early_stop, early_stop_max_iter):
