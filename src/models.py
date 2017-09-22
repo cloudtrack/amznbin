@@ -11,16 +11,16 @@ class _Base(object):
 
         # Input
         # TODO: change format 
-        self.batch_size = 128
+        # self.batch_size = 128
         self.image_size = 224
-
-        self.image = tf.Variable(tf.random_normal([self.batch_size,
-                                                   self.image_size,
-                                                   self.image_size, 3],
-                                                   dtype=tf.float32,
-                                                   stddev=1e-1))
-
         self.class_size = 1000
+
+        # self.image = tf.Variable(tf.random_normal([self.batch_size,
+        #                                            self.image_size,
+        #                                            self.image_size, 3],
+        #                                            dtype=tf.float32,
+        #                                            stddev=1e-1))
+        self.image = tf.placeholder(tf.float32, [None, self.image_size, self.image_size, 3])
         self.target = tf.placeholder(tf.float32, [None, self.class_size])
 
         # Call methods to initialize variables and operations 
