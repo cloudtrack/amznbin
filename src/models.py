@@ -1,4 +1,3 @@
-import math
 import tensorflow as tf
 
 def print_activations(t):
@@ -45,17 +44,15 @@ class _Base(object):
         """ 
         Runs each train iteration
         """
-        feed_dict = {self.image:imagedata, self.target:targetdata}
-
+        feed_dict = {self.image: imagedata, self.target: targetdata}
         self.sess.run(self.optimize_steps, feed_dict=feed_dict)
-
         self._iters += 1
 
     def eval_rmse(self, imagedata, targetdata):
         """ 
         Calculates RMSE 
         """
-        feed_dict = {self.image:imagedata, self.target:targetdata}
+        feed_dict = {self.image: imagedata, self.target: targetdata}
         return self.sess.run([self.rmse, self.pred], feed_dict=feed_dict)
 
 class ALEXNET(_Base):
