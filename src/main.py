@@ -39,7 +39,7 @@ def train(model, sess, saver, train_data, valid_data, batch_size, max_iters, use
     for i in range(max_iters):
         t1 = time()
         batch = train_data.sample(batch_size) if batch_size else train_data
-        model.train_iteration(batch, batch_add)
+        model.train_iteration(batch['image'], batch['target'])
 
         # Evaluate
         train_error, train_rsme = model.eval_loss(batch['image'], batch['target'])
@@ -61,7 +61,6 @@ def train(model, sess, saver, train_data, valid_data, batch_size, max_iters, use
                 traintime = (time() - t0)
                 print("total training time %ds" % traintime)
                 return traintime
-                break
         else:
             saver.save(sess, model.model_filename)
 
@@ -122,7 +121,7 @@ if __name__ == '__main__':
     with tf.Session() as sess:
         # Process data
         print("Reading in data")
-
+        # TODO : Pandas DataFrame format
         train_data, valid_data, test_data = load_data()
 
         # Define computation graph & Initialize
