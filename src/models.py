@@ -183,16 +183,19 @@ class ALEXNET(_Base):
         fc6W = tf.Variable(tf.constant(0.0, shape=[256, 4096], dtype=tf.float32), trainable=True, name='weights')
         fc6b = tf.Variable(tf.constant(0.0, shape=[4096], dtype=tf.float32), trainable=True, name='biases')
         fc6 = tf.nn.relu_layer(tf.reshape(pool5, [-1, int(prod(pool5.get_shape()[1:]))]), fc6W, fc6b)
+        self.parameters += [fc6W, fc6b]
         
         # fullyconnected7
         fc7W = tf.Variable(tf.constant(0.0, shape=[4096, 4096], dtype=tf.float32), trainable=True, name='weights')
         fc7b = tf.Variable(tf.constant(0.0, shape=[4096], dtype=tf.float32), trainable=True, name='biases')
         fc7 = tf.nn.relu_layer(fc6, fc7W, fc7b)
+        self.parameters += [fc7W, fc7b]
         
         # fullyconnected8
         fc8W = tf.Variable(tf.constant(0.0, shape=[4096, 1000], dtype=tf.float32), trainable=True, name='weights')
         fc8b = tf.Variable(tf.constant(0.0, shape=[1000], dtype=tf.float32), trainable=True, name='biases')
         fc8 = tf.nn.xw_plus_b(fc7, fc8W, fc8b)
+        self.parameters += [fc8W, fc8b]
         
         #prob = tf.nn.softmax(fc8)
 
