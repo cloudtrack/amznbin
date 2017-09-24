@@ -8,3 +8,4 @@ pandas==0.20.3
 matplotlib==2.0.2
 
 pip-tools==1.9.0
+Pillow==4.2.1

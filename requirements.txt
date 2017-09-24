@@ -14,7 +14,9 @@ markdown==2.6.9           # via tensorflow-tensorboard
 matplotlib==2.0.2
 mxnet==0.11.0
 numpy==1.13.1
+olefile==0.44             # via pillow
 pandas==0.20.3
+pillow==4.2.1
 pip-tools==1.9.0
 protobuf==3.4.0           # via tensorflow, tensorflow-tensorboard
 pyparsing==2.2.0          # via matplotlib
