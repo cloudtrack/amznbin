@@ -180,7 +180,7 @@ class ALEXNET(_Base):
         print_activations(pool5)
 
         # fullyconnected6
-        fc6W = tf.Variable(tf.constant(0.0, shape=[256, 4096], dtype=tf.float32), trainable=True, name='weights')
+        fc6W = tf.Variable(tf.constant(0.0, shape=[(256*13), 4096], dtype=tf.float32), trainable=True, name='weights')
         fc6b = tf.Variable(tf.constant(0.0, shape=[4096], dtype=tf.float32), trainable=True, name='biases')
         fc6 = tf.nn.relu_layer(tf.reshape(pool5, [-1, int(prod(pool5.get_shape()[1:]))]), fc6W, fc6b)
         self.parameters += [fc6W, fc6b]
