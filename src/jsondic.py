@@ -7,15 +7,15 @@ TV_INIT = 0
 #for file name
 def ntostr(n):
 	if(n<10):
-		 return "0000" + str(n)
+		return "0000" + str(n)
 	elif(n < 100):
-		 return "000" + str(n)
+		return "000" + str(n)
 	elif(n < 1000):
-		 return "00" + str(n)
+		return "00" + str(n)
 	elif(n < 10000):
-		 return "0" + str(n)
+		return "0" + str(n)
 	else:
-		 return "" + str(n)
+		return "" + str(n)
 
 pct = 10
 asin_index_dic = {}
@@ -59,11 +59,8 @@ def json2tv(n):
 	jsdata = open("./metadata/"+ntostr(n)+".json").read()
 	data = json.loads(jsdata)
 
-	tvlen = len(asin_index_dic.keys())
-	tv = []
-	for _ in range(0, tvlen):
-		tv += [TV_INIT]
-
+	tv = [TV_INIT] * len(asin_index_dic.keys())
+    
 	for asin in data['BIN_FCSKU_DATA'].keys():
 		tv[asin_index_dic[asin]] = data['BIN_FCSKU_DATA'][asin]['quantity']
 
