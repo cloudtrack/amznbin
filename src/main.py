@@ -9,7 +9,7 @@ from dataset import load_dataset
 from models import ALEXNET  # , VGG16, INCEPTION
 
 
-DATASET_DIR = './dataset'
+DATASET_DIR = './dataset/'
 
 
 def train(model, sess, saver, train_data, valid_data, batch_size, max_iters, use_early_stop, early_stop_max_iter):
@@ -114,7 +114,7 @@ if __name__ == '__main__':
         # Process data
         print("Load dataset")
         dataset = load_dataset(DATASET_DIR)
-        train_data, valid_data, test_data = dataset.train, dataset.validation, dataset.test
+        train_data, validation_data, test_data = dataset.train, dataset.validation, dataset.test
 
         # Define computation graph & Initialize
         print('Building network & initializing variables')
@@ -130,13 +130,13 @@ if __name__ == '__main__':
         # Train
         traintime = 0
         if mode == 'train':
-            traintime = train(model, sess, saver, train_data, valid_data, batch_size=batch_size,
+            traintime = train(model, sess, saver, train_data, validation_data, batch_size=batch_size,
                               max_iters=max_iters, use_early_stop=use_early_stop,
                               early_stop_max_iter=early_stop_max_iter)
         elif mode == 'test':
             print('Loading best checkpointed model')
             saver.restore(sess, model.filename)
-            TRAIN, VALID, TEST = test(model, sess, saver, test_data, train_data, valid_data)
+            TRAIN, VALID, TEST = test(model, sess, saver, test_data, train_data, validation_data)
 
         # if(args.outfile == 'modelname') :
         #     outfile = model.model_filename

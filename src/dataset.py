@@ -1,34 +1,31 @@
 import collections
+import json
+import random
 
-import numpy as np
 import tensorflow as tf
-from tensorflow.python.framework import dtypes
+
+TOTAL_DATA_SIZE = 535234
+VALIDATION_SIZE = 50000
+TEST_SIZE = 10000
 
 
 class DataSet(object):
     def __init__(self,
-                 images,
-                 labels,
-                 dtype=dtypes.float64,
-                 reshape=True):
-        if reshape:
-            assert images.shape[3] == 1
-            images = images.reshape(images.shape[0],
-                                    images.shape[1] * images.shape[2])
-
-        self._images = images
-        self._num_examples = images.shape[0]
-        self._labels = labels
+                 input_list):
+        self._input_list = input_list
+        self._num_examples = len(input_list)
         self._epochs_completed = 0
         self._index_in_epoch = 0
 
     @property
     def images(self):
-        return self._images
+        # TODO : Check memory limit
+        return self._get_images(0, self._num_examples)
 
     @property
     def labels(self):
-        return self._labels
+        # TODO : Check memory limit
+        return self._get_labels(0, self._num_examples)
 
     @property
     def num_examples(self):
@@ -46,57 +43,48 @@ class DataSet(object):
             # Finished epoch
             self._epochs_completed += 1
             # Shuffle the data
-            perm = np.arange(self._num_examples)
-            np.random.shuffle(perm)
-            self._images = self._images[perm]
-            self._labels = self._labels[perm]
+            random.shuffle(self._input_list)
             # Start next epoch
             start = 0
             self._index_in_epoch = batch_size
             assert batch_size <= self._num_examples
         end = self._index_in_epoch
 
-        return self._images[start:end], self._labels[start:end]
+        return self._get_images(start, end), self._get_labels(start, end)
+
+    def _get_images(self, start, end):
+        pass
+
+    def _get_labels(self, start, end):
+        pass
 
 
-DATA_SIZE = 535234
-VALIDATION_SIZE = 50000
-TEST_SIZE = 10000
-
-
-def load_dataset(dataset_dir, dtype=dtypes.float64, reshape=True):
-    file_reader = tf.WholeFileReader()
-    image_files_queue = tf.train.string_input_producer(tf.train.match_filenames_once(dataset_dir + '/bin-images/*.jpg'))
-    filename, image_file = file_reader.read(image_files_queue)
-    image = tf.image.decode_jpeg(image_file, channels=3)
-
-    num_training = DATA_SIZE - (VALIDATION_SIZE + TEST_SIZE)
+def load_dataset(dataset_dir):
+    num_training = TOTAL_DATA_SIZE - (VALIDATION_SIZE + TEST_SIZE)
     num_validation = VALIDATION_SIZE
     num_test = TEST_SIZE
 
-    print('Load training:{0}, validation:{1}, test:{2}'.format(num_training, num_validation, num_test))
+    print('training:{0}, validation:{1}, test:{2}'.format(num_training, num_validation, num_test))
 
-    all_images = image
-    all_images = all_images.reshape(all_images.shape[0],
-                                    all_images.shape[1], all_images.shape[2], 1)
+    if not tf.gfile.Exists(dataset_dir + 'random_split.json'):
+        make_random_split(dataset_dir, num_training, num_validation, num_test)
+    random_split = json.load(open(dataset_dir + 'random_split.json', 'r'))
 
-    all_labels = np.asarray(range(0, DATA_SIZE))
-
-    mask = range(num_training)
-    train_images = all_images[mask]
-    train_labels = all_labels[mask]
-
-    mask = range(num_training, num_training + num_validation)
-    validation_images = all_images[mask]
-    validation_labels = all_labels[mask]
-
-    mask = range(num_training + num_validation, num_training + num_validation + num_test)
-    test_images = all_images[mask]
-    test_labels = all_labels[mask]
-
-    train = DataSet(train_images, train_labels, dtype=dtype, reshape=reshape)
-    validation = DataSet(validation_images, validation_labels, dtype=dtype, reshape=reshape)
-    test = DataSet(test_images, test_labels, dtype=dtype, reshape=reshape)
+    train = DataSet(random_split.get('train'))
+    validation = DataSet(random_split.get('validation'))
+    test = DataSet(random_split.get('test'))
 
     ds = collections.namedtuple('Datasets', ['train', 'validation', 'test'])
     return ds(train=train, validation=validation, test=test)
+
+
+# Randomly split the whole list into train, validation, and test set.
+def make_random_split(dataset_dir, train_size, validation_size, test_size):
+    random_list = list(range(1, TOTAL_DATA_SIZE + 1))
+    random.shuffle(random_list)
+    result = {
+        'train': random_list[:train_size],
+        'validation': random_list[train_size:train_size + validation_size],
+        'test': random_list[train_size + validation_size:],
+    }
+    json.dump(result, open(dataset_dir + 'random_split.json', 'w'))
