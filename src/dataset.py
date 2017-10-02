@@ -11,7 +11,6 @@ class DataSet(object):
     def __init__(self,
                  images,
                  labels,
-                 fake_data=False,
                  one_hot=False,
                  dtype=dtypes.float64,
                  reshape=True):
@@ -43,7 +42,7 @@ class DataSet(object):
     def epochs_completed(self):
         return self._epochs_completed
 
-    def next_batch(self, batch_size, fake_data=False):
+    def next_batch(self, batch_size):
         """Return the next `batch_size` examples from this data set."""
         start = self._index_in_epoch
         self._index_in_epoch += batch_size

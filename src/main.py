@@ -1,7 +1,6 @@
 import argparse
 import json
 import time
-from time import time
 
 import tensorflow as tf
 from numpy.distutils.fcompiler import str2bool
@@ -26,7 +25,7 @@ def train(model, sess, saver, train_data, valid_data, batch_size, max_iters, use
     """
     Trainer 
     """
-    t0 = time()
+    t0 = time.time()
     batch = train_data.sample(batch_size) if batch_size else train_data
     train_error = model.eval_loss(batch['image'], batch['target'])
     train_rmse, train_pred = model.eval_rmse(batch['image'], batch['target'])
@@ -37,7 +36,7 @@ def train(model, sess, saver, train_data, valid_data, batch_size, max_iters, use
     prev_valid_rmse = float("Inf")
     early_stop_iters = 0
     for i in range(max_iters):
-        t1 = time()
+        t1 = time.time()
         batch = train_data.sample(batch_size) if batch_size else train_data
         model.train_iteration(batch['image'], batch['target'])
 
@@ -46,7 +45,7 @@ def train(model, sess, saver, train_data, valid_data, batch_size, max_iters, use
         valid_rmse, _ = model.eval_rmse(valid_data['image'], valid_data['target'])
         print(model.model_filename)
         print("train loss: %.4f, train rmse: %.4f, valid rmse: %.4f in %ds" % (
-            train_error, train_rmse, valid_rmse, time() - t1))
+            train_error, train_rmse, valid_rmse, time.time() - t1))
 
         # Checkpointing/early stopping
         if use_early_stop:
@@ -58,7 +57,7 @@ def train(model, sess, saver, train_data, valid_data, batch_size, max_iters, use
                 saver.save(sess, model.model_filename)
             elif early_stop_iters == early_stop_max_iter:
                 print("Early stopping ({} vs. {})...".format(prev_valid_rmse, valid_rmse))
-                traintime = (time() - t0)
+                traintime = (time.time() - t0)
                 print("total training time %ds" % traintime)
                 return traintime
         else:

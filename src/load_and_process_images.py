@@ -27,13 +27,12 @@ if __name__ == '__main__':
     start = len(glob.glob(IMAGE_DIR + '/*.jpg')) if len(glob.glob(IMAGE_DIR + '/*.jpg')) > 0 else 1
     print('Start from %05d.jpg' % start)
     bucket = connect_s3_bucket()
-    N = 535234
-    for i in range(start, N+1):
+    for i in range(start, TOTAL_IMAGES + 1):
         filename = '%05d.jpg' % i
         source = 'bin-images/' + filename
         dest = IMAGE_DIR + filename
         bucket.download_file(source, dest)
         process_image(dest)
-        print('Processed {0}({1}/{2})'.format(dest, i, N))
+        print('Processed {0}({1}/{2})'.format(dest, i, TOTAL_IMAGES))
 
     print('Processing Done')
