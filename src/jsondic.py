@@ -1,8 +1,7 @@
 import json
 from pathlib import Path
 
-from dataset import TOTAL_DATA_SIZE
-
+META_NUM = 535234
 TV_INIT = 0
 META_DIR = "dataset/metadata/"
 
@@ -19,7 +18,7 @@ def ntostr(n):
 # make dic and save to json
 def make_dic():
     cnt = 0
-    for i in range(1, TOTAL_DATA_SIZE + 1):
+    for i in range(1, META_NUM + 1):
         jsdata = open(META_DIR + ntostr(i) + ".json").read()
         data = json.loads(jsdata)   
 
