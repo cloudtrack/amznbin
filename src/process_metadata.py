@@ -30,9 +30,8 @@ def get_instance_data(metadata):
             quantity = metadata[i]['EXPECTED_QUANTITY']
             if quantity > 0:
                 bin_info = metadata[i]['BIN_FCSKU_DATA']
-                bin_keys = bin_info.keys()
-                for j in range(0, len(bin_info)):
-                    instance_info = bin_info[bin_keys[j]]
+                for bin_key in bin_info.keys():
+                    instance_info = bin_info[bin_key]
                     asin = instance_info['asin']
                     if asin in instances:
                         # occurance
