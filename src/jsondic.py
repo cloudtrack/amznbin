@@ -1,9 +1,11 @@
 import json
-from pathlib import Path
+import os
 
 META_NUM = 535234
 TV_INIT = 0
-META_DIR = "dataset/metadata/"
+META_DIR = 'dataset/metadata/'
+
+JSONDIC_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'jsondic')
 
 asin_index_dic = {}
 asin_index_dic_r = {}
@@ -29,9 +31,9 @@ def make_dic():
                 asin_index_dic_r[str(cnt)] = asin
                 cnt += 1
 
-    aidfw = open("./jsondic/asin_index_dic.json", 'w')
-    aidrfw = open("./jsondic/asin_index_dic_r.json", 'w')
-    andfw = open("./jsondic/asin_name_dic.json", 'w')
+    aidfw = open(os.path.join(JSONDIC_DIR, 'asin_index_dic.json'), 'w')
+    aidrfw = open(os.path.join(JSONDIC_DIR, 'asin_index_dic_r.json'), 'w')
+    andfw = open(os.path.join(JSONDIC_DIR, 'asin_name_dic.json'), 'w')
 
     js_asin_index_dic = json.dumps(asin_index_dic, sort_keys=True, indent=4, separators=(',', ':'))
     js_asin_index_dic_r = json.dumps(asin_index_dic_r, sort_keys=True, indent=4, separators=(',', ':'))
@@ -74,17 +76,14 @@ def tv2res(tv):
 if __name__ == '__main__':
     make_dic()
 else:
-    jsonfile = Path("./jsondic/asin_index_dic.json")
-    
-    #already exist
-    if jsonfile.is_file():
-        jsdata = open("./jsondic/asin_index_dic.json").read()
-        asin_index_dic = json.loads(jsdata)     
+    if os.path.exists(os.path.join(JSONDIC_DIR, 'asin_index_dic.json')):
+        jsdata = open(os.path.join(JSONDIC_DIR, 'asin_index_dic.json')).read()
+        asin_index_dic = json.loads(jsdata)
 
-        jsdata = open("./jsondic/asin_index_dic_r.json").read()
+        jsdata = open(os.path.join(JSONDIC_DIR, 'asin_index_dic_r.json')).read()
         asin_index_dic_r = json.loads(jsdata)
 
-        jsdata = open("./jsondic/asin_name_dic.json").read()
+        jsdata = open(os.path.join(JSONDIC_DIR, 'asin_name_dic.json')).read()
         asin_name_dic = json.loads(jsdata)
     else:
         make_dic()

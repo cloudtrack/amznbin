@@ -59,7 +59,6 @@ class DataSet(object):
 
     def _get_labels(self, start, end):
         labels = []
-        label_json = open('', 'r')
         for index in range(start, end):
             labels.append(json2tv(self._input_list[index]))
         return labels
