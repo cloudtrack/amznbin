@@ -2,3 +2,4 @@ dataset
 # IDE
 .idea
 connect.sh
+.DS_Store

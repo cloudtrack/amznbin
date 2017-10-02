@@ -1,5 +1,5 @@
 #!/bin/bash
-run="python"
+run="python3"
 main="src/main.py"
 
 ${run} ${main} --mode train --model "ALEXNET"

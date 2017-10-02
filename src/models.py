@@ -1,11 +1,14 @@
 import tensorflow as tf
 
+
 def print_activations(t):
-  print(t.op.name, ' ', t.get_shape().as_list())
+    print(t.op.name, ' ', t.get_shape().as_list())
+
 
 class _Base(object):
-    """ Base structrue """
-    def __init__(self) :
+
+    """ Base structure """
+    def __init__(self):
         # Internal counter to keep track of current iteration
         self._iters = 0
 
@@ -14,12 +17,8 @@ class _Base(object):
         # self.batch_size = 128
         self.image_size = 224
         self.class_size = 1000
+        self.learning_rate = 0.01
 
-        # self.image = tf.Variable(tf.random_normal([self.batch_size,
-        #                                            self.image_size,
-        #                                            self.image_size, 3],
-        #                                            dtype=tf.float32,
-        #                                            stddev=1e-1))
         self.image = tf.placeholder(tf.float32, [None, self.image_size, self.image_size, 3])
         self.target = tf.placeholder(tf.float32, [None, self.class_size])
 
@@ -30,6 +29,16 @@ class _Base(object):
         # RMSE
         # TODO: rmse format of classification is probably different 
         self.rmse = tf.sqrt(tf.reduce_mean(tf.square(tf.subtract(self.target, self.pred))))
+
+    @property
+    def filename(self):
+        raise NotImplementedError()
+
+    def _init_vars(self):
+        raise NotImplementedError()
+
+    def _init_ops(self):
+        raise NotImplementedError()
 
     def init_sess(self, sess):
         """ 
@@ -57,12 +66,16 @@ class _Base(object):
 
 class ALEXNET(_Base):
     """ AlexNet model structrue """
-    def __init__(self, *args, **kwargs):
-        super(ALEXNET, self).__init__(*args, **kwargs)
+
+    def __init__(self):
+        super(ALEXNET, self).__init__()
+
+    @property
+    def filename(self):
+        return 'alexnet'
 
     def _init_vars(self):
         """ Build layers of the model """
-
         self.pred = tf.squeeze(self.build_layers(self.image), squeeze_dims=[1])
 
     def _init_ops(self):
@@ -73,7 +86,7 @@ class ALEXNET(_Base):
         # Optimizer
         self.optimizer = tf.train.AdamOptimizer(self.learning_rate)
         # Optimize the weights
-        self.optimize_steps= self.optimizer.minimize(self.loss, var_list=self.parameters)
+        self.optimize_steps = self.optimizer.minimize(self.loss, var_list=self.parameters)
 
     def eval_loss(self, imagedata, targetdata):
         """ 
