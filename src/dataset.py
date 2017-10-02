@@ -4,6 +4,8 @@ import random
 
 import tensorflow as tf
 
+from jsondic import json2tv
+
 TOTAL_DATA_SIZE = 535234
 VALIDATION_SIZE = 50000
 TEST_SIZE = 10000
@@ -56,7 +58,11 @@ class DataSet(object):
         pass
 
     def _get_labels(self, start, end):
-        pass
+        labels = []
+        label_json = open('', 'r')
+        for index in range(start, end):
+            labels.append(json2tv(self._input_list[index]))
+        return labels
 
 
 def load_dataset(dataset_dir):
