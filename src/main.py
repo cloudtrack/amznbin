@@ -5,20 +5,11 @@ import time
 import tensorflow as tf
 from numpy.distutils.fcompiler import str2bool
 
-from dataset import read_data_sets
+from dataset import load_dataset
 from models import ALEXNET  # , VGG16, INCEPTION
 
 
-def load_data():
-    """
-    Data loader
-    """
-    # TODO: each data should contain two columns: image, target 
-    # one thing that concerns me is that it is not possible to load all data at once. (not enough memory space) 
-    # since we will use batch learning we can deprecate this function and directly feed images in batches
-
-    data = read_data_sets('dataset')
-    return data.train, data.validation, data.test
+DATASET_DIR = './dataset'
 
 
 def train(model, sess, saver, train_data, valid_data, batch_size, max_iters, use_early_stop, early_stop_max_iter):
@@ -26,10 +17,11 @@ def train(model, sess, saver, train_data, valid_data, batch_size, max_iters, use
     Trainer 
     """
     t0 = time.time()
-    batch = train_data.sample(batch_size) if batch_size else train_data
-    train_error = model.eval_loss(batch['image'], batch['target'])
-    train_rmse, train_pred = model.eval_rmse(batch['image'], batch['target'])
-    valid_rmse, valid_pred = model.eval_rmse(valid_data['image'], valid_data['target'])
+    batch_image, batch_target = train_data.next_batch(batch_size)
+    train_error = model.eval_loss(batch_image, batch_target)
+    train_rmse, train_pred = model.eval_rmse(batch_image, batch_target)
+    valid_rmse, valid_pred = model.eval_rmse(valid_data.images, valid_data.labels)
+
     print("train loss: %.3f, train rmse: %.3f, valid rmse: %.3f" % (train_error, train_rmse, valid_rmse))
 
     # Optimize
@@ -37,12 +29,12 @@ def train(model, sess, saver, train_data, valid_data, batch_size, max_iters, use
     early_stop_iters = 0
     for i in range(max_iters):
         t1 = time.time()
-        batch = train_data.sample(batch_size) if batch_size else train_data
-        model.train_iteration(batch['image'], batch['target'])
+        batch_image, batch_target = train_data.next_batch(batch_size)
+        model.train_iteration(batch_image, batch_target)
 
         # Evaluate
-        train_error, train_rsme = model.eval_loss(batch['image'], batch['target'])
-        valid_rmse, _ = model.eval_rmse(valid_data['image'], valid_data['target'])
+        train_error, train_rsme = model.eval_loss(batch_image, batch_target)
+        valid_rmse, _ = model.eval_rmse(valid_data.images, valid_data.labels)
         print(model.model_filename)
         print("train loss: %.4f, train rmse: %.4f, valid rmse: %.4f in %ds" % (
             train_error, train_rmse, valid_rmse, time.time() - t1))
@@ -64,19 +56,20 @@ def train(model, sess, saver, train_data, valid_data, batch_size, max_iters, use
             saver.save(sess, model.model_filename)
 
 
-def test(model, sess, saver, test_data, train_data, valid_data, log=False):
+def test(model, sess, saver, test_data, train_data, valid_data, log=True):
     """
     Tester
     """
-    train_rmse, _ = model.eval_rmse(train_data['image'], train_data['target'])
-    valid_rmse, _ = model.eval_rmse(valid_data['image'], valid_data['target'])
+    train_rmse, _ = model.eval_rmse(train_data.images, train_data.labels)
+    valid_rmse, _ = model.eval_rmse(valid_data.images, valid_data.labels)
     if log:
         print("Final train RMSE: {}".format(train_rmse))
         print("Final valid RMSE: {}".format(valid_rmse))
-    test_rmse, _ = model.eval_rmse(test_data['image'], test_data['target'])
-    pred = pred + model.mu
+
+    test_rmse, _ = model.eval_rmse(test_data.images, test_data.labels)
     if log:
         print("Final test RMSE: {}".format(test_rmse))
+
     print('%.4f %.4f %.4f' % (train_rmse, valid_rmse, test_rmse))
 
     return train_rmse, valid_rmse, test_rmse
@@ -119,9 +112,9 @@ if __name__ == '__main__':
 
     with tf.Session() as sess:
         # Process data
-        print("Reading in data")
-        # TODO : Pandas DataFrame format
-        train_data, valid_data, test_data = load_data()
+        print("Load dataset")
+        dataset = load_dataset(DATASET_DIR)
+        train_data, valid_data, test_data = dataset.train, dataset.validation, dataset.test
 
         # Define computation graph & Initialize
         print('Building network & initializing variables')
@@ -140,10 +133,10 @@ if __name__ == '__main__':
             traintime = train(model, sess, saver, train_data, valid_data, batch_size=batch_size,
                               max_iters=max_iters, use_early_stop=use_early_stop,
                               early_stop_max_iter=early_stop_max_iter)
-
-        print('Loading best checkpointed model')
-        saver.restore(sess, model.model_filename)
-        # TRAIN, VALID, TEST = test(model, sess, saver, test_data, test_data_coldstart, train_data, valid_data, add, args.show_test_instance)
+        elif mode == 'test':
+            print('Loading best checkpointed model')
+            saver.restore(sess, model.filename)
+            TRAIN, VALID, TEST = test(model, sess, saver, test_data, train_data, valid_data)
 
         # if(args.outfile == 'modelname') :
         #     outfile = model.model_filename

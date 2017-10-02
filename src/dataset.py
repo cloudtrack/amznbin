@@ -1,20 +1,16 @@
 import collections
 
-import numpy
+import numpy as np
+import tensorflow as tf
 from tensorflow.python.framework import dtypes
 
-import tensorflow as tf
 
 class DataSet(object):
-    """Dataset class object."""
-
     def __init__(self,
                  images,
                  labels,
-                 one_hot=False,
                  dtype=dtypes.float64,
                  reshape=True):
-        """Initialize the class."""
         if reshape:
             assert images.shape[3] == 1
             images = images.reshape(images.shape[0],
@@ -50,8 +46,8 @@ class DataSet(object):
             # Finished epoch
             self._epochs_completed += 1
             # Shuffle the data
-            perm = numpy.arange(self._num_examples)
-            numpy.random.shuffle(perm)
+            perm = np.arange(self._num_examples)
+            np.random.shuffle(perm)
             self._images = self._images[perm]
             self._labels = self._labels[perm]
             # Start next epoch
@@ -63,25 +59,28 @@ class DataSet(object):
         return self._images[start:end], self._labels[start:end]
 
 
-def read_data_sets(train_dir, dtype=dtypes.float64, reshape=True, validation_size=5000):
+DATA_SIZE = 535234
+VALIDATION_SIZE = 50000
+TEST_SIZE = 10000
+
+
+def load_dataset(dataset_dir, dtype=dtypes.float64, reshape=True):
     file_reader = tf.WholeFileReader()
-    image_files_queue = tf.train.string_input_producer(tf.train.match_filenames_once(train_dir + '/bin-images/*.jpg'))
+    image_files_queue = tf.train.string_input_producer(tf.train.match_filenames_once(dataset_dir + '/bin-images/*.jpg'))
     filename, image_file = file_reader.read(image_files_queue)
     image = tf.image.decode_jpeg(image_file, channels=3)
-    meta_data_queue = tf.train.string_input_producer(tf.train.match_filenames_once(train_dir + '/metadata/*.json'))
 
-    """Set the images and labels."""
-    num_training = 3000
-    num_validation = 1000
-    num_test = 1000
+    num_training = DATA_SIZE - (VALIDATION_SIZE + TEST_SIZE)
+    num_validation = VALIDATION_SIZE
+    num_test = TEST_SIZE
 
-    all_images = numpy.load('./npy/grey.npy')
+    print('Load training:{0}, validation:{1}, test:{2}'.format(num_training, num_validation, num_test))
+
+    all_images = image
     all_images = all_images.reshape(all_images.shape[0],
                                     all_images.shape[1], all_images.shape[2], 1)
 
-    train_labels_original = numpy.load('./npy/label.npy')
-    all_labels = numpy.asarray(range(0, len(train_labels_original)))
-    all_labels = dense_to_one_hot(all_labels, len(all_labels))
+    all_labels = np.asarray(range(0, DATA_SIZE))
 
     mask = range(num_training)
     train_images = all_images[mask]
@@ -101,13 +100,3 @@ def read_data_sets(train_dir, dtype=dtypes.float64, reshape=True, validation_siz
 
     ds = collections.namedtuple('Datasets', ['train', 'validation', 'test'])
     return ds(train=train, validation=validation, test=test)
-
-
-def dense_to_one_hot(labels_dense, num_classes):
-    """Convert class labels from scalars to one-hot vectors."""
-    num_labels = labels_dense.shape[0]
-    index_offset = numpy.arange(num_labels) * num_classes
-    labels_one_hot = numpy.zeros((num_labels, num_classes))
-    labels_one_hot.flat[index_offset + labels_dense.ravel()] = 1
-
-    return labels_one_hot
