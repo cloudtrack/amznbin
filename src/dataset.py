@@ -5,10 +5,7 @@ import random
 import tensorflow as tf
 
 import jsondic
-from constants import TOTAL_DATA_SIZE
-
-VALIDATION_SIZE = 50000
-TEST_SIZE = 10000
+from constants import TOTAL_DATA_SIZE, VALIDATION_SIZE, TEST_SIZE
 
 
 class DataSet(object):
@@ -56,6 +53,7 @@ class DataSet(object):
 
     def _get_images(self, start, end):
         images = []
+        # TODO
         return images
 
     def _get_labels(self, start, end):

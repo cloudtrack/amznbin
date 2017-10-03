@@ -14,4 +14,6 @@ ASIN_INDEX_FILE = path.join(DATASET_DIR, "asin_index_dic.json")
 INDEX_ASIN_FILE = path.join(DATASET_DIR, "index_asin_dic.json")
 
 TOTAL_DATA_SIZE = 535234
+VALIDATION_SIZE = 50000
+TEST_SIZE = 10000
 IMAGE_SIZE = 224
