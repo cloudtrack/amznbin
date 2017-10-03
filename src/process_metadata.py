@@ -12,6 +12,7 @@ METADATA_FILE = "dataset/metadata.json"
 def get_raw_metadata():
     """
     metadata 각 파일들에서 필요한 정보만 모은 리스트를 리턴한다.
+    리스트의 index 는 파일 이름과 동일함 (즉, 0에는 dummy data)
     * example of each item_metadata format
     {
         "TOTAL": 2,
@@ -28,11 +29,11 @@ def get_raw_metadata():
     }
     :return: The list of item_metadata
     """
-    raw_metadata = []
-    for i in range(TOTAL_DATA_SIZE):
+    raw_metadata = [{}]
+    for i in range(1, TOTAL_DATA_SIZE+1):
         if i % 1000 == 0:
             print("get_raw_metadata: processing (%d/%d)..." % (i, TOTAL_DATA_SIZE))
-        json_path = '%s%05d.json' % (METADATA_DIR, i+1)
+        json_path = '%s%05d.json' % (METADATA_DIR, i)
         if os.path.isfile(json_path):
             json_data = json.loads(open(json_path).read())
             processed_json_data = {}
@@ -52,12 +53,10 @@ def get_raw_metadata():
 
 def get_metadata(raw_metadata):
     metadata = {}
-    TOTAL_METADATA = len(raw_metadata)
-    for i in range(TOTAL_METADATA):
+    for i in range(1, len(raw_metadata)):
         if i % 1000 == 0:
-            print("get_metadata: processing (%d/%d)..." % (i, TOTAL_METADATA))
+            print("get_metadata: processing (%d/%d)..." % (i, TOTAL_DATA_SIZE))
         if raw_metadata[i]:
-            file_index = i+1
             quantity = raw_metadata[i]['TOTAL']
             if quantity > 0:
                 bin_info = raw_metadata[i]['DATA']
@@ -69,13 +68,13 @@ def get_metadata(raw_metadata):
                         metadata[asin]['repeat'] = metadata[asin]['repeat'] + 1
                         # quantity
                         metadata[asin]['quantity'] = metadata[asin]['quantity'] + instance_info['quantity']
-                        metadata[asin]['bin_list'].append(file_index)
+                        metadata[asin]['bin_list'].append(i)
                     else:
                         metadata[asin] = {}
                         metadata[asin]['repeat'] = 1
                         metadata[asin]['quantity'] = instance_info['quantity']
                         metadata[asin]['name'] = instance_info['name']
-                        metadata[asin]['bin_list'] = [file_index]
+                        metadata[asin]['bin_list'] = [i]
     return metadata
 
 
