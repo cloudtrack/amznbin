@@ -1,13 +1,17 @@
-# Directory path relative to project root
-DATASET_DIR = "dataset/"
-IMAGE_DIR = "dataset/bin-images/"
-METADATA_DIR = "dataset/metadata/"
+from os import path
 
-# File path relative to project root
-METADATA_FILE = "dataset/metadata.json"
-RAW_METADATA_FILE = "dataset/raw_metadata.json"
-ASIN_INDEX_FILE = "dataset/asin_index_map.json"
-INDEX_ASIN_FILE = "dataset/index_asin_map.json"
+PROJECT_ROOT = path.dirname(path.dirname(path.abspath(__file__)))
+
+# Directory path
+DATASET_DIR = path.join(PROJECT_ROOT, "dataset/")
+IMAGE_DIR = path.join(DATASET_DIR, "bin-images/")
+METADATA_DIR = path.join(DATASET_DIR, "metadata/")
+
+# File path
+METADATA_FILE = path.join(DATASET_DIR, "metadata.json")
+RAW_METADATA_FILE = path.join(DATASET_DIR, "raw_metadata.json")
+ASIN_INDEX_FILE = path.join(DATASET_DIR, "asin_index_map.json")
+INDEX_ASIN_FILE = path.join(DATASET_DIR, "index_asin_map.json")
 
 TOTAL_DATA_SIZE = 535234
 IMAGE_SIZE = 224
