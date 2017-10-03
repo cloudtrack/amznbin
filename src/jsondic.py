@@ -50,7 +50,7 @@ def get_tv_list(index_list):
         for asin in data['DATA'].keys():
             tv_index = asin_index_map.get(asin)
             tv[tv_index] = data['DATA'][asin]['quantity']
-        tv_list.append(tv_list)
+        tv_list.append(tv)
     return tv_list
 
 
@@ -62,7 +62,7 @@ def tv2res(tv):
     res = {}
     for i in range(len(tv)):
         if tv[i] != 0:
-            asin = index_asin_map[i]
+            asin = index_asin_map[str(i)]
             asin_meta = {
                 'name': metadata[asin]['name'],
                 'quantity': tv[i],
