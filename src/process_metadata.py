@@ -5,59 +5,88 @@ import os.path
 from dataset import TOTAL_DATA_SIZE
 
 METADATA_DIR = "dataset/metadata/"
+RAW_METADATA_FILE = "dataset/raw_metadata.json"
+METADATA_FILE = "dataset/metadata.json"
 
 
-# getting whole metadata list
-def get_metadata():
-    metadata = []
+def get_raw_metadata():
+    """
+    metadata 각 파일들에서 필요한 정보만 모은 리스트를 리턴한다.
+    * example of each item_metadata format
+    {
+        "TOTAL": 2,
+        "DATA": {
+            "B01DDF6WWS": {
+                "quantity": 1,
+                "name": "iPhone SE Case, araree\u00ae [Airfit] Ultra Slim SOFT-Interior Scratch Protection with Perfect Fit for iPhone SE, 5S and 5 (2016) (BLUE(Matt))"
+            },
+            "B019775SYE": {
+                "quantity": 1,
+                "name": "Midline Lacrosse Logo Crew Socks (Columbia Blue/Navy, Small)"
+            }
+        }
+    }
+    :return: The list of item_metadata
+    """
+    raw_metadata = []
     for i in range(TOTAL_DATA_SIZE):
         if i % 1000 == 0:
-            print("get_metadata: processing (%d/%d)..." % (i, TOTAL_DATA_SIZE))
+            print("get_raw_metadata: processing (%d/%d)..." % (i, TOTAL_DATA_SIZE))
         json_path = '%s%05d.json' % (METADATA_DIR, i+1)
         if os.path.isfile(json_path):
-            d = json.loads(open(json_path).read())
-            metadata.append(d)
+            json_data = json.loads(open(json_path).read())
+            processed_json_data = {}
+            processed_json_data['TOTAL'] = json_data['EXPECTED_QUANTITY']
+            processed_json_data['DATA'] = {}
+            for bin_key in json_data['BIN_FCSKU_DATA'].keys():
+                bin_meta = json_data['BIN_FCSKU_DATA'][bin_key]
+                useful_meta = {
+                    'name': bin_meta['name'],
+                    'quantity': bin_meta['quantity'],
+                }
+                processed_json_data['DATA'][bin_key] = useful_meta
+            raw_metadata.append(processed_json_data)
+
+    return raw_metadata
+
+
+def get_metadata(raw_metadata):
+    metadata = {}
+    TOTAL_METADATA = len(raw_metadata)
+    for i in range(TOTAL_METADATA):
+        if i % 1000 == 0:
+            print("get_metadata: processing (%d/%d)..." % (i, TOTAL_METADATA))
+        if raw_metadata[i]:
+            file_index = i+1
+            quantity = raw_metadata[i]['TOTAL']
+            if quantity > 0:
+                bin_info = raw_metadata[i]['DATA']
+                for bin_key in bin_info.keys():
+                    instance_info = bin_info[bin_key]
+                    asin = bin_key
+                    if asin in metadata:
+                        # occurance
+                        metadata[asin]['repeat'] = metadata[asin]['repeat'] + 1
+                        # quantity
+                        metadata[asin]['quantity'] = metadata[asin]['quantity'] + instance_info['quantity']
+                        metadata[asin]['bin_list'].append(file_index)
+                    else:
+                        metadata[asin] = {}
+                        metadata[asin]['repeat'] = 1
+                        metadata[asin]['quantity'] = instance_info['quantity']
+                        metadata[asin]['name'] = instance_info['name']
+                        metadata[asin]['bin_list'] = [file_index]
     return metadata
 
 
-def get_instance_data(metadata):
-    instances = {}
-    N = len(metadata)
-    for i in range(TOTAL_DATA_SIZE):
-        if i % 1000 == 0:
-            print("get_instance_data: processing (%d/%d)..." % (i, N))
-        if metadata[i]:
-            quantity = metadata[i]['EXPECTED_QUANTITY']
-            if quantity > 0:
-                bin_info = metadata[i]['BIN_FCSKU_DATA']
-                for bin_key in bin_info.keys():
-                    instance_info = bin_info[bin_key]
-                    asin = instance_info['asin']
-                    if asin in instances:
-                        # occurance
-                        instances[asin]['repeat'] = instances[asin]['repeat'] + 1
-                        # quantity
-                        instances[asin]['quantity'] = instances[asin]['quantity'] + instance_info['quantity']
-                        instances[asin]['bin_list'].append(i)
-                    else:
-                        instances[asin] = {}
-                        instances[asin]['repeat'] = 1
-                        instances[asin]['quantity'] = instance_info['quantity']
-                        instances[asin]['name'] = instance_info['name']
-                        bin_list = list()
-                        bin_list.append(i)
-                        instances[asin]['bin_list'] = bin_list
-    return instances
-
-
 if __name__ == '__main__':
-    metadata = get_metadata()
-    # dumping out all metadata into a file
-    print("dumping metadata.json...")
-    with open('dataset/metadata.json', 'w') as fp:
-        json.dump(metadata, fp)
-    instances = get_instance_data(metadata)
+    raw_metadata = get_raw_metadata()
+    print("dumping raw_metadata_file")
+    with open(RAW_METADATA_FILE, 'w') as fp:
+        json.dump(raw_metadata, fp)
 
-    print("dumping instances.json...")
-    with open('dataset/instances.json', 'w') as fp:
+    instances = get_metadata(raw_metadata)
+    print("dumping metadata_file")
+    with open(METADATA_FILE, 'w') as fp:
         json.dump(instances, fp)
+    print("Done processing metadata")
