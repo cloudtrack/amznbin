@@ -38,7 +38,7 @@ if __name__ == '__main__':
     make_dic()
 
 
-def get_tv_list(index_list):
+def json2tv(index_list):
     with open(RAW_METADATA_FILE) as raw_metadata_file:
         raw_metadata = json.load(raw_metadata_file)
     with open(ASIN_INDEX_FILE) as asin_index_file:

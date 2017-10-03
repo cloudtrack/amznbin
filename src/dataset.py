@@ -59,7 +59,7 @@ class DataSet(object):
         return images
 
     def _get_labels(self, start, end):
-        return jsondic.get_tv_list(self._input_list[start:end])
+        return jsondic.json2tv(self._input_list[start:end])
 
 
 def load_dataset(dataset_dir):
