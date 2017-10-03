@@ -19,6 +19,8 @@ def make_dic():
     for data in raw_metadata:
         if count % 1000 == 0:
             print("make asin:index map, processing (%d/%d)..." % (count, total_count))
+        if not data.get('DATA'):
+            continue
         for asin in data['DATA'].keys():
             if asin not in asin_index_map.keys():
                 asin_index_map[asin] = index
