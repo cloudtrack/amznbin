@@ -5,8 +5,8 @@ import random
 import tensorflow as tf
 
 import jsondic
+from constants import TOTAL_DATA_SIZE
 
-TOTAL_DATA_SIZE = 535234
 VALIDATION_SIZE = 50000
 TEST_SIZE = 10000
 

@@ -1,12 +1,6 @@
 import json
-import os
-import os.path
 
-from dataset import TOTAL_DATA_SIZE
-
-METADATA_DIR = "dataset/metadata/"
-RAW_METADATA_FILE = "dataset/raw_metadata.json"
-METADATA_FILE = "dataset/metadata.json"
+from constants import METADATA_DIR, RAW_METADATA_FILE, METADATA_FILE, TOTAL_DATA_SIZE
 
 
 def get_raw_metadata():
@@ -33,20 +27,20 @@ def get_raw_metadata():
     for i in range(1, TOTAL_DATA_SIZE+1):
         if i % 1000 == 0:
             print("get_raw_metadata: processing (%d/%d)..." % (i, TOTAL_DATA_SIZE))
-        json_path = '%s%05d.json' % (METADATA_DIR, i)
-        if os.path.isfile(json_path):
-            json_data = json.loads(open(json_path).read())
-            processed_json_data = {}
-            processed_json_data['TOTAL'] = json_data['EXPECTED_QUANTITY']
-            processed_json_data['DATA'] = {}
-            for bin_key in json_data['BIN_FCSKU_DATA'].keys():
-                bin_meta = json_data['BIN_FCSKU_DATA'][bin_key]
-                useful_meta = {
-                    'name': bin_meta['name'],
-                    'quantity': bin_meta['quantity'],
-                }
-                processed_json_data['DATA'][bin_key] = useful_meta
-            raw_metadata.append(processed_json_data)
+        file_path = '%s%05d.json' % (METADATA_DIR, i)
+        json_data = json.loads(open(file_path).read())
+        processed_json_data = {
+            'TOTAL': json_data['EXPECTED_QUANTITY'],
+            'DATA': {}
+        }
+        for bin_key in json_data['BIN_FCSKU_DATA'].keys():
+            bin_meta = json_data['BIN_FCSKU_DATA'][bin_key]
+            useful_meta = {
+                'name': bin_meta['name'],
+                'quantity': bin_meta['quantity'],
+            }
+            processed_json_data['DATA'][bin_key] = useful_meta
+        raw_metadata.append(processed_json_data)
 
     return raw_metadata
 
@@ -81,11 +75,11 @@ def get_metadata(raw_metadata):
 if __name__ == '__main__':
     raw_metadata = get_raw_metadata()
     print("dumping raw_metadata_file")
-    with open(RAW_METADATA_FILE, 'w') as fp:
-        json.dump(raw_metadata, fp)
+    with open(RAW_METADATA_FILE, 'w') as raw_metadata_file:
+        json.dump(raw_metadata, raw_metadata_file)
 
-    instances = get_metadata(raw_metadata)
+    metadata = get_metadata(raw_metadata)
     print("dumping metadata_file")
-    with open(METADATA_FILE, 'w') as fp:
-        json.dump(instances, fp)
+    with open(METADATA_FILE, 'w') as metadata_file:
+        json.dump(metadata, metadata_file)
     print("Done processing metadata")

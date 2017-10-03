@@ -5,11 +5,9 @@ import time
 import tensorflow as tf
 from numpy.distutils.fcompiler import str2bool
 
+from constants import DATASET_DIR
 from dataset import load_dataset
 from models import ALEXNET  # , VGG16, INCEPTION
-
-
-DATASET_DIR = './dataset/'
 
 
 def train(model, sess, saver, train_data, valid_data, batch_size, max_iters, use_early_stop, early_stop_max_iter):
