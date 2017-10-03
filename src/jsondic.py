@@ -9,17 +9,17 @@ INDEX_ASIN_FILE = "dataset/index_asin_map.json"
 # make dic and save to json
 def make_dic():
     print("load raw_metadata.json file")
-    with open(RAW_METADATA_FILE) as metadata_file:
-        metadata = json.load(metadata_file)
-    total_count = len(metadata)
+    with open(RAW_METADATA_FILE) as raw_metadata_file:
+        raw_metadata = json.load(raw_metadata_file)
+    total_count = len(raw_metadata)
     asin_index_map = {}
     index_asin_map = {}
     index = 0
     count = 0
-    for data in metadata:
+    for data in raw_metadata:
         if count % 1000 == 0:
             print("make asin:index map, processing (%d/%d)..." % (count, total_count))
-        for asin in data['BIN_FCSKU_DATA'].keys():
+        for asin in data['DATA'].keys():
             if asin not in asin_index_map.keys():
                 asin_index_map[asin] = index
                 index_asin_map[index] = asin
@@ -42,17 +42,17 @@ if __name__ == '__main__':
 
 
 def get_tv_list(index_list):
-    with open(RAW_METADATA_FILE) as metadata_file:
-        metadata = json.load(metadata_file)
+    with open(RAW_METADATA_FILE) as raw_metadata_file:
+        raw_metadata = json.load(raw_metadata_file)
     with open(ASIN_INDEX_FILE) as asin_index_file:
         asin_index_map = json.load(asin_index_file)
     tv_list = []
     for index in index_list:
         tv = [0] * len(asin_index_map.keys())
-        data = metadata[index]
-        for asin in data['BIN_FCSKU_DATA'].keys():
+        data = raw_metadata[index]
+        for asin in data['DATA'].keys():
             tv_index = asin_index_map.get(asin)
-            tv[tv_index] = data['BIN_FCSKU_DATA'][asin]['quantity']
+            tv[tv_index] = data['DATA'][asin]['quantity']
         tv_list.append(tv_list)
     return tv_list
 
