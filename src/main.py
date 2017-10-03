@@ -5,7 +5,6 @@ import time
 import tensorflow as tf
 from numpy.distutils.fcompiler import str2bool
 
-from constants import DATASET_DIR
 from dataset import load_dataset
 from models import ALEXNET  # , VGG16, INCEPTION
 
@@ -111,7 +110,7 @@ if __name__ == '__main__':
     with tf.Session() as sess:
         # Process data
         print("Load dataset")
-        dataset = load_dataset(DATASET_DIR)
+        dataset = load_dataset()
         train_data, validation_data, test_data = dataset.train, dataset.validation, dataset.test
 
         # Define computation graph & Initialize

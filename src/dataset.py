@@ -5,7 +5,7 @@ import random
 import tensorflow as tf
 
 import jsondic
-from constants import TOTAL_DATA_SIZE, VALIDATION_SIZE, TEST_SIZE
+from constants import TOTAL_DATA_SIZE, VALIDATION_SIZE, TEST_SIZE, RANDOM_SPLIT_FILE
 
 
 class DataSet(object):
@@ -60,27 +60,29 @@ class DataSet(object):
         return jsondic.json2tv(self._input_list[start:end])
 
 
-def load_dataset(dataset_dir):
+def load_dataset():
     num_training = TOTAL_DATA_SIZE - (VALIDATION_SIZE + TEST_SIZE)
     num_validation = VALIDATION_SIZE
     num_test = TEST_SIZE
 
-    print('training:{0}, validation:{1}, test:{2}'.format(num_training, num_validation, num_test))
+    print('train:{0}, validation:{1}, test:{2}'.format(num_training, num_validation, num_test))
 
-    if not tf.gfile.Exists(dataset_dir + 'random_split.json'):
-        make_random_split(dataset_dir, num_training, num_validation, num_test)
-    random_split = json.load(open(dataset_dir + 'random_split.json', 'r'))
+    if not tf.gfile.Exists(RANDOM_SPLIT_FILE):
+        make_random_split(num_training, num_validation, num_test)
+    with open(RANDOM_SPLIT_FILE, 'r') as random_split_file:
+        random_split_json = json.load(random_split_file)
 
-    train = DataSet(random_split.get('train'))
-    validation = DataSet(random_split.get('validation'))
-    test = DataSet(random_split.get('test'))
+    train = DataSet(random_split_json.get('train'))
+    validation = DataSet(random_split_json.get('validation'))
+    test = DataSet(random_split_json.get('test'))
 
     ds = collections.namedtuple('Datasets', ['train', 'validation', 'test'])
     return ds(train=train, validation=validation, test=test)
 
 
 # Randomly split the whole list into train, validation, and test set.
-def make_random_split(dataset_dir, train_size, validation_size, test_size):
+def make_random_split(train_size, validation_size, test_size):
+    print('make new random_split.json for train:{0}, validation:{1}, test:{2}'.format(train_size, validation_size, test_size))
     random_list = list(range(1, TOTAL_DATA_SIZE + 1))
     random.shuffle(random_list)
     result = {
@@ -88,4 +90,5 @@ def make_random_split(dataset_dir, train_size, validation_size, test_size):
         'validation': random_list[train_size:train_size + validation_size],
         'test': random_list[train_size + validation_size:],
     }
-    json.dump(result, open(dataset_dir + 'random_split.json', 'w'))
+    with open(RANDOM_SPLIT_FILE, 'w') as random_split_file:
+        json.dump(result, random_split_file)
