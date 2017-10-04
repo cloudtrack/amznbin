@@ -67,10 +67,9 @@ class DataSet(object):
             threads = tf.train.start_queue_runners(coord=coord)
 
             for i in range(start, end):
-                image = decoded_image.eval()
-                images.append(image)
-                # For debugging
-                # print(image)
+                image_tensor = sess.run(decoded_image)
+                images.append(image_tensor)
+                # For debugging - show current image
                 # from PIL import Image
                 # Image.fromarray(np.asarray(image)).show()
 
