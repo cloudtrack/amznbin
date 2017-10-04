@@ -1,4 +1,7 @@
 import tensorflow as tf
+import numpy as np
+
+from constants import IMAGE_SIZE, CLASS_SIZE
 
 
 def print_activations(t):
@@ -15,8 +18,8 @@ class _Base(object):
         # Input
         # TODO: change format 
         # self.batch_size = 128
-        self.image_size = 224
-        self.class_size = 1000
+        self.image_size = IMAGE_SIZE
+        self.class_size = CLASS_SIZE
         self.learning_rate = 0.01
 
         self.image = tf.placeholder(tf.float32, [None, self.image_size, self.image_size, 3])
@@ -195,7 +198,7 @@ class ALEXNET(_Base):
         # fullyconnected6
         fc6W = tf.Variable(tf.constant(0.0, shape=[(256*13), 4096], dtype=tf.float32), trainable=True, name='weights')
         fc6b = tf.Variable(tf.constant(0.0, shape=[4096], dtype=tf.float32), trainable=True, name='biases')
-        fc6 = tf.nn.relu_layer(tf.reshape(pool5, [-1, int(prod(pool5.get_shape()[1:]))]), fc6W, fc6b)
+        fc6 = tf.nn.relu_layer(tf.reshape(pool5, [-1, int(np.prod(pool5.get_shape()[1:]))]), fc6W, fc6b)
         self.parameters += [fc6W, fc6b]
         
         # fullyconnected7
