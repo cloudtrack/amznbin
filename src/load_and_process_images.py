@@ -4,10 +4,9 @@ import os
 import boto3
 from PIL import Image
 
+from constants import IMAGE_SIZE, IMAGE_DIR
 from dataset import TOTAL_DATA_SIZE
 
-IMAGE_DIR = "dataset/bin-images/"
-IMAGE_SIZE = 224
 
 def connect_s3_bucket():
     s3 = boto3.resource('s3', region_name='us-east-1')

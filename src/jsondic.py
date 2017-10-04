@@ -1,89 +1,36 @@
 import json
-import os
 
-META_NUM = 535234
-TV_INIT = 0
-META_DIR = 'dataset/metadata/'
-
-JSONDIC_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'jsondic')
-
-asin_index_dic = {}
-asin_index_dic_r = {}
-asin_name_dic = {}
+from constants import ASIN_INDEX_FILE, INDEX_ASIN_FILE, RAW_METADATA_FILE, METADATA_FILE
 
 
-# for file name
-def ntostr(n):
-    return "%05d" % n
-
-
-# make dic and save to json
-def make_dic():
-    cnt = 0
-    for i in range(1, META_NUM + 1):
-        jsdata = open(META_DIR + ntostr(i) + ".json").read()
-        data = json.loads(jsdata)   
-
-        for asin in data['BIN_FCSKU_DATA'].keys():
-            if(asin not in asin_index_dic.keys()):
-                asin_index_dic[asin] = cnt
-                asin_name_dic[asin] = data['BIN_FCSKU_DATA'][asin]['normalizedName']
-                asin_index_dic_r[str(cnt)] = asin
-                cnt += 1
-
-    aidfw = open(os.path.join(JSONDIC_DIR, 'asin_index_dic.json'), 'w')
-    aidrfw = open(os.path.join(JSONDIC_DIR, 'asin_index_dic_r.json'), 'w')
-    andfw = open(os.path.join(JSONDIC_DIR, 'asin_name_dic.json'), 'w')
-
-    js_asin_index_dic = json.dumps(asin_index_dic, sort_keys=True, indent=4, separators=(',', ':'))
-    js_asin_index_dic_r = json.dumps(asin_index_dic_r, sort_keys=True, indent=4, separators=(',', ':'))
-    js_asin_name_dic = json.dumps(asin_name_dic, sort_keys=True, indent=4, separators=(',', ':'))
-
-    aidfw.write(js_asin_index_dic)
-    aidrfw.write(js_asin_index_dic_r)
-    andfw.write(js_asin_name_dic)
-
-    aidfw.close()
-    aidrfw.close()
-    andfw.close()
-
-
-def json2tv(n):
-    jsdata = open(META_DIR + ntostr(n) + ".json").read()
-    data = json.loads(jsdata)
-
-    tv = [TV_INIT] * len(asin_index_dic.keys())
-    
-    for asin in data['BIN_FCSKU_DATA'].keys():
-        tv[asin_index_dic[asin]] = data['BIN_FCSKU_DATA'][asin]['quantity']
-
-    return tv
+def json2tv(index_list):
+    with open(RAW_METADATA_FILE) as raw_metadata_file:
+        raw_metadata = json.load(raw_metadata_file)
+    with open(ASIN_INDEX_FILE) as asin_index_file:
+        asin_index_map = json.load(asin_index_file)
+    tv_list = []
+    for index in index_list:
+        tv = [0] * len(asin_index_map.keys())
+        data = raw_metadata[index]
+        for asin in data['DATA'].keys():
+            tv_index = asin_index_map.get(asin)
+            tv[tv_index] = data['DATA'][asin]['quantity']
+        tv_list.append(tv)
+    return tv_list
 
 
 def tv2res(tv):
+    with open(METADATA_FILE) as metadata_file:
+        metadata = json.load(metadata_file)
+    with open(INDEX_ASIN_FILE) as index_asin_file:
+        index_asin_map = json.load(index_asin_file)
     res = {}
-    l = len(tv)
-    
-    for i in range(0, l):
-        if(tv[i] != TV_INIT):
-            asin = asin_index_dic_r[str(i)]
-            res[asin] = {}  
-            res[asin]['name'] = asin_name_dic[asin]
-            res[asin]['quantity'] = tv[i]
+    for i in range(len(tv)):
+        if tv[i] != 0:
+            asin = index_asin_map[str(i)]
+            asin_meta = {
+                'name': metadata[asin]['name'],
+                'quantity': tv[i],
+            }
+            res[asin] = asin_meta
     return res
-
-
-if __name__ == '__main__':
-    make_dic()
-else:
-    if os.path.exists(os.path.join(JSONDIC_DIR, 'asin_index_dic.json')):
-        jsdata = open(os.path.join(JSONDIC_DIR, 'asin_index_dic.json')).read()
-        asin_index_dic = json.loads(jsdata)
-
-        jsdata = open(os.path.join(JSONDIC_DIR, 'asin_index_dic_r.json')).read()
-        asin_index_dic_r = json.loads(jsdata)
-
-        jsdata = open(os.path.join(JSONDIC_DIR, 'asin_name_dic.json')).read()
-        asin_name_dic = json.loads(jsdata)
-    else:
-        make_dic()

@@ -9,9 +9,6 @@ from dataset import load_dataset
 from models import ALEXNET  # , VGG16, INCEPTION
 
 
-DATASET_DIR = './dataset/'
-
-
 def train(model, sess, saver, train_data, valid_data, batch_size, max_iters, use_early_stop, early_stop_max_iter):
     """
     Trainer 
@@ -29,15 +26,17 @@ def train(model, sess, saver, train_data, valid_data, batch_size, max_iters, use
     early_stop_iters = 0
     for i in range(max_iters):
         t1 = time.time()
-        batch_image, batch_target = train_data.next_batch(batch_size)
-        model.train_iteration(batch_image, batch_target)
+        batch_count = int(train_data.num_examples / batch_size)
+        for _ in range(batch_count):
+            batch_image, batch_target = train_data.next_batch(batch_size)
+            model.train_iteration(batch_image, batch_target)
 
-        # Evaluate
-        train_error, train_rsme = model.eval_loss(batch_image, batch_target)
-        valid_rmse, _ = model.eval_rmse(valid_data.images, valid_data.labels)
-        print(model.model_filename)
-        print("train loss: %.4f, train rmse: %.4f, valid rmse: %.4f in %ds" % (
-            train_error, train_rmse, valid_rmse, time.time() - t1))
+            # Evaluate
+            train_error, train_rsme = model.eval_loss(batch_image, batch_target)
+            valid_rmse, _ = model.eval_rmse(valid_data.images, valid_data.labels)
+            print(model.model_filename)
+            print("train loss: %.4f, train rmse: %.4f, valid rmse: %.4f in %ds"
+                  % (train_error, train_rmse, valid_rmse, time.time() - t1))
 
         # Checkpointing/early stopping
         if use_early_stop:
@@ -113,7 +112,7 @@ if __name__ == '__main__':
     with tf.Session() as sess:
         # Process data
         print("Load dataset")
-        dataset = load_dataset(DATASET_DIR)
+        dataset = load_dataset()
         train_data, validation_data, test_data = dataset.train, dataset.validation, dataset.test
 
         # Define computation graph & Initialize
