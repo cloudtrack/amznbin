@@ -2,6 +2,7 @@ import collections
 import json
 import random
 
+import numpy as np
 import tensorflow as tf
 
 from constants import TOTAL_DATA_SIZE, VALIDATION_SIZE, TEST_SIZE, RANDOM_SPLIT_FILE, IMAGE_DIR, RAW_METADATA_FILE, \
@@ -53,12 +54,36 @@ class DataSet(object):
         return self._get_images(start, end), self._get_labels(start, end)
 
     def _get_images(self, start, end):
-        images = []
-        # TODO
-        return images
+        files = ['%s%05d.jpg' % (IMAGE_DIR, self._input_list[i]) for i in range(start, end)]
+        filename_queue = tf.train.string_input_producer(files)
+        image_name, image_file = tf.WholeFileReader().read(filename_queue)
+        decoded_images = tf.image.decode_jpeg(image_file, channels=3)
+
+        init_op = tf.global_variables_initializer()
+        with tf.Session() as sess:
+            sess.run(init_op)
+
+        # Start populating the filename queue.
+        coord = tf.train.Coordinator()
+        threads = tf.train.start_queue_runners(coord=coord)
+
+        for i in range(start, end):
+            image = decoded_images.eval()
+            print(image.shape)
+            print(image)
+            # Image.fromarray(np.asarray(image)).show()
+        coord.request_stop()
+        coord.join(threads)
+
+        # filename_queue = tf.train.string_input_producer(tf.train.match_filenames_once(IMAGE_DIR + "*.jpg"))
+        # image_name, image_file = image_reader.read(filename_queue)
+        # decoded_image = tf.image.decode_jpeg(image_file, channels=3)
+        # decoded_image = tf.cast(decoded_image, tf.uint8)
+        return decoded_images
 
     def _get_labels(self, start, end):
-        return jsondic.json2tv(self._input_list[start:end])
+        tv_list = json2tv(self._input_list[start:end])
+        return np.array(tv_list)
 
 
 def load_dataset():
