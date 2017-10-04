@@ -69,9 +69,10 @@ class DataSet(object):
             for i in range(start, end):
                 image = decoded_image.eval()
                 images.append(image)
-                print(image)
-                from PIL import Image
-                Image.fromarray(np.asarray(image)).show()
+                # For debugging
+                # print(image)
+                # from PIL import Image
+                # Image.fromarray(np.asarray(image)).show()
 
             # Finish off the filename queue coordinator.
             coord.request_stop()
