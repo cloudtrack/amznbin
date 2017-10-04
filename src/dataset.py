@@ -4,8 +4,8 @@ import random
 
 import tensorflow as tf
 
-import jsondic
-from constants import TOTAL_DATA_SIZE, VALIDATION_SIZE, TEST_SIZE, RANDOM_SPLIT_FILE
+from constants import TOTAL_DATA_SIZE, VALIDATION_SIZE, TEST_SIZE, RANDOM_SPLIT_FILE, IMAGE_DIR, RAW_METADATA_FILE, \
+    ASIN_INDEX_FILE, METADATA_FILE, INDEX_ASIN_FILE
 
 
 class DataSet(object):
@@ -93,3 +93,44 @@ def make_random_split(train_size, validation_size, test_size):
     }
     with open(RANDOM_SPLIT_FILE, 'w') as random_split_file:
         json.dump(result, random_split_file)
+
+
+########################
+# Target vector utils
+########################
+def json2tv(index_list):
+    print("making target vectors")
+    print("opening " + RAW_METADATA_FILE)
+    with open(RAW_METADATA_FILE) as raw_metadata_file:
+        raw_metadata = json.load(raw_metadata_file)
+    print("opening " + ASIN_INDEX_FILE)
+    with open(ASIN_INDEX_FILE) as asin_index_file:
+        asin_index_map = json.load(asin_index_file)
+    tv_list = []
+    for index in index_list:
+        tv = [0] * len(asin_index_map.keys())
+        data = raw_metadata[index]
+        for asin in data['DATA'].keys():
+            tv_index = asin_index_map.get(asin)
+            tv[tv_index] = data['DATA'][asin]['quantity']
+        tv_list.append(tv)
+    return tv_list
+
+
+def tv2res(tv):
+    print("opening " + METADATA_FILE)
+    with open(METADATA_FILE) as metadata_file:
+        metadata = json.load(metadata_file)
+    print("opening " + INDEX_ASIN_FILE)
+    with open(INDEX_ASIN_FILE) as index_asin_file:
+        index_asin_map = json.load(index_asin_file)
+    res = {}
+    for i in range(len(tv)):
+        if tv[i] != 0:
+            asin = index_asin_map[str(i)]
+            asin_meta = {
+                'name': metadata[asin]['name'],
+                'quantity': tv[i],
+            }
+            res[asin] = asin_meta
+    return res
