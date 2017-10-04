@@ -37,6 +37,7 @@ class DataSet(object):
 
     def next_batch(self, batch_size):
         """Return the next `batch_size` examples from this data set."""
+        assert batch_size <= self._num_examples
         start = self._index_in_epoch
         self._index_in_epoch += batch_size
         if self._index_in_epoch > self._num_examples:
@@ -48,9 +49,8 @@ class DataSet(object):
             # Start next epoch
             start = 0
             self._index_in_epoch = batch_size
-            assert batch_size <= self._num_examples
         end = self._index_in_epoch
-        print("data - load next batch(size {0}) from {1} to {2}".format(batch_size, start, end))
+        print("load next batch(size {0}) from {1} to {2}".format(batch_size, start, end))
         return self._get_images(start, end), self._get_labels(start, end)
 
     def _get_images(self, start, end):
