@@ -57,29 +57,27 @@ class DataSet(object):
         files = ['%s%05d.jpg' % (IMAGE_DIR, self._input_list[i]) for i in range(start, end)]
         filename_queue = tf.train.string_input_producer(files)
         image_name, image_file = tf.WholeFileReader().read(filename_queue)
-        decoded_images = tf.image.decode_jpeg(image_file, channels=3)
+        decoded_image = tf.image.decode_jpeg(image_file, channels=3)
+        images = []
 
-        init_op = tf.global_variables_initializer()
         with tf.Session() as sess:
-            sess.run(init_op)
+            sess.run(tf.global_variables_initializer())
+            # Start populating the filename queue.
+            coord = tf.train.Coordinator()
+            threads = tf.train.start_queue_runners(coord=coord)
 
-        # Start populating the filename queue.
-        coord = tf.train.Coordinator()
-        threads = tf.train.start_queue_runners(coord=coord)
+            for i in range(start, end):
+                image = decoded_image.eval()
+                images.append(image)
+                print(image)
+                from PIL import Image
+                Image.fromarray(np.asarray(image)).show()
 
-        for i in range(start, end):
-            image = decoded_images.eval()
-            print(image.shape)
-            print(image)
-            # Image.fromarray(np.asarray(image)).show()
-        coord.request_stop()
-        coord.join(threads)
+            # Finish off the filename queue coordinator.
+            coord.request_stop()
+            coord.join(threads)
 
-        # filename_queue = tf.train.string_input_producer(tf.train.match_filenames_once(IMAGE_DIR + "*.jpg"))
-        # image_name, image_file = image_reader.read(filename_queue)
-        # decoded_image = tf.image.decode_jpeg(image_file, channels=3)
-        # decoded_image = tf.cast(decoded_image, tf.uint8)
-        return decoded_images
+        return np.array(images)
 
     def _get_labels(self, start, end):
         tv_list = json2tv(self._input_list[start:end])
