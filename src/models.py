@@ -11,29 +11,28 @@ def print_activations(t):
 class _Base(object):
 
     """ Base structure """
-    def __init__(self):
+    def __init__(self, model_filename='model/nncmf.ckpt', learning_rate=0.01):
         # Internal counter to keep track of current iteration
         self._iters = 0
 
         # Input
-        # TODO: change format 
-        # self.batch_size = 128
-        self.image_size = IMAGE_SIZE
-        self.class_size = CLASS_SIZE
-        self.learning_rate = 0.01
+        self.learning_rate = learning_rate
         # self.classification = 
 
-        self.image = tf.placeholder(tf.float32, [None, self.image_size, self.image_size, 3])
-        self.target = tf.placeholder(tf.float32, [None, self.class_size])
+        self.image = tf.placeholder(tf.float32, [None, IMAGE_SIZE, IMAGE_SIZE, 3])
+        self.target = tf.placeholder(tf.float32, [None, CLASS_SIZE])
+
+        self.model_filename = model_filename
 
         # Call methods to initialize variables and operations 
         self._init_vars()
         self._init_ops()
 
         # RMSE
-        # if self.classification :
-        # else: 
         self.rmse = tf.sqrt(tf.reduce_mean(tf.square(tf.subtract(self.target, self.pred))))
+        # Accuracy
+        self.accuracy = tf.subtract(tf.cast(1.0, tf.float64), tf.divide(tf.count_nonzero(tf.subtract(self.target, self.pred)), CLASS_SIZE))
+
 
     @property
     def filename(self):
@@ -62,12 +61,12 @@ class _Base(object):
         self.sess.run(self.optimize_steps, feed_dict=feed_dict)
         self._iters += 1
 
-    def eval_rmse(self, imagedata, targetdata):
+    def eval_metric(self, imagedata, targetdata):
         """ 
         Calculates RMSE 
         """
         feed_dict = {self.image: imagedata, self.target: targetdata}
-        return self.sess.run([self.rmse, self.pred], feed_dict=feed_dict)
+        return self.sess.run([self.rmse, self.accuracy, self.pred], feed_dict=feed_dict)
 
 class ALEXNET(_Base):
     """ AlexNet model structrue """
@@ -90,7 +89,7 @@ class ALEXNET(_Base):
         # Loss     
         # if self.classification :
         # else :	
-        self.loss = tf.reduce_sum(tf.square(tf.subtract(self.target, self.pred)), reduction_indices=[0])
+        self.loss = tf.reduce_sum(tf.square(tf.subtract(self.target, self.pred)))
 
         # Optimizer
         self.optimizer = tf.train.AdamOptimizer(self.learning_rate)
@@ -103,7 +102,7 @@ class ALEXNET(_Base):
         """
         feed_dict = {self.image: imagedata, self.target: targetdata}
 
-        return self.sess.run([self.loss, self.rmse], feed_dict=feed_dict)
+        return self.sess.run(self.loss, feed_dict=feed_dict)
 
     def build_layers(self, image):
         """
@@ -204,9 +203,9 @@ class ALEXNET(_Base):
         print_activations(pool5)
 
         # fullyconnected6
-        fc6W = tf.Variable(tf.constant(0.0, shape=[512, 512], dtype=tf.float32), trainable=True, name='weights')
+        fc6W = tf.Variable(tf.constant(0.0, shape=[9216, 512], dtype=tf.float32), trainable=True, name='weights')
         fc6b = tf.Variable(tf.constant(0.0, shape=[512], dtype=tf.float32), trainable=True, name='biases')
-        fc6 = tf.nn.relu_layer(tf.reshape(pool5, [int(np.prod(pool5.get_shape()[1:])), -1]), fc6W, fc6b)
+        fc6 = tf.nn.relu_layer(tf.reshape(pool5, [-1, int(np.prod(pool5.get_shape()[1:]))]), fc6W, fc6b)
         print_activations(fc6)
 
         self.parameters += [fc6W, fc6b]

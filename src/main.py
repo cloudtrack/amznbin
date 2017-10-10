@@ -16,10 +16,11 @@ def train(model, sess, saver, train_data, valid_data, batch_size, max_iters, use
     t0 = time.time()
     batch_image, batch_target = train_data.next_batch(batch_size)
     train_error = model.eval_loss(batch_image, batch_target)
-    train_rmse, train_pred = model.eval_rmse(batch_image, batch_target)
-    valid_rmse, valid_pred = model.eval_rmse(valid_data.images, valid_data.labels)
+    train_rmse, train_acc, train_pred = model.eval_metric(batch_image, batch_target)
+    valid_batch_image, valid_batch_target = valid_data.next_batch(batch_size)
+    valid_rmse, valid_acc, valid_pred = model.eval_metric(valid_batch_image, valid_batch_target)
 
-    print("train loss: %.3f, train rmse: %.3f, valid rmse: %.3f" % (train_error, train_rmse, valid_rmse))
+    print("train accuracy: %.4f, valid accuracy: %.4f, train loss: %.3f, train rmse: %.3f, valid rmse: %.3f" % (train_acc, valid_acc, train_error, train_rmse, valid_rmse))
 
     # Optimize
     prev_valid_rmse = float("Inf")
@@ -29,16 +30,17 @@ def train(model, sess, saver, train_data, valid_data, batch_size, max_iters, use
         batch_count = int(train_data.num_examples / batch_size)
         for _ in range(batch_count):
             batch_image, batch_target = train_data.next_batch(batch_size)
-            # print(len(batch_image))
-            # print(len(batch_target))
             model.train_iteration(batch_image, batch_target)
 
             # Evaluate
-            train_error, train_rsme = model.eval_loss(batch_image, batch_target)
-            valid_rmse, _ = model.eval_rmse(valid_data.images, valid_data.labels)
+            train_error = model.eval_loss(batch_image, batch_target)
+            train_rmse, train_acc, train_pred = model.eval_metric(batch_image, batch_target)
+
+            valid_batch_image, valid_batch_target = valid_data.next_batch(batch_size)
+            valid_rmse, valid_acc, valid_pred = model.eval_metric(valid_batch_image, valid_batch_target)
             print(model.model_filename)
-            print("train loss: %.4f, train rmse: %.4f, valid rmse: %.4f in %ds"
-                  % (train_error, train_rmse, valid_rmse, time.time() - t1))
+            print("train accuracy: %.4f, valid accuracy: %.4f, train loss: %.4f, train rmse: %.4f, valid rmse: %.4f in %ds"
+                  % (train_acc, valid_acc, train_error, train_rmse, valid_rmse, time.time() - t1))
 
         # Checkpointing/early stopping
         if use_early_stop:
@@ -61,13 +63,13 @@ def test(model, sess, saver, test_data, train_data, valid_data, log=True):
     """
     Tester
     """
-    train_rmse, _ = model.eval_rmse(train_data.images, train_data.labels)
-    valid_rmse, _ = model.eval_rmse(valid_data.images, valid_data.labels)
+    train_rmse, _ = model.eval_metric(train_data.images, train_data.labels)
+    valid_rmse, _ = model.eval_metric(valid_data.images, valid_data.labels)
     if log:
         print("Final train RMSE: {}".format(train_rmse))
         print("Final valid RMSE: {}".format(valid_rmse))
 
-    test_rmse, _ = model.eval_rmse(test_data.images, test_data.labels)
+    test_rmse, _ = model.eval_metric(test_data.images, test_data.labels)
     if log:
         print("Final test RMSE: {}".format(test_rmse))
 
@@ -90,7 +92,7 @@ if __name__ == '__main__':
     # Optional
     parser.add_argument('--model-params', metavar='MODEL_PARAMS_JSON', type=str, default='{}',
                         help='JSON string containing model params: D, Dprime, hidden_layer_num, hidden_units_per_layer, learning_rate, dropoutkeep, lam, alpha, model name')
-    parser.add_argument('--batch', metavar='BATCH_SIZE', type=int, default=64,
+    parser.add_argument('--batch', metavar='BATCH_SIZE', type=int, default=16,
                         help='the batch size to use when doing gradient descent')
     parser.add_argument('--no-early', type=str2bool, default=False, help='disable early stopping')
     parser.add_argument('--early-stop-max-iter', metavar='EARLY_STOP_MAX_ITER', type=int, default=300,
@@ -127,7 +129,6 @@ if __name__ == '__main__':
         #     model = INCEPTION()
 
         model.init_sess(sess)
-        print('global initializer success')
         saver = tf.train.Saver()
 
         # Train
