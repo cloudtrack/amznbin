@@ -21,6 +21,7 @@ class _Base(object):
         self.image_size = IMAGE_SIZE
         self.class_size = CLASS_SIZE
         self.learning_rate = 0.01
+        # self.classification = 
 
         self.image = tf.placeholder(tf.float32, [None, self.image_size, self.image_size, 3])
         self.target = tf.placeholder(tf.float32, [None, self.class_size])
@@ -30,6 +31,8 @@ class _Base(object):
         self._init_ops()
 
         # RMSE
+        # if self.classification :
+        # else: 
         self.rmse = tf.sqrt(tf.reduce_mean(tf.square(tf.subtract(self.target, self.pred))))
 
     @property
@@ -85,6 +88,8 @@ class ALEXNET(_Base):
     def _init_ops(self):
         """ Calculates loss and performs gradient descent """
         # Loss     
+        # if self.classification :
+        # else :	
         self.loss = tf.reduce_sum(tf.square(tf.subtract(self.target, self.pred)), reduction_indices=[0])
 
         # Optimizer
@@ -105,7 +110,8 @@ class ALEXNET(_Base):
         Builds layers 
         """
         self.parameters = []
-        
+        print('build layers')
+
         # conv1
         with tf.name_scope('conv1') as scope:
             kernel = tf.Variable(tf.truncated_normal([11, 11, 3, 64], dtype=tf.float32, stddev=1e-1), name='weights')
@@ -158,29 +164,30 @@ class ALEXNET(_Base):
                                  name='pool2')
             print_activations(pool2)
 
-        # conv3
-        with tf.name_scope('conv3') as scope:
-            kernel = tf.Variable(tf.truncated_normal([3, 3, 192, 384], dtype=tf.float32, stddev=1e-1), name='weights')
-            conv = tf.nn.conv2d(pool2, kernel, [1, 1, 1, 1], padding='SAME')
-            biases = tf.Variable(tf.constant(0.0, shape=[384], dtype=tf.float32), trainable=True, name='biases')
-            bias = tf.nn.bias_add(conv, biases)
-            conv3 = tf.nn.relu(bias, name=scope)
-            self.parameters += [kernel, biases]
-            print_activations(conv3)
+        # # conv3
+        # with tf.name_scope('conv3') as scope:
+        #     kernel = tf.Variable(tf.truncated_normal([3, 3, 192, 384], dtype=tf.float32, stddev=1e-1), name='weights')
+        #     conv = tf.nn.conv2d(pool2, kernel, [1, 1, 1, 1], padding='SAME')
+        #     biases = tf.Variable(tf.constant(0.0, shape=[384], dtype=tf.float32), trainable=True, name='biases')
+        #     bias = tf.nn.bias_add(conv, biases)
+        #     conv3 = tf.nn.relu(bias, name=scope)
+        #     self.parameters += [kernel, biases]
+        #     print_activations(conv3)
 
-        # conv4
-        with tf.name_scope('conv4') as scope:
-            kernel = tf.Variable(tf.truncated_normal([3, 3, 384, 256], dtype=tf.float32, stddev=1e-1), name='weights')
-            conv = tf.nn.conv2d(conv3, kernel, [1, 1, 1, 1], padding='SAME')
-            biases = tf.Variable(tf.constant(0.0, shape=[256], dtype=tf.float32), trainable=True, name='biases')
-            bias = tf.nn.bias_add(conv, biases)
-            conv4 = tf.nn.relu(bias, name=scope)
-            self.parameters += [kernel, biases]
-            print_activations(conv4)
+        # # conv4
+        # with tf.name_scope('conv4') as scope:
+        #     kernel = tf.Variable(tf.truncated_normal([3, 3, 384, 256], dtype=tf.float32, stddev=1e-1), name='weights')
+        #     conv = tf.nn.conv2d(conv3, kernel, [1, 1, 1, 1], padding='SAME')
+        #     biases = tf.Variable(tf.constant(0.0, shape=[256], dtype=tf.float32), trainable=True, name='biases')
+        #     bias = tf.nn.bias_add(conv, biases)
+        #     conv4 = tf.nn.relu(bias, name=scope)
+        #     self.parameters += [kernel, biases]
+        #     print_activations(conv4)
 
         # conv5
         with tf.name_scope('conv5') as scope:
-            kernel = tf.Variable(tf.truncated_normal([3, 3, 256, 256], dtype=tf.float32, stddev=1e-1), name='weights')
+        	kernel = tf.Variable(tf.truncated_normal([3, 3, 192, 256], dtype=tf.float32, stddev=1e-1), name='weights')
+            # kernel = tf.Variable(tf.truncated_normal([3, 3, 256, 256], dtype=tf.float32, stddev=1e-1), name='weights')
             conv = tf.nn.conv2d(conv4, kernel, [1, 1, 1, 1], padding='SAME')
             biases = tf.Variable(tf.constant(0.0, shape=[256], dtype=tf.float32), trainable=True, name='biases')
             bias = tf.nn.bias_add(conv, biases)
@@ -197,28 +204,30 @@ class ALEXNET(_Base):
         print_activations(pool5)
 
         # fullyconnected6
-        fc6W = tf.Variable(tf.constant(0.0, shape=[4096, 4096], dtype=tf.float32), trainable=True, name='weights')
-        fc6b = tf.Variable(tf.constant(0.0, shape=[4096], dtype=tf.float32), trainable=True, name='biases')
+        fc6W = tf.Variable(tf.constant(0.0, shape=[1024, 1024], dtype=tf.float32), trainable=True, name='weights')
+        fc6b = tf.Variable(tf.constant(0.0, shape=[1024], dtype=tf.float32), trainable=True, name='biases')
         fc6 = tf.nn.relu_layer(tf.reshape(pool5, [int(np.prod(pool5.get_shape()[1:])), -1]), fc6W, fc6b)
         print_activations(fc6)
 
         self.parameters += [fc6W, fc6b]
         
         # fullyconnected7
-        fc7W = tf.Variable(tf.constant(0.0, shape=[4096, 4096], dtype=tf.float32), trainable=True, name='weights')
-        fc7b = tf.Variable(tf.constant(0.0, shape=[4096], dtype=tf.float32), trainable=True, name='biases')
+        fc7W = tf.Variable(tf.constant(0.0, shape=[1024, 1024], dtype=tf.float32), trainable=True, name='weights')
+        fc7b = tf.Variable(tf.constant(0.0, shape=[1024], dtype=tf.float32), trainable=True, name='biases')
         fc7 = tf.nn.relu_layer(fc6, fc7W, fc7b)
         print_activations(fc7)
         self.parameters += [fc7W, fc7b]
         
         # fullyconnected8
-        fc8W = tf.Variable(tf.constant(0.0, shape=[4096, CLASS_SIZE], dtype=tf.float32), trainable=True, name='weights')
+        fc8W = tf.Variable(tf.constant(0.0, shape=[1024, CLASS_SIZE], dtype=tf.float32), trainable=True, name='weights')
         fc8b = tf.Variable(tf.constant(0.0, shape=[CLASS_SIZE], dtype=tf.float32), trainable=True, name='biases')
         fc8 = tf.nn.xw_plus_b(fc7, fc8W, fc8b)
         print_activations(fc8)
 
         self.parameters += [fc8W, fc8b]
         
-        #prob = tf.nn.softmax(fc8)
+        # if self.classification
+        # 	fc8 = tf.nn.softmax(fc8)
 
+        print(len(self.parameters))
         return fc8
