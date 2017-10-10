@@ -110,7 +110,6 @@ class ALEXNET(_Base):
         Builds layers 
         """
         self.parameters = []
-        print('build layers')
 
         # conv1
         with tf.name_scope('conv1') as scope:
@@ -186,9 +185,10 @@ class ALEXNET(_Base):
 
         # conv5
         with tf.name_scope('conv5') as scope:
-        	kernel = tf.Variable(tf.truncated_normal([3, 3, 192, 256], dtype=tf.float32, stddev=1e-1), name='weights')
+            kernel = tf.Variable(tf.truncated_normal([3, 3, 192, 256], dtype=tf.float32, stddev=1e-1), name='weights')
             # kernel = tf.Variable(tf.truncated_normal([3, 3, 256, 256], dtype=tf.float32, stddev=1e-1), name='weights')
-            conv = tf.nn.conv2d(conv4, kernel, [1, 1, 1, 1], padding='SAME')
+            # conv = tf.nn.conv2d(conv4, kernel, [1, 1, 1, 1], padding='SAME')
+            conv = tf.nn.conv2d(pool2, kernel, [1, 1, 1, 1], padding='SAME')
             biases = tf.Variable(tf.constant(0.0, shape=[256], dtype=tf.float32), trainable=True, name='biases')
             bias = tf.nn.bias_add(conv, biases)
             conv5 = tf.nn.relu(bias, name=scope)
@@ -204,22 +204,22 @@ class ALEXNET(_Base):
         print_activations(pool5)
 
         # fullyconnected6
-        fc6W = tf.Variable(tf.constant(0.0, shape=[1024, 1024], dtype=tf.float32), trainable=True, name='weights')
-        fc6b = tf.Variable(tf.constant(0.0, shape=[1024], dtype=tf.float32), trainable=True, name='biases')
+        fc6W = tf.Variable(tf.constant(0.0, shape=[4096, 4096], dtype=tf.float32), trainable=True, name='weights')
+        fc6b = tf.Variable(tf.constant(0.0, shape=[4096], dtype=tf.float32), trainable=True, name='biases')
         fc6 = tf.nn.relu_layer(tf.reshape(pool5, [int(np.prod(pool5.get_shape()[1:])), -1]), fc6W, fc6b)
         print_activations(fc6)
 
         self.parameters += [fc6W, fc6b]
         
         # fullyconnected7
-        fc7W = tf.Variable(tf.constant(0.0, shape=[1024, 1024], dtype=tf.float32), trainable=True, name='weights')
-        fc7b = tf.Variable(tf.constant(0.0, shape=[1024], dtype=tf.float32), trainable=True, name='biases')
+        fc7W = tf.Variable(tf.constant(0.0, shape=[4096, 4096], dtype=tf.float32), trainable=True, name='weights')
+        fc7b = tf.Variable(tf.constant(0.0, shape=[4096], dtype=tf.float32), trainable=True, name='biases')
         fc7 = tf.nn.relu_layer(fc6, fc7W, fc7b)
         print_activations(fc7)
         self.parameters += [fc7W, fc7b]
         
         # fullyconnected8
-        fc8W = tf.Variable(tf.constant(0.0, shape=[1024, CLASS_SIZE], dtype=tf.float32), trainable=True, name='weights')
+        fc8W = tf.Variable(tf.constant(0.0, shape=[4096, CLASS_SIZE], dtype=tf.float32), trainable=True, name='weights')
         fc8b = tf.Variable(tf.constant(0.0, shape=[CLASS_SIZE], dtype=tf.float32), trainable=True, name='biases')
         fc8 = tf.nn.xw_plus_b(fc7, fc8W, fc8b)
         print_activations(fc8)
@@ -229,5 +229,4 @@ class ALEXNET(_Base):
         # if self.classification
         # 	fc8 = tf.nn.softmax(fc8)
 
-        print(len(self.parameters))
         return fc8
