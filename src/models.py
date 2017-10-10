@@ -30,7 +30,6 @@ class _Base(object):
         self._init_ops()
 
         # RMSE
-        # TODO: rmse format of classification is probably different 
         self.rmse = tf.sqrt(tf.reduce_mean(tf.square(tf.subtract(self.target, self.pred))))
 
     @property
@@ -79,7 +78,9 @@ class ALEXNET(_Base):
 
     def _init_vars(self):
         """ Build layers of the model """
-        self.pred = tf.squeeze(self.build_layers(self.image), squeeze_dims=[1])
+        # self.pred = tf.squeeze(self.build_layers(self.image), squeeze_dims=[1])
+        self.pred = tf.squeeze(self.build_layers(self.image))
+
 
     def _init_ops(self):
         """ Calculates loss and performs gradient descent """
@@ -196,21 +197,26 @@ class ALEXNET(_Base):
         print_activations(pool5)
 
         # fullyconnected6
-        fc6W = tf.Variable(tf.constant(0.0, shape=[(256*13), 4096], dtype=tf.float32), trainable=True, name='weights')
+        fc6W = tf.Variable(tf.constant(0.0, shape=[4096, 4096], dtype=tf.float32), trainable=True, name='weights')
         fc6b = tf.Variable(tf.constant(0.0, shape=[4096], dtype=tf.float32), trainable=True, name='biases')
-        fc6 = tf.nn.relu_layer(tf.reshape(pool5, [-1, int(np.prod(pool5.get_shape()[1:]))]), fc6W, fc6b)
+        fc6 = tf.nn.relu_layer(tf.reshape(pool5, [int(np.prod(pool5.get_shape()[1:])), -1]), fc6W, fc6b)
+        print_activations(fc6)
+
         self.parameters += [fc6W, fc6b]
         
         # fullyconnected7
         fc7W = tf.Variable(tf.constant(0.0, shape=[4096, 4096], dtype=tf.float32), trainable=True, name='weights')
         fc7b = tf.Variable(tf.constant(0.0, shape=[4096], dtype=tf.float32), trainable=True, name='biases')
         fc7 = tf.nn.relu_layer(fc6, fc7W, fc7b)
+        print_activations(fc7)
         self.parameters += [fc7W, fc7b]
         
         # fullyconnected8
-        fc8W = tf.Variable(tf.constant(0.0, shape=[4096, 1000], dtype=tf.float32), trainable=True, name='weights')
-        fc8b = tf.Variable(tf.constant(0.0, shape=[1000], dtype=tf.float32), trainable=True, name='biases')
+        fc8W = tf.Variable(tf.constant(0.0, shape=[4096, CLASS_SIZE], dtype=tf.float32), trainable=True, name='weights')
+        fc8b = tf.Variable(tf.constant(0.0, shape=[CLASS_SIZE], dtype=tf.float32), trainable=True, name='biases')
         fc8 = tf.nn.xw_plus_b(fc7, fc8W, fc8b)
+        print_activations(fc8)
+
         self.parameters += [fc8W, fc8b]
         
         #prob = tf.nn.softmax(fc8)

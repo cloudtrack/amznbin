@@ -29,6 +29,8 @@ def train(model, sess, saver, train_data, valid_data, batch_size, max_iters, use
         batch_count = int(train_data.num_examples / batch_size)
         for _ in range(batch_count):
             batch_image, batch_target = train_data.next_batch(batch_size)
+            # print(len(batch_image))
+            # print(len(batch_target))
             model.train_iteration(batch_image, batch_target)
 
             # Evaluate
@@ -88,7 +90,7 @@ if __name__ == '__main__':
     # Optional
     parser.add_argument('--model-params', metavar='MODEL_PARAMS_JSON', type=str, default='{}',
                         help='JSON string containing model params: D, Dprime, hidden_layer_num, hidden_units_per_layer, learning_rate, dropoutkeep, lam, alpha, model name')
-    parser.add_argument('--batch', metavar='BATCH_SIZE', type=int, default=128,
+    parser.add_argument('--batch', metavar='BATCH_SIZE', type=int, default=64,
                         help='the batch size to use when doing gradient descent')
     parser.add_argument('--no-early', type=str2bool, default=False, help='disable early stopping')
     parser.add_argument('--early-stop-max-iter', metavar='EARLY_STOP_MAX_ITER', type=int, default=300,
@@ -126,6 +128,7 @@ if __name__ == '__main__':
 
         model.init_sess(sess)
         saver = tf.train.Saver()
+
         # Train
         traintime = 0
         if mode == 'train':
