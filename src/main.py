@@ -127,6 +127,7 @@ if __name__ == '__main__':
         #     model = INCEPTION()
 
         model.init_sess(sess)
+        print('global initializer success')
         saver = tf.train.Saver()
 
         # Train
