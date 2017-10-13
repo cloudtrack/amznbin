@@ -135,7 +135,8 @@ def json2tv(index_list):
         data = raw_metadata[index]
         for asin in data['DATA'].keys():
             tv_index = asin_index_map.get(asin)
-            tv[tv_index] = data['DATA'][asin]['quantity']
+            if(tv_index != None):
+                tv[tv_index] = data['DATA'][asin]['quantity']
         tv_list.append(tv)
     return tv_list
 
