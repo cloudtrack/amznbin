@@ -5,6 +5,7 @@ import random
 import numpy as np
 import tensorflow as tf
 
+from time import time
 from constants import TOTAL_DATA_SIZE, VALIDATION_SIZE, TEST_SIZE, RANDOM_SPLIT_FILE, IMAGE_DIR, RAW_METADATA_FILE, \
     ASIN_INDEX_FILE, METADATA_FILE, INDEX_ASIN_FILE
 
@@ -54,17 +55,29 @@ class DataSet(object):
         return self._get_images(start, end), self._get_labels(start, end)
 
     def _get_images(self, start, end):
+        print('1 start _get_images')
+        t0 = time()
         files = ['%s%05d.jpg' % (IMAGE_DIR, self._input_list[i]) for i in range(start, end)]
         filename_queue = tf.train.string_input_producer(files)
         image_name, image_file = tf.WholeFileReader().read(filename_queue)
         decoded_image = tf.image.decode_jpeg(image_file, channels=3)
         images = []
-
+	
+        print('2 before session starts: ' + str(round(time() - t0, 2)) + 's')
+        t0 = time()
         with tf.Session() as sess:
             sess.run(tf.global_variables_initializer())
+            print('3: ' + str(round(time() - t0, 2)) + 's')
+            t0 = time()
+
             # Start populating the filename queue.
             coord = tf.train.Coordinator()
-            threads = tf.train.start_queue_runners(coord=coord)
+            print('4: ' + str(round(time() - t0, 2)) + 's')
+            t0 = time()
+
+            threads = tf.train.start_queue_runners(coord=coord)	        
+            print('5 Inside session before for loop: ' + str(round(time() - t0, 2)) + 's')
+            t0 = time()
 
             for i in range(start, end):
                 image_tensor = sess.run(decoded_image)
@@ -72,10 +85,16 @@ class DataSet(object):
                 # For debugging - show current image
                 # from PIL import Image
                 # Image.fromarray(np.asarray(image)).show()
+            print('6 Inside session after for loop: ' + str(round(time() - t0, 2)) + 's')
+            t0 = time()
 
             # Finish off the filename queue coordinator.
             coord.request_stop()
+            print('7 Inside session coordinator stoped: ' + str(round(time() - t0, 2)) + 's')
+            t0 = time()
+
             coord.join(threads)
+            print('8 Inside session, threads joined: ' + str(round(time() - t0, 2)) + 's')
 
         return np.array(images)
 

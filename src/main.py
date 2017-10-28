@@ -29,6 +29,7 @@ def train(model, sess, saver, train_data, valid_data, batch_size, max_iters, use
         t1 = time.time()
         batch_count = int(train_data.num_examples / batch_size)
         for _ in range(batch_count):
+            t2 = time.time()
             batch_image, batch_target = train_data.next_batch(batch_size)
             model.train_iteration(batch_image, batch_target)
 
@@ -40,7 +41,7 @@ def train(model, sess, saver, train_data, valid_data, batch_size, max_iters, use
             valid_rmse, valid_acc, valid_pred = model.eval_metric(valid_batch_image, valid_batch_target)
             print(model.model_filename)
             print("train accuracy: %.4f, valid accuracy: %.4f, train loss: %.4f, train rmse: %.4f, valid rmse: %.4f in %ds"
-                  % (train_acc, valid_acc, train_error, train_rmse, valid_rmse, time.time() - t1))
+                  % (train_acc, valid_acc, train_error, train_rmse, valid_rmse, time.time() - t2))
 
         # Checkpointing/early stopping
         if use_early_stop:
