@@ -89,12 +89,12 @@ if __name__ == '__main__':
                         help='the name of the model to use', required=True)
     parser.add_argument('--mode', metavar='MODE', type=str, choices=['train', 'test'],
                         help='the mode to run the program in', default='train', required=True)
+    parser.add_argument('--function', metavar='FUNCTION', type=str, choices=['classify', 'count'], default='count', required=True)
 
     # Optional
-    parser.add_argument('--model-params', metavar='MODEL_PARAMS_JSON', type=str, default='{}',
-                        help='JSON string containing model params: D, Dprime, hidden_layer_num, hidden_units_per_layer, learning_rate, dropoutkeep, lam, alpha, model name')
     parser.add_argument('--batch', metavar='BATCH_SIZE', type=int, default=16,
                         help='the batch size to use when doing gradient descent')
+    parser.add_argument('--learning-rate', metavar='LEARNING-RATE', type=float, default=0.01)
     parser.add_argument('--no-early', type=str2bool, default=False, help='disable early stopping')
     parser.add_argument('--early-stop-max-iter', metavar='EARLY_STOP_MAX_ITER', type=int, default=300,
                         help='the maximum number of iterations to let the model continue training after reaching a '
@@ -108,8 +108,9 @@ if __name__ == '__main__':
     # Global args
     model_name = args.model
     mode = args.mode
-    model_params = json.loads(args.model_params)
+    function = args.function
     batch_size = args.batch
+    learning_rate = args.learning_rate
     use_early_stop = not (args.no_early)
     early_stop_max_iter = args.early_stop_max_iter
     max_iters = args.max_iters
@@ -123,7 +124,7 @@ if __name__ == '__main__':
         # Define computation graph & Initialize
         print('Building network & initializing variables')
         if model_name == 'ALEXNET':
-            model = ALEXNET()
+            model = ALEXNET(function, learning_rate)
         # elif model_name == 'VGG16' :
         #     model = VGG16()
         # else :
@@ -140,7 +141,7 @@ if __name__ == '__main__':
                               early_stop_max_iter=early_stop_max_iter)
         elif mode == 'test':
             print('Loading best checkpointed model')
-            saver.restore(sess, model.filename)
+            saver.restore(sess, model.model_filename)
             TRAIN, VALID, TEST = test(model, sess, saver, test_data, train_data, validation_data)
 
         # if(args.outfile == 'modelname') :

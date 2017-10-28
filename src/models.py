@@ -11,7 +11,7 @@ def print_activations(t):
 class _Base(object):
 
     """ Base structure """
-    def __init__(self, model_filename='model/nncmf.ckpt', learning_rate=0.01):
+    def __init__(self, function, learning_rate):
         # Internal counter to keep track of current iteration
         self._iters = 0
 
@@ -22,7 +22,9 @@ class _Base(object):
         self.image = tf.placeholder(tf.float32, [None, IMAGE_SIZE, IMAGE_SIZE, 3])
         self.target = tf.placeholder(tf.float32, [None, CLASS_SIZE])
 
-        self.model_filename = model_filename
+        self.function = function
+
+        self.model_filename = 'model/' + function + '.ckpt'
 
         # Call methods to initialize variables and operations 
         self._init_vars()
@@ -71,8 +73,8 @@ class _Base(object):
 class ALEXNET(_Base):
     """ AlexNet model structrue """
 
-    def __init__(self):
-        super(ALEXNET, self).__init__()
+    def __init__(self, function, learning_rate):
+        super(ALEXNET, self).__init__(function, learning_rate)
 
     @property
     def filename(self):
@@ -117,7 +119,7 @@ class ALEXNET(_Base):
             biases = tf.Variable(tf.constant(0.0, shape=[64], dtype=tf.float32), trainable=True, name='biases')
             bias = tf.nn.bias_add(conv, biases)
             conv1 = tf.nn.relu(bias, name=scope)
-            print_activations(conv1)
+            # print_activations(conv1)
             self.parameters += [kernel, biases]
 
         # lrn1
@@ -134,7 +136,7 @@ class ALEXNET(_Base):
                                  strides=[1, 2, 2, 1],
                                  padding='VALID',
                                  name='pool1')
-            print_activations(pool1)
+            # print_activations(pool1)
 
         # conv2
         with tf.name_scope('conv2') as scope:
@@ -144,7 +146,7 @@ class ALEXNET(_Base):
             bias = tf.nn.bias_add(conv, biases)
             conv2 = tf.nn.relu(bias, name=scope)
             self.parameters += [kernel, biases]
-            print_activations(conv2)
+            # print_activations(conv2)
 
         # lrn2
         with tf.name_scope('lrn2') as scope:
@@ -160,7 +162,7 @@ class ALEXNET(_Base):
                                  strides=[1, 2, 2, 1],
                                  padding='VALID',
                                  name='pool2')
-            print_activations(pool2)
+            # print_activations(pool2)
 
         # # conv3
         # with tf.name_scope('conv3') as scope:
@@ -170,7 +172,7 @@ class ALEXNET(_Base):
         #     bias = tf.nn.bias_add(conv, biases)
         #     conv3 = tf.nn.relu(bias, name=scope)
         #     self.parameters += [kernel, biases]
-        #     print_activations(conv3)
+        #     # print_activations(conv3)
 
         # # conv4
         # with tf.name_scope('conv4') as scope:
@@ -180,7 +182,7 @@ class ALEXNET(_Base):
         #     bias = tf.nn.bias_add(conv, biases)
         #     conv4 = tf.nn.relu(bias, name=scope)
         #     self.parameters += [kernel, biases]
-        #     print_activations(conv4)
+        #     # print_activations(conv4)
 
         # conv5
         with tf.name_scope('conv5') as scope:
@@ -192,7 +194,7 @@ class ALEXNET(_Base):
             bias = tf.nn.bias_add(conv, biases)
             conv5 = tf.nn.relu(bias, name=scope)
             self.parameters += [kernel, biases]
-            print_activations(conv5)
+            # print_activations(conv5)
 
         # pool5
         pool5 = tf.nn.max_pool(conv5,
@@ -200,13 +202,13 @@ class ALEXNET(_Base):
                              strides=[1, 2, 2, 1],
                              padding='VALID',
                              name='pool5')
-        print_activations(pool5)
+        # print_activations(pool5)
 
         # fullyconnected6
         fc6W = tf.Variable(tf.constant(0.0, shape=[9216, 512], dtype=tf.float32), trainable=True, name='weights')
         fc6b = tf.Variable(tf.constant(0.0, shape=[512], dtype=tf.float32), trainable=True, name='biases')
         fc6 = tf.nn.relu_layer(tf.reshape(pool5, [-1, int(np.prod(pool5.get_shape()[1:]))]), fc6W, fc6b)
-        print_activations(fc6)
+        # print_activations(fc6)
 
         self.parameters += [fc6W, fc6b]
         
@@ -214,18 +216,23 @@ class ALEXNET(_Base):
         fc7W = tf.Variable(tf.constant(0.0, shape=[512, 512], dtype=tf.float32), trainable=True, name='weights')
         fc7b = tf.Variable(tf.constant(0.0, shape=[512], dtype=tf.float32), trainable=True, name='biases')
         fc7 = tf.nn.relu_layer(fc6, fc7W, fc7b)
-        print_activations(fc7)
+        # print_activations(fc7)
         self.parameters += [fc7W, fc7b]
         
+        if self.function == 'classify' :
+            OUTPUT = CLASS_SIZE
+        else : 
+            OUTPUT = 1
+
         # fullyconnected8
-        fc8W = tf.Variable(tf.constant(0.0, shape=[512, CLASS_SIZE], dtype=tf.float32), trainable=True, name='weights')
-        fc8b = tf.Variable(tf.constant(0.0, shape=[CLASS_SIZE], dtype=tf.float32), trainable=True, name='biases')
+        fc8W = tf.Variable(tf.constant(0.0, shape=[512, OUTPUT], dtype=tf.float32), trainable=True, name='weights')
+        fc8b = tf.Variable(tf.constant(0.0, shape=[OUTPUT], dtype=tf.float32), trainable=True, name='biases')
         fc8 = tf.nn.xw_plus_b(fc7, fc8W, fc8b)
-        print_activations(fc8)
+        # print_activations(fc8)
 
         self.parameters += [fc8W, fc8b]
         
-        # if self.classification
-        # 	fc8 = tf.nn.softmax(fc8)
+        if self.function == 'classify' :
+        	fc8 = tf.nn.softmax(fc8)
 
         return fc8
