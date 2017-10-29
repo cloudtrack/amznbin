@@ -36,7 +36,7 @@ class DataSet(object):
     def epochs_completed(self):
         return self._epochs_completed
 
-    def next_batch(self, batch_size):
+    def next_batch(self, batch_size, function):
         """Return the next `batch_size` examples from this data set."""
         assert batch_size <= self._num_examples
         start = self._index_in_epoch
@@ -52,7 +52,7 @@ class DataSet(object):
             self._index_in_epoch = batch_size
         end = self._index_in_epoch
         print("load next batch(size {0}) from {1} to {2}".format(batch_size, start, end))
-        return self._get_images(start, end), self._get_labels(start, end)
+        return self._get_images(start, end), self._get_labels(start, end, function)
 
     def _get_images(self, start, end):
         print('1 start _get_images')
@@ -99,7 +99,7 @@ class DataSet(object):
         return np.array(images)
 
     def _get_labels(self, start, end):
-        tv_list = json2tv(self._input_list[start:end])
+        tv_list = json2tv(self._input_list[start:end], function)
         return np.array(tv_list)
 
 
@@ -140,8 +140,8 @@ def make_random_split(train_size, validation_size, test_size):
 ########################
 # Target vector utils
 ########################
-def json2tv(index_list):
-    print("making target vectors")
+def json2tv(index_list, function):
+    print("making target vectors, function: "+function)
     print("opening " + RAW_METADATA_FILE)
     with open(RAW_METADATA_FILE) as raw_metadata_file:
         raw_metadata = json.load(raw_metadata_file)
@@ -150,11 +150,17 @@ def json2tv(index_list):
         asin_index_map = json.load(asin_index_file)
     tv_list = []
     for index in index_list:
-        tv = [0] * len(asin_index_map.keys())
-        data = raw_metadata[index]
-        for asin in data['DATA'].keys():
-            tv_index = asin_index_map.get(asin)
-            tv[tv_index] = data['DATA'][asin]['quantity']
+        if(function == "classify"):
+            tv = [0] * len(asin_index_map.keys())
+            data = raw_metadata[index]
+            for asin in data['DATA'].keys():
+                tv_index = asin_index_map.get(asin)
+                tv[tv_index] = 1
+        elif (function == "count"):
+            data = raw_metadata[index]
+            tv = [data['TOTAL']]
+        else:
+            print("Invalid function name")
         tv_list.append(tv)
     return tv_list
 

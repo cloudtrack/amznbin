@@ -9,15 +9,15 @@ from dataset import load_dataset
 from models import ALEXNET  # , VGG16, INCEPTION
 
 
-def train(model, sess, saver, train_data, valid_data, batch_size, max_iters, use_early_stop, early_stop_max_iter):
+def train(model, sess, saver, train_data, valid_data, batch_size, max_iters, use_early_stop, early_stop_max_iter, function):
     """
     Trainer 
     """
     t0 = time.time()
-    batch_image, batch_target = train_data.next_batch(batch_size)
+    batch_image, batch_target = train_data.next_batch(batch_size, function)
     train_error = model.eval_loss(batch_image, batch_target)
     train_rmse, train_acc, train_pred = model.eval_metric(batch_image, batch_target)
-    valid_batch_image, valid_batch_target = valid_data.next_batch(batch_size)
+    valid_batch_image, valid_batch_target = valid_data.next_batch(batch_size, function)
     valid_rmse, valid_acc, valid_pred = model.eval_metric(valid_batch_image, valid_batch_target)
 
     print("train accuracy: %.4f, valid accuracy: %.4f, train loss: %.3f, train rmse: %.3f, valid rmse: %.3f" % (train_acc, valid_acc, train_error, train_rmse, valid_rmse))
@@ -30,14 +30,14 @@ def train(model, sess, saver, train_data, valid_data, batch_size, max_iters, use
         batch_count = int(train_data.num_examples / batch_size)
         for _ in range(batch_count):
             t2 = time.time()
-            batch_image, batch_target = train_data.next_batch(batch_size)
+            batch_image, batch_target = train_data.next_batch(batch_size, function)
             model.train_iteration(batch_image, batch_target)
 
             # Evaluate
             train_error = model.eval_loss(batch_image, batch_target)
             train_rmse, train_acc, train_pred = model.eval_metric(batch_image, batch_target)
 
-            valid_batch_image, valid_batch_target = valid_data.next_batch(batch_size)
+            valid_batch_image, valid_batch_target = valid_data.next_batch(batch_size, function)
             valid_rmse, valid_acc, valid_pred = model.eval_metric(valid_batch_image, valid_batch_target)
             print(model.model_filename)
             print("train accuracy: %.4f, valid accuracy: %.4f, train loss: %.4f, train rmse: %.4f, valid rmse: %.4f in %ds"
