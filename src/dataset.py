@@ -62,6 +62,7 @@ class DataSet(object):
         image_batch = tf.train.batch(
             [decoded_image],
             batch_size=len(files),
+            num_threads=2
         )
         with tf.Session() as sess:
             sess.run(tf.global_variables_initializer())
@@ -75,8 +76,11 @@ class DataSet(object):
         return image
 
     def _get_labels(self, start, end):
+        t0 = time()
         tv_list = json2tv(self._input_list[start:end], self._function)
-        return np.array(tv_list)
+        labels = np.array(tv_list)
+        print('get_labels finished after ' + str(round(time() - t0, 2)) + 's')
+        return labels
 
 
 def load_dataset(function):
@@ -117,11 +121,9 @@ def make_random_split(train_size, validation_size, test_size):
 # Target vector utils
 ########################
 def json2tv(index_list, function):
-    print("making target vectors, function: "+function)
-    print("opening " + RAW_METADATA_FILE)
+    print("making target vectors, function: " +function)
     with open(RAW_METADATA_FILE) as raw_metadata_file:
         raw_metadata = json.load(raw_metadata_file)
-    print("opening " + ASIN_INDEX_FILE)
     with open(ASIN_INDEX_FILE) as asin_index_file:
         asin_index_map = json.load(asin_index_file)
     tv_list = []

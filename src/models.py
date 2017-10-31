@@ -20,7 +20,10 @@ class _Base(object):
         # self.classification = 
 
         self.image = tf.placeholder(tf.float32, [None, IMAGE_SIZE, IMAGE_SIZE, 3])
-        self.target = tf.placeholder(tf.float32, [None, CLASS_SIZE])
+        if function == 'count':
+            self.target = tf.placeholder(tf.float32, [None, 1])
+        else:
+            self.target = tf.placeholder(tf.float32, [None, CLASS_SIZE])
 
         self.function = function
 
