@@ -11,21 +11,19 @@ from constants import TOTAL_DATA_SIZE, VALIDATION_SIZE, TEST_SIZE, RANDOM_SPLIT_
 
 
 class DataSet(object):
-    def __init__(self,
-                 input_list):
+    def __init__(self, input_list, function):
         self._input_list = input_list
+        self._function = function
         self._num_examples = len(input_list)
         self._epochs_completed = 0
         self._index_in_epoch = 0
 
     @property
     def images(self):
-        # TODO : Check memory limit
         return self._get_images(0, self._num_examples)
 
     @property
     def labels(self):
-        # TODO : Check memory limit
         return self._get_labels(0, self._num_examples)
 
     @property
@@ -36,7 +34,7 @@ class DataSet(object):
     def epochs_completed(self):
         return self._epochs_completed
 
-    def next_batch(self, batch_size, function):
+    def next_batch(self, batch_size):
         """Return the next `batch_size` examples from this data set."""
         assert batch_size <= self._num_examples
         start = self._index_in_epoch
@@ -103,7 +101,7 @@ class DataSet(object):
         return np.array(tv_list)
 
 
-def load_dataset():
+def load_dataset(function):
     num_training = TOTAL_DATA_SIZE - (VALIDATION_SIZE + TEST_SIZE)
     num_validation = VALIDATION_SIZE
     num_test = TEST_SIZE
@@ -115,9 +113,9 @@ def load_dataset():
     with open(RANDOM_SPLIT_FILE, 'r') as random_split_file:
         random_split_json = json.load(random_split_file)
 
-    train = DataSet(random_split_json.get('train'))
-    validation = DataSet(random_split_json.get('validation'))
-    test = DataSet(random_split_json.get('test'))
+    train = DataSet(random_split_json.get('train'), function)
+    validation = DataSet(random_split_json.get('validation'), function)
+    test = DataSet(random_split_json.get('test'), function)
 
     ds = collections.namedtuple('Datasets', ['train', 'validation', 'test'])
     return ds(train=train, validation=validation, test=test)
