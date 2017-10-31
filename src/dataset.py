@@ -98,7 +98,7 @@ class DataSet(object):
 
         return np.array(images)
 
-    def _get_labels(self, start, end):
+    def _get_labels(self, start, end, function):
         tv_list = json2tv(self._input_list[start:end], function)
         return np.array(tv_list)
 

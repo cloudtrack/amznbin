@@ -138,7 +138,7 @@ if __name__ == '__main__':
         if mode == 'train':
             traintime = train(model, sess, saver, train_data, validation_data, batch_size=batch_size,
                               max_iters=max_iters, use_early_stop=use_early_stop,
-                              early_stop_max_iter=early_stop_max_iter)
+                              early_stop_max_iter=early_stop_max_iter, function=function)
         elif mode == 'test':
             print('Loading best checkpointed model')
             saver.restore(sess, model.model_filename)
