@@ -17,7 +17,6 @@ class _Base(object):
 
         # Input
         self.learning_rate = learning_rate
-        # self.classification = 
 
         self.image = tf.placeholder(tf.float32, [None, IMAGE_SIZE, IMAGE_SIZE, 3])
         if function == 'count':
@@ -34,10 +33,13 @@ class _Base(object):
         self._init_ops()
 
         # RMSE
-        self.rmse = tf.sqrt(tf.reduce_mean(tf.square(tf.subtract(self.target, self.pred))))
+        # self.rmse = tf.sqrt(tf.reduce_mean(tf.square(tf.subtract(self.target, self.pred))))
+        self.rmse = tf.metrics.root_mean_squared_error(labels=self.target, predictions=self.pred)
         # Accuracy
-        self.accuracy = tf.subtract(tf.cast(1.0, tf.float64), tf.divide(tf.count_nonzero(tf.subtract(self.target, self.pred)), CLASS_SIZE))
-
+        pred_labels = tf.greater_equal(self.pred, 0.2)
+        self.accuracy = tf.metrics.accuracy(labels=self.target, predictions=pred_labels)
+        # self.accuracy = tf.subtract(tf.cast(1.0, tf.float64), tf.divide(tf.count_nonzero(tf.subtract(self.target, self.pred)), CLASS_SIZE))
+        
 
     @property
     def filename(self):
@@ -92,9 +94,10 @@ class ALEXNET(_Base):
     def _init_ops(self):
         """ Calculates loss and performs gradient descent """
         # Loss     
-        # if self.classification :
-        # else :	
-        self.loss = tf.reduce_sum(tf.square(tf.subtract(self.target, self.pred)))
+        if self.function == 'classify' :
+            self.loss = tf.nn.sigmoid_cross_entropy_with_logits(labels=self.target, logits=self.pred)
+        else :	
+            self.loss = tf.reduce_sum(tf.square(tf.subtract(self.target, self.pred)))
 
         # Optimizer
         self.optimizer = tf.train.AdamOptimizer(self.learning_rate)
@@ -236,6 +239,7 @@ class ALEXNET(_Base):
         self.parameters += [fc8W, fc8b]
         
         if self.function == 'classify' :
-        	fc8 = tf.nn.softmax(fc8)
+        	# fc8 = tf.nn.softmax(fc8)
+            fc8 = tf.sigmoid(fc8)
 
         return fc8

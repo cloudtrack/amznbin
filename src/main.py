@@ -20,7 +20,7 @@ def train(model, sess, saver, train_data, valid_data, batch_size, max_iters, use
     valid_batch_image, valid_batch_target = valid_data.next_batch(batch_size)
     valid_rmse, valid_acc, valid_pred = model.eval_metric(valid_batch_image, valid_batch_target)
 
-    print("train accuracy: %.4f, valid accuracy: %.4f, train loss: %.3f, train rmse: %.3f, valid rmse: %.3f" % (train_acc, valid_acc, train_error, train_rmse, valid_rmse))
+    print("train accuracy: %.4f, valid accuracy: %.4f, train rmse: %.3f, valid rmse: %.3f, train loss: %.3f," % (train_acc, valid_acc, train_rmse, valid_rmse, train_error))
 
     # Optimize
     prev_valid_rmse = float("Inf")
@@ -40,8 +40,8 @@ def train(model, sess, saver, train_data, valid_data, batch_size, max_iters, use
             valid_batch_image, valid_batch_target = valid_data.next_batch(batch_size)
             valid_rmse, valid_acc, valid_pred = model.eval_metric(valid_batch_image, valid_batch_target)
             print(model.model_filename)
-            print("train accuracy: %.4f, valid accuracy: %.4f, train loss: %.4f, train rmse: %.4f, valid rmse: %.4f in %ds"
-                  % (train_acc, valid_acc, train_error, train_rmse, valid_rmse, time.time() - t2))
+            print("train accuracy: %.4f, valid accuracy: %.4f, train rmse: %.4f, valid rmse: %.4f, train loss: %.4f in %ds"
+                  % (train_acc, valid_acc, train_rmse, valid_rmse, train_error, time.time() - t2))
 
         # Checkpointing/early stopping
         if use_early_stop:
@@ -92,7 +92,7 @@ if __name__ == '__main__':
     parser.add_argument('--function', metavar='FUNCTION', type=str, choices=['classify', 'count'], default='count', required=True)
 
     # Optional
-    parser.add_argument('--batch', metavar='BATCH_SIZE', type=int, default=100,
+    parser.add_argument('--batch', metavar='BATCH_SIZE', type=int, default=10000,
                         help='the batch size to use when doing gradient descent')
     parser.add_argument('--learning-rate', metavar='LEARNING-RATE', type=float, default=0.01)
     parser.add_argument('--no-early', type=str2bool, default=False, help='disable early stopping')
