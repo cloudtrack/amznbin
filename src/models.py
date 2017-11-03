@@ -33,11 +33,12 @@ class _Base(object):
         self._init_ops()
 
         # RMSE
-        # self.rmse = tf.sqrt(tf.reduce_mean(tf.square(tf.subtract(self.target, self.pred))))
-        self.rmse = tf.metrics.root_mean_squared_error(labels=self.target, predictions=self.pred)
+        self.rmse = tf.sqrt(tf.reduce_mean(tf.square(tf.subtract(self.target, self.pred))))
+        #self.rmse, _ = tf.metrics.root_mean_squared_error(labels=self.target, predictions=self.pred)
         # Accuracy
         pred_labels = tf.greater_equal(self.pred, 0.2)
-        self.accuracy = tf.metrics.accuracy(labels=self.target, predictions=pred_labels)
+        acc, _ = tf.metrics.accuracy(labels=self.target, predictions=pred_labels)
+        self.accuracy = tf.divide(tf.multiply(acc, CLASS_SIZE), tf.cast(tf.count_nonzero(pred_labels), tf.float32))
         # self.accuracy = tf.subtract(tf.cast(1.0, tf.float64), tf.divide(tf.count_nonzero(tf.subtract(self.target, self.pred)), CLASS_SIZE))
         
 
@@ -57,8 +58,10 @@ class _Base(object):
         :param sess: tensorflow session to execute tensorflow operations
         """
         self.sess = sess
-        init = tf.global_variables_initializer()
-        self.sess.run(init)
+        init_g = tf.global_variables_initializer()
+        init_l = tf.local_variables_initializer()
+        self.sess.run(init_g)
+        self.sess.run(init_l)        
 
     def train_iteration(self, imagedata, targetdata):
         """ 
