@@ -64,9 +64,10 @@ class _Base(object):
         self.sess.run(init_l)        
 
     def train_iteration(self, imagedata, targetdata):
-        """ 
+        """
         Runs each train iteration
         """
+        print('train_iteration')
         feed_dict = {self.image: imagedata, self.target: targetdata}
         self.sess.run(self.optimize_steps, feed_dict=feed_dict)
         self._iters += 1
@@ -75,8 +76,26 @@ class _Base(object):
         """ 
         Calculates RMSE 
         """
+        print('eval_metric')
         feed_dict = {self.image: imagedata, self.target: targetdata}
         return self.sess.run([self.rmse, self.accuracy, self.pred], feed_dict=feed_dict)
+
+    def eval_loss(self, imagedata, targetdata):
+        """
+        Calculates loss
+        """
+        print('eval_loss')
+        feed_dict = {self.image: imagedata, self.target: targetdata}
+        return self.sess.run(self.loss, feed_dict=feed_dict)
+
+    def get_next_batch(self, image_batch, label_batch):
+        print('get_next_batch')
+        coord = tf.train.Coordinator()
+        threads = tf.train.start_queue_runners(sess=self.sess, coord=coord)
+        images, labels = self.sess.run([image_batch, label_batch])
+        coord.request_stop()
+        coord.join(threads)
+        return images, labels
 
 class ALEXNET(_Base):
     """ AlexNet model structrue """
@@ -97,23 +116,15 @@ class ALEXNET(_Base):
     def _init_ops(self):
         """ Calculates loss and performs gradient descent """
         # Loss     
-        if self.function == 'classify' :
+        if self.function == 'classify':
             self.loss = tf.nn.sigmoid_cross_entropy_with_logits(labels=self.target, logits=self.pred)
-        else :	
+        else:
             self.loss = tf.reduce_sum(tf.square(tf.subtract(self.target, self.pred)))
 
         # Optimizer
         self.optimizer = tf.train.AdamOptimizer(self.learning_rate)
         # Optimize the weights
         self.optimize_steps = self.optimizer.minimize(self.loss, var_list=self.parameters)
-
-    def eval_loss(self, imagedata, targetdata):
-        """ 
-        Calculates loss
-        """
-        feed_dict = {self.image: imagedata, self.target: targetdata}
-
-        return self.sess.run(self.loss, feed_dict=feed_dict)
 
     def build_layers(self, image):
         """
@@ -242,7 +253,7 @@ class ALEXNET(_Base):
         self.parameters += [fc8W, fc8b]
         
         if self.function == 'classify' :
-        	# fc8 = tf.nn.softmax(fc8)
+            # fc8 = tf.nn.softmax(fc8)
             fc8 = tf.sigmoid(fc8)
 
         return fc8

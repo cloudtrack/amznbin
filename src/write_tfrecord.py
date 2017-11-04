@@ -32,7 +32,7 @@ if __name__ == '__main__':
             print('Start Writing ' + filename)
             writer = tf.python_io.TFRecordWriter(filename)
             file_indices = random_split_json.get(data_type)
-            train_labels = json2tv(file_indices, training_type)
+            targets = json2tv(file_indices, training_type)
 
             for i in range(len(file_indices)):
                 if not i % 1000:
@@ -40,11 +40,11 @@ if __name__ == '__main__':
                 # Load the image
                 image_file = '%s%05d.jpg' % (IMAGE_DIR, file_indices[i])
                 img = np.array(Image.open(image_file))
-                label = train_labels[i]
+                target = targets[i]
                 # Create a feature
                 feature = {
                     'image': _bytes_feature(tf.compat.as_bytes(img.tostring())),
-                    'label': _int64_feature(label)
+                    'target': _int64_feature(target)
                 }
                 # Create an example protocol buffer
                 example = tf.train.Example(features=tf.train.Features(feature=feature))

@@ -14,34 +14,36 @@ def train(model, sess, saver, train_data, valid_data, batch_size, max_iters, use
     Trainer 
     """
     t0 = time.time()
-    batch_image, batch_target = train_data.next_batch(batch_size)
-    train_error = model.eval_loss(batch_image, batch_target)
-    train_rmse, train_acc, train_pred = model.eval_metric(batch_image, batch_target)
-    valid_batch_image, valid_batch_target = valid_data.next_batch(100)
-    valid_rmse, valid_acc, valid_pred = model.eval_metric(valid_batch_image, valid_batch_target)
-
-    print("train accuracy: %.4f, valid accuracy: %.4f, train rmse: %.3f, valid rmse: %.3f, train loss: %.3f," % (train_acc, valid_acc, train_rmse, valid_rmse, train_error))
-
     # Optimize
     prev_valid_rmse = float("Inf")
     early_stop_iters = 0
+    image_tensor, target_tensor = train_data.get_batch_tensor(batch_size)
+    coord = tf.train.Coordinator()
+    threads = tf.train.start_queue_runners(sess=model.sess, coord=coord)
     for i in range(max_iters):
-        t1 = time.time()
-        batch_count = int(train_data.num_examples / batch_size)
-        for _ in range(batch_count):
-            t2 = time.time()
-            batch_image, batch_target = train_data.next_batch(batch_size)
-            model.train_iteration(batch_image, batch_target)
+        print('==== New epoch started ====')
+        while True:
+            try:
+                t2 = time.time()
+                print('get_next_batch')
+                images, labels = model.sess.run([image_tensor, target_tensor])
+                model.train_iteration(images, labels)
+                # Evaluate
+                train_error = model.eval_loss(images, labels)
+                train_rmse, train_acc, train_pred = model.eval_metric(images, labels)
+                print(model.model_filename)
+                print("train accuracy: %.4f, train rmse: %.4f,  train loss: %.4f in %ds"
+                      % (train_acc, train_rmse, train_error, time.time() - t2))
+            except tf.errors.OutOfRangeError:
+                print('train dataset ended')
+                coord.request_stop()
+                coord.join(threads)
+                break
 
-            # Evaluate
-            train_error = model.eval_loss(batch_image, batch_target)
-            train_rmse, train_acc, train_pred = model.eval_metric(batch_image, batch_target)
-
-            valid_batch_image, valid_batch_target = valid_data.next_batch(100)
-            valid_rmse, valid_acc, valid_pred = model.eval_metric(valid_batch_image, valid_batch_target)
-            print(model.model_filename)
-            print("train accuracy: %.4f, valid accuracy: %.4f, train rmse: %.4f, valid rmse: %.4f, train loss: %.4f in %ds"
-                  % (train_acc, valid_acc, train_rmse, valid_rmse, train_error, time.time() - t2))
+        valid_batch_image, valid_batch_target = valid_data.get_batch_tensor()
+        valid_images, valid_labels = model.get_next_batch(valid_batch_image, valid_batch_target)
+        valid_rmse, valid_acc, valid_pred = model.eval_metric(valid_images, valid_labels)
+        print('valid accuracy: %.4f, valid rmse: %.4f' % (valid_acc, valid_rmse))
 
         # Checkpointing/early stopping
         if use_early_stop:
@@ -60,23 +62,15 @@ def train(model, sess, saver, train_data, valid_data, batch_size, max_iters, use
             saver.save(sess, model.model_filename)
 
 
-def test(model, sess, saver, test_data, train_data, valid_data, log=True):
+def test(model, sess, saver, test_data, log=True):
     """
     Tester
     """
-    train_rmse, _ = model.eval_metric(train_data.images, train_data.labels)
-    valid_rmse, _ = model.eval_metric(valid_data.images, valid_data.labels)
-    if log:
-        print("Final train RMSE: {}".format(train_rmse))
-        print("Final valid RMSE: {}".format(valid_rmse))
-
-    test_rmse, _ = model.eval_metric(test_data.images, test_data.labels)
+    batch_image, batch_target = test_data.get_batch_tensor()
+    test_rmse, _ = model.eval_metric(batch_image, batch_target)
     if log:
         print("Final test RMSE: {}".format(test_rmse))
-
-    print('%.4f %.4f %.4f' % (train_rmse, valid_rmse, test_rmse))
-
-    return train_rmse, valid_rmse, test_rmse
+    return test_rmse
 
 
 if __name__ == '__main__':
@@ -92,14 +86,14 @@ if __name__ == '__main__':
     parser.add_argument('--function', metavar='FUNCTION', type=str, choices=['classify', 'count'], default='count', required=True)
 
     # Optional
-    parser.add_argument('--batch', metavar='BATCH_SIZE', type=int, default=1000,
+    parser.add_argument('--batch', metavar='BATCH_SIZE', type=int, default=500,
                         help='the batch size to use when doing gradient descent')
     parser.add_argument('--learning-rate', metavar='LEARNING-RATE', type=float, default=0.01)
     parser.add_argument('--no-early', type=str2bool, default=False, help='disable early stopping')
     parser.add_argument('--early-stop-max-iter', metavar='EARLY_STOP_MAX_ITER', type=int, default=300,
                         help='the maximum number of iterations to let the model continue training after reaching a '
                              'minimum validation error')
-    parser.add_argument('--max-iters', metavar='MAX_ITERS', type=int, default=10000,
+    parser.add_argument('--max-iters', metavar='MAX_ITERS', type=int, default=100,
                         help='the maximum number of iterations to allow the model to train for')
     parser.add_argument('--outfile', type=str, default='modelname', help='output file name')
 
@@ -136,13 +130,15 @@ if __name__ == '__main__':
         # Train
         traintime = 0
         if mode == 'train':
-            traintime = train(model, sess, saver, train_data, validation_data, batch_size=batch_size,
-                              max_iters=max_iters, use_early_stop=use_early_stop,
-                              early_stop_max_iter=early_stop_max_iter)
+            traintime = train(
+                model, sess, saver, train_data, validation_data, batch_size=batch_size,
+                max_iters=max_iters, use_early_stop=use_early_stop,
+                early_stop_max_iter=early_stop_max_iter
+            )
         elif mode == 'test':
             print('Loading best checkpointed model')
             saver.restore(sess, model.model_filename)
-            TRAIN, VALID, TEST = test(model, sess, saver, test_data, train_data, validation_data)
+            test_rmse = test(model, sess, saver, test_data)
 
         # if(args.outfile == 'modelname') :
         #     outfile = model.model_filename

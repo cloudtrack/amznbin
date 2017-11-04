@@ -2,91 +2,44 @@ import collections
 import json
 import random
 from os import path
-from time import time
 
 import tensorflow as tf
 
-from constants import TOTAL_DATA_SIZE, RANDOM_SPLIT_FILE, IMAGE_DIR, RAW_METADATA_FILE, \
+from constants import TOTAL_DATA_SIZE, RANDOM_SPLIT_FILE, RAW_METADATA_FILE, \
     ASIN_INDEX_FILE, METADATA_FILE, INDEX_ASIN_FILE, DATASET_DIR
 
-
-def _parse_function(example_proto):
-    features = {
-        'image': tf.FixedLenFeature([], tf.string),
-        'label': tf.FixedLenFeature([], tf.int64),
-    }
-    parsed_features = tf.parse_single_example(example_proto, features)
-    return parsed_features["image"], parsed_features["label"]
 
 class DataSet(object):
 
     def __init__(self, filename):
         self._filename = filename
-        self._num_examples = 1000
-        self._epochs_completed = 0
-        self._index_in_epoch = 0
 
-    @property
-    def num_examples(self):
-        return self._num_examples
-
-    @property
-    def epochs_completed(self):
-        return self._epochs_completed
-
-    def next_batch(self):
-        return self.next_batch(self._num_examples)
-
-    def next_batch(self, batch_size):
-        """Return the next `batch_size` examples from this data set."""
-        assert batch_size <= self._num_examples
-        start = self._index_in_epoch
-        self._index_in_epoch += batch_size
-        if self._index_in_epoch > self._num_examples:
-            print("epoch completed!")
-            # Finished epoch
-            self._epochs_completed += 1
-            # Start next epoch
-            start = 0
-            self._index_in_epoch = batch_size
-        end = self._index_in_epoch
-        print("load next batch(size {0}) from {1} to {2}".format(batch_size, start, end))
-        t0 = time()
-        with tf.Session() as sess:
-            filename_queue = tf.train.string_input_producer([self._filename])
-            reader = tf.TFRecordReader()
-            _, serialized_example = reader.read(filename_queue)
-            features = tf.parse_single_example(
-                serialized_example,
-                features={
-                    'image': tf.FixedLenFeature([], tf.string),
-                    'label': tf.FixedLenFeature([], tf.int64),
-                }
-            )
-            # Convert the image data from string back to the numbers
-            image = tf.reshape(tf.decode_raw(features['image'], tf.uint8), [224, 224, 3])
-            label = tf.reshape(tf.cast(features['label'], tf.int32), [1])
-            min_queue_examples_train = 50
-            # Creates batches by randomly shuffling tensors
-            images, labels = tf.train.shuffle_batch(
-                [image, label], batch_size=batch_size, num_threads=8,
-                capacity=min_queue_examples_train + 3 * batch_size,
-                min_after_dequeue=min_queue_examples_train
-            )
-            sess.run(tf.global_variables_initializer())
-
-            # Create a coordinator and run all QueueRunner objects
-            coord = tf.train.Coordinator()
-            threads = tf.train.start_queue_runners(coord=coord)
-            images_value, labels_value = sess.run([images, labels])
-            # Stop the threads
-            coord.request_stop()
-
-            # Wait for threads to stop
-            coord.join(threads)
-            sess.close()
-        print('get_images finished after ' + str(round(time() - t0, 2)) + 's')
-        return images_value, labels_value
+    def get_batch_tensor(self, batch_size=100):
+        print('load dataset from ' + self._filename)
+        filename_queue = tf.train.string_input_producer([self._filename])
+        reader = tf.TFRecordReader()
+        _, serialized_example = reader.read(filename_queue)
+        features = tf.parse_single_example(
+            serialized_example,
+            features={
+                'image': tf.FixedLenFeature([], tf.string),
+                'target': tf.FixedLenFeature([], tf.int64),
+            }
+        )
+        # Convert the image data from string back to the numbers
+        image = tf.reshape(tf.decode_raw(features['image'], tf.uint8), [224, 224, 3])
+        target = tf.reshape(tf.cast(features['target'], tf.int32), [1])
+        # Creates batches by randomly shuffling tensors
+        images, targets = tf.train.shuffle_batch(
+            [image, target],
+            batch_size=batch_size,
+            capacity=batch_size * 4,
+            min_after_dequeue=batch_size * 2,
+            num_threads=8
+        )
+        print(images)
+        print(targets)
+        return images, targets
 
 
 def load_dataset(function):
