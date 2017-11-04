@@ -1,30 +1,30 @@
 import collections
 import json
 import random
+from os import path
+from time import time
 
-import numpy as np
 import tensorflow as tf
 
-from time import time
-from constants import TOTAL_DATA_SIZE, VALIDATION_SIZE, TEST_SIZE, RANDOM_SPLIT_FILE, IMAGE_DIR, RAW_METADATA_FILE, \
-    ASIN_INDEX_FILE, METADATA_FILE, INDEX_ASIN_FILE
+from constants import TOTAL_DATA_SIZE, RANDOM_SPLIT_FILE, IMAGE_DIR, RAW_METADATA_FILE, \
+    ASIN_INDEX_FILE, METADATA_FILE, INDEX_ASIN_FILE, DATASET_DIR
 
+
+def _parse_function(example_proto):
+    features = {
+        'image': tf.FixedLenFeature([], tf.string),
+        'label': tf.FixedLenFeature([], tf.int64),
+    }
+    parsed_features = tf.parse_single_example(example_proto, features)
+    return parsed_features["image"], parsed_features["label"]
 
 class DataSet(object):
-    def __init__(self, input_list, function):
-        self._input_list = input_list
-        self._function = function
-        self._num_examples = len(input_list)
+
+    def __init__(self, filename):
+        self._filename = filename
+        self._num_examples = 1000
         self._epochs_completed = 0
         self._index_in_epoch = 0
-
-    @property
-    def images(self):
-        return self._get_images(0, self._num_examples)
-
-    @property
-    def labels(self):
-        return self._get_labels(0, self._num_examples)
 
     @property
     def num_examples(self):
@@ -33,6 +33,9 @@ class DataSet(object):
     @property
     def epochs_completed(self):
         return self._epochs_completed
+
+    def next_batch(self):
+        return self.next_batch(self._num_examples)
 
     def next_batch(self, batch_size):
         """Return the next `batch_size` examples from this data set."""
@@ -43,62 +46,53 @@ class DataSet(object):
             print("epoch completed!")
             # Finished epoch
             self._epochs_completed += 1
-            # Shuffle the data
-            random.shuffle(self._input_list)
             # Start next epoch
             start = 0
             self._index_in_epoch = batch_size
         end = self._index_in_epoch
         print("load next batch(size {0}) from {1} to {2}".format(batch_size, start, end))
-        return self._get_images(start, end), self._get_labels(start, end)
-
-    def _get_images(self, start, end):
         t0 = time()
-        files = ['%s%05d.jpg' % (IMAGE_DIR, self._input_list[i]) for i in range(start, end)]
-        filename_queue = tf.train.string_input_producer(files)
-        image_name, image_file = tf.WholeFileReader().read(filename_queue)
-        decoded_image = tf.image.decode_jpeg(image_file, channels=3)
-        decoded_image.set_shape((224, 224, 3))
-        image_batch = tf.train.batch(
-            [decoded_image],
-            batch_size=len(files),
-            num_threads=2
-        )
         with tf.Session() as sess:
+            filename_queue = tf.train.string_input_producer([self._filename])
+            reader = tf.TFRecordReader()
+            _, serialized_example = reader.read(filename_queue)
+            features = tf.parse_single_example(
+                serialized_example,
+                features={
+                    'image': tf.FixedLenFeature([], tf.string),
+                    'label': tf.FixedLenFeature([], tf.int64),
+                }
+            )
+            # Convert the image data from string back to the numbers
+            image = tf.reshape(tf.decode_raw(features['image'], tf.uint8), [224, 224, 3])
+            label = tf.reshape(tf.cast(features['label'], tf.int32), [1])
+            min_queue_examples_train = 50
+            # Creates batches by randomly shuffling tensors
+            images, labels = tf.train.shuffle_batch(
+                [image, label], batch_size=batch_size, num_threads=8,
+                capacity=min_queue_examples_train + 3 * batch_size,
+                min_after_dequeue=min_queue_examples_train
+            )
             sess.run(tf.global_variables_initializer())
+
+            # Create a coordinator and run all QueueRunner objects
             coord = tf.train.Coordinator()
             threads = tf.train.start_queue_runners(coord=coord)
-            image = sess.run(image_batch)
+            images_value, labels_value = sess.run([images, labels])
+            # Stop the threads
             coord.request_stop()
+
+            # Wait for threads to stop
             coord.join(threads)
             sess.close()
         print('get_images finished after ' + str(round(time() - t0, 2)) + 's')
-        return image
-
-    def _get_labels(self, start, end):
-        t0 = time()
-        tv_list = json2tv(self._input_list[start:end], self._function)
-        labels = np.array(tv_list)
-        print('get_labels finished after ' + str(round(time() - t0, 2)) + 's')
-        return labels
+        return images_value, labels_value
 
 
 def load_dataset(function):
-    num_training = TOTAL_DATA_SIZE - (VALIDATION_SIZE + TEST_SIZE)
-    num_validation = VALIDATION_SIZE
-    num_test = TEST_SIZE
-
-    print('train:{0}, validation:{1}, test:{2}'.format(num_training, num_validation, num_test))
-
-    if not tf.gfile.Exists(RANDOM_SPLIT_FILE):
-        make_random_split(num_training, num_validation, num_test)
-    with open(RANDOM_SPLIT_FILE, 'r') as random_split_file:
-        random_split_json = json.load(random_split_file)
-
-    train = DataSet(random_split_json.get('train'), function)
-    validation = DataSet(random_split_json.get('validation'), function)
-    test = DataSet(random_split_json.get('test'), function)
-
+    train = DataSet(path.join(DATASET_DIR, '{0}_{1}.tfrecords'.format(function, 'train')))
+    validation = DataSet(path.join(DATASET_DIR, '{0}_{1}.tfrecords'.format(function, 'validation')))
+    test = DataSet(path.join(DATASET_DIR, '{0}_{1}.tfrecords'.format(function, 'test')))
     ds = collections.namedtuple('Datasets', ['train', 'validation', 'test'])
     return ds(train=train, validation=validation, test=test)
 
@@ -127,14 +121,15 @@ def json2tv(index_list, function):
     with open(ASIN_INDEX_FILE) as asin_index_file:
         asin_index_map = json.load(asin_index_file)
     tv_list = []
+    tv = []
     for index in index_list:
-        if(function == "classify"):
+        if function == "classify":
             tv = [0] * len(asin_index_map.keys())
             data = raw_metadata[index]
             for asin in data['DATA'].keys():
                 tv_index = asin_index_map.get(asin)
                 tv[tv_index] = 1
-        elif (function == "count"):
+        elif function == "count":
             data = raw_metadata[index]
             tv = [data['TOTAL']]
         else:
