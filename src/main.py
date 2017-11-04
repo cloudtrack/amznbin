@@ -17,15 +17,16 @@ def train(model, sess, saver, train_data, valid_data, batch_size, max_iters, use
     # Optimize
     prev_valid_rmse = float("Inf")
     early_stop_iters = 0
-    image_tensor, target_tensor = train_data.get_batch_tensor(batch_size)
-    coord = tf.train.Coordinator()
-    threads = tf.train.start_queue_runners(sess=model.sess, coord=coord)
     for i in range(max_iters):
         print('==== New epoch started ====')
+        # Training
+        image_tensor, target_tensor = train_data.get_batch_tensor(batch_size)
+        coord = tf.train.Coordinator()
+        threads = tf.train.start_queue_runners(sess=model.sess, coord=coord)
         while True:
             try:
                 t2 = time.time()
-                print('get_next_batch')
+                print('train - get next batch')
                 images, labels = model.sess.run([image_tensor, target_tensor])
                 model.train_iteration(images, labels)
                 # Evaluate
@@ -40,10 +41,22 @@ def train(model, sess, saver, train_data, valid_data, batch_size, max_iters, use
                 coord.join(threads)
                 break
 
-        valid_batch_image, valid_batch_target = valid_data.get_batch_tensor()
-        valid_images, valid_labels = model.get_next_batch(valid_batch_image, valid_batch_target)
-        valid_rmse, valid_acc, valid_pred = model.eval_metric(valid_images, valid_labels)
-        print('valid accuracy: %.4f, valid rmse: %.4f' % (valid_acc, valid_rmse))
+        # Validation
+        image_tensor, target_tensor = valid_data.get_batch_tensor(batch_size)
+        coord = tf.train.Coordinator()
+        threads = tf.train.start_queue_runners(sess=model.sess, coord=coord)
+        while True:
+            try:
+                print('validation - get next batch')
+                images, labels = model.sess.run([image_tensor, target_tensor])
+                valid_rmse, valid_acc, valid_pred = model.eval_metric(images, labels)
+                print(model.model_filename)
+                print('validation accuracy: %.4f, validation rmse: %.4f' % (valid_acc, valid_rmse))
+            except tf.errors.OutOfRangeError:
+                print('validation dataset ended')
+                coord.request_stop()
+                coord.join(threads)
+                break
 
         # Checkpointing/early stopping
         if use_early_stop:

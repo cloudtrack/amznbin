@@ -1,5 +1,5 @@
-import tensorflow as tf
 import numpy as np
+import tensorflow as tf
 
 from constants import IMAGE_SIZE, CLASS_SIZE
 
@@ -88,14 +88,6 @@ class _Base(object):
         feed_dict = {self.image: imagedata, self.target: targetdata}
         return self.sess.run(self.loss, feed_dict=feed_dict)
 
-    def get_next_batch(self, image_batch, label_batch):
-        print('get_next_batch')
-        coord = tf.train.Coordinator()
-        threads = tf.train.start_queue_runners(sess=self.sess, coord=coord)
-        images, labels = self.sess.run([image_batch, label_batch])
-        coord.request_stop()
-        coord.join(threads)
-        return images, labels
 
 class ALEXNET(_Base):
     """ AlexNet model structrue """

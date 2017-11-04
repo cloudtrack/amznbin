@@ -16,7 +16,7 @@ class DataSet(object):
 
     def get_batch_tensor(self, batch_size=100):
         print('load dataset from ' + self._filename)
-        filename_queue = tf.train.string_input_producer([self._filename])
+        filename_queue = tf.train.string_input_producer([self._filename], num_epochs=1)
         reader = tf.TFRecordReader()
         _, serialized_example = reader.read(filename_queue)
         features = tf.parse_single_example(
