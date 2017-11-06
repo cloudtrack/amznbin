@@ -21,42 +21,42 @@ def train(model, sess, saver, train_data, valid_data, batch_size, max_iters, use
         print('==== New epoch started ====')
         # Training
         image_tensor, target_tensor = train_data.get_batch_tensor(batch_size)
+        sess.run(tf.local_variables_initializer())
         coord = tf.train.Coordinator()
-        threads = tf.train.start_queue_runners(sess=model.sess, coord=coord)
-        while True:
-            try:
+        threads = tf.train.start_queue_runners(sess=sess, coord=coord)
+        try:
+            while not coord.should_stop():
                 t2 = time.time()
                 print('train - get next batch')
-                images, labels = model.sess.run([image_tensor, target_tensor])
+                images, labels = sess.run([image_tensor, target_tensor])
                 model.train_iteration(images, labels)
-                # Evaluate
                 train_error = model.eval_loss(images, labels)
                 train_rmse, train_acc, train_pred = model.eval_metric(images, labels)
                 print(model.model_filename)
                 print("train accuracy: %.4f, train rmse: %.4f,  train loss: %.4f in %ds"
                       % (train_acc, train_rmse, train_error, time.time() - t2))
-            except tf.errors.OutOfRangeError:
-                print('train dataset ended')
-                coord.request_stop()
-                coord.join(threads)
-                break
+        except tf.errors.OutOfRangeError:
+            print('Done training -- epoch limit reached')
+        finally:
+            coord.request_stop()
+            coord.join(threads)
 
         # Validation
-        image_tensor, target_tensor = valid_data.get_batch_tensor(batch_size)
+        valid_image_tensor, valid_target_tensor = valid_data.get_batch_tensor()
+        sess.run(tf.local_variables_initializer())
         coord = tf.train.Coordinator()
-        threads = tf.train.start_queue_runners(sess=model.sess, coord=coord)
-        while True:
-            try:
-                print('validation - get next batch')
-                images, labels = model.sess.run([image_tensor, target_tensor])
+        threads = tf.train.start_queue_runners(sess=sess, coord=coord)
+        try:
+            while not coord.should_stop():
+                images, labels = sess.run([valid_image_tensor, valid_target_tensor])
                 valid_rmse, valid_acc, valid_pred = model.eval_metric(images, labels)
                 print(model.model_filename)
                 print('validation accuracy: %.4f, validation rmse: %.4f' % (valid_acc, valid_rmse))
-            except tf.errors.OutOfRangeError:
-                print('validation dataset ended')
-                coord.request_stop()
-                coord.join(threads)
-                break
+        except tf.errors.OutOfRangeError:
+            print('Done validation -- epoch limit reached')
+        finally:
+            coord.request_stop()
+            coord.join(threads)
 
         # Checkpointing/early stopping
         if use_early_stop:

@@ -14,9 +14,9 @@ class DataSet(object):
     def __init__(self, filename):
         self._filename = filename
 
-    def get_batch_tensor(self, batch_size=100):
+    def get_batch_tensor(self, batch_size=100, num_epochs=1):
         print('load dataset from ' + self._filename)
-        filename_queue = tf.train.string_input_producer([self._filename], num_epochs=1)
+        filename_queue = tf.train.string_input_producer([self._filename], num_epochs=num_epochs)
         reader = tf.TFRecordReader()
         _, serialized_example = reader.read(filename_queue)
         features = tf.parse_single_example(
@@ -33,9 +33,9 @@ class DataSet(object):
         images, targets = tf.train.shuffle_batch(
             [image, target],
             batch_size=batch_size,
-            capacity=batch_size * 4,
-            min_after_dequeue=batch_size * 2,
-            num_threads=8
+            capacity=batch_size * 3,
+            min_after_dequeue=batch_size,
+            num_threads=4
         )
         print(images)
         print(targets)
