@@ -14,7 +14,7 @@ class DataSet(object):
     def __init__(self, filename):
         self._filename = filename
 
-    def get_batch_tensor(self, batch_size=100, num_epochs=1):
+    def get_batch_tensor(self, batch_size, num_epochs=1):
         print('load dataset from ' + self._filename)
         filename_queue = tf.train.string_input_producer([self._filename], num_epochs=num_epochs)
         reader = tf.TFRecordReader()
