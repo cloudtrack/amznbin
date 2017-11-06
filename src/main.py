@@ -9,7 +9,7 @@ from dataset import load_dataset
 from models import ALEXNET  # , VGG16, INCEPTION
 
 
-def train(model, sess, saver, train_data, valid_data, batch_size, max_iters, use_early_stop, early_stop_max_iter):
+def train(model, sess, saver, train_data, valid_data, batch_size, max_iters, use_early_stop, early_stop_max_iter, function):
     """
     Trainer 
     """
@@ -144,9 +144,9 @@ if __name__ == '__main__':
         traintime = 0
         if mode == 'train':
             traintime = train(
-                model, sess, saver, train_data, validation_data, batch_size=batch_size,
-                max_iters=max_iters, use_early_stop=use_early_stop,
-                early_stop_max_iter=early_stop_max_iter
+                model, sess, saver, train_data, validation_data,
+                batch_size=batch_size, max_iters=max_iters,
+                use_early_stop=use_early_stop, early_stop_max_iter=early_stop_max_iter, function=function
             )
         elif mode == 'test':
             print('Loading best checkpointed model')
