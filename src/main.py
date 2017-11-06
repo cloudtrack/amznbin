@@ -18,10 +18,11 @@ def train(model, sess, saver, train_data, valid_data, batch_size, max_iters, use
     # Optimize
     prev_valid_rmse = float("Inf")
     early_stop_iters = 0
+    train_image_tensor, train_target_tensor = train_data.get_batch_tensor(batch_size)
+    valid_image_tensor, valid_target_tensor = valid_data.get_batch_tensor(batch_size=VALIDATION_SIZE)
     for i in range(max_iters):
         print('==== New epoch started ====')
         # Training
-        image_tensor, target_tensor = train_data.get_batch_tensor(batch_size)
         with tf.Session() as _sess:
             _sess.run(tf.local_variables_initializer())
             coord = tf.train.Coordinator()
@@ -30,7 +31,7 @@ def train(model, sess, saver, train_data, valid_data, batch_size, max_iters, use
                 while not coord.should_stop():
                     t2 = time.time()
                     print('train - get next batch')
-                    images, labels = _sess.run([image_tensor, target_tensor])
+                    images, labels = _sess.run([train_image_tensor, train_target_tensor])
                     model.train_iteration(images, labels)
                     train_error = model.eval_loss(images, labels)
                     train_rmse, train_acc, train_pred = model.eval_metric(images, labels)
@@ -44,7 +45,6 @@ def train(model, sess, saver, train_data, valid_data, batch_size, max_iters, use
                 coord.join(threads)
 
         # Validation
-        valid_image_tensor, valid_target_tensor = valid_data.get_batch_tensor(batch_size=VALIDATION_SIZE)
         with tf.Session() as _sess:
             _sess.run(tf.local_variables_initializer())
             coord = tf.train.Coordinator()
@@ -102,7 +102,7 @@ if __name__ == '__main__':
     parser.add_argument('--function', metavar='FUNCTION', type=str, choices=['classify', 'count'], default='count', required=True)
 
     # Optional
-    parser.add_argument('--batch', metavar='BATCH_SIZE', type=int, default=1000,
+    parser.add_argument('--batch', metavar='BATCH_SIZE', type=int, default=200,
                         help='the batch size to use when doing gradient descent')
     parser.add_argument('--learning-rate', metavar='LEARNING-RATE', type=float, default=0.01)
     parser.add_argument('--no-early', type=str2bool, default=False, help='disable early stopping')
