@@ -4,3 +4,4 @@ mxnet-vgg16-sample
 .idea
 connect.sh
 .DS_Store
+*.pyc
