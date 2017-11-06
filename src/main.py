@@ -9,7 +9,7 @@ from dataset import load_dataset
 from models import ALEXNET  # , VGG16, INCEPTION
 
 
-def train(model, sess, saver, train_data, valid_data, batch_size, max_iters, use_early_stop, early_stop_max_iter):
+def train(model, sess, saver, train_data, valid_data, batch_size, max_iters, use_early_stop, early_stop_max_iter, function):
     """
     Trainer 
     """
@@ -19,6 +19,9 @@ def train(model, sess, saver, train_data, valid_data, batch_size, max_iters, use
     train_rmse, train_acc, train_pred = model.eval_metric(batch_image, batch_target)
     valid_batch_image, valid_batch_target = valid_data.next_batch(100)
     valid_rmse, valid_acc, valid_pred = model.eval_metric(valid_batch_image, valid_batch_target)
+
+    if function == 'classify' :
+        train_error = sum(map(sum,train_error))
 
     print("train accuracy: %.4f, valid accuracy: %.4f, train rmse: %.3f, valid rmse: %.3f, train loss: %.3f," % (train_acc, valid_acc, train_rmse, valid_rmse, train_error))
 
@@ -138,7 +141,7 @@ if __name__ == '__main__':
         if mode == 'train':
             traintime = train(model, sess, saver, train_data, validation_data, batch_size=batch_size,
                               max_iters=max_iters, use_early_stop=use_early_stop,
-                              early_stop_max_iter=early_stop_max_iter)
+                              early_stop_max_iter=early_stop_max_iter, function=function)
         elif mode == 'test':
             print('Loading best checkpointed model')
             saver.restore(sess, model.model_filename)
