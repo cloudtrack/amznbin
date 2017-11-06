@@ -1,6 +1,6 @@
 import json
 
-from constants import METADATA_DIR, RAW_METADATA_FILE, METADATA_FILE, TOTAL_DATA_SIZE, ASIN_INDEX_FILE, INDEX_ASIN_FILE
+from constants import METADATA_DIR, RAW_METADATA_FILE, METADATA_FILE, TOTAL_DATA_SIZE, ASIN_INDEX_FILE, INDEX_ASIN_FILE, MINIMUM_REPEAT
 
 
 def make_raw_metadata():
@@ -72,20 +72,21 @@ def make_metadata(raw_metadata):
     return metadata
 
 
-def make_target_vector_map(raw_metadata):
+def make_target_vector_map(metadata):
     asin_index_map = {}
     index_asin_map = {}
     index = 0
-    for i in range(1, len(raw_metadata)):
+    i = 0
+    for asin in metadata.keys():
         if i % 1000 == 0:
-            print("make_target_vector_map - processing (%d/%d)..." % (i, TOTAL_DATA_SIZE))
-        data = raw_metadata[i]
-        for asin in data['DATA'].keys():
+            print("make_target_vector_map - processing (%d/%d)..." % (i, len(metadata.keys())))
+        i += 1
+        if metadata[asin]['repeat'] >= MINIMUM_REPEAT:
             if asin not in asin_index_map.keys():
                 asin_index_map[asin] = index
                 index_asin_map[index] = asin
                 index += 1
-
+    print(str(index))
     return asin_index_map, index_asin_map
 
 
@@ -100,7 +101,7 @@ if __name__ == '__main__':
     with open(METADATA_FILE, 'w') as metadata_file:
         json.dump(metadata, metadata_file)
 
-    asin_index_map, index_asin_map = make_target_vector_map(raw_metadata)
+    asin_index_map, index_asin_map = make_target_vector_map(metadata)
     print("dumping " + ASIN_INDEX_FILE)
     with open(ASIN_INDEX_FILE, 'w') as asin_index_file:
         json.dump(asin_index_map, asin_index_file)

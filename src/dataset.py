@@ -133,7 +133,8 @@ def json2tv(index_list, function):
             data = raw_metadata[index]
             for asin in data['DATA'].keys():
                 tv_index = asin_index_map.get(asin)
-                tv[tv_index] = 1
+                if tv_index != None:
+                    tv[tv_index] = 1
         elif (function == "count"):
             data = raw_metadata[index]
             tv = [data['TOTAL']]
@@ -143,20 +144,20 @@ def json2tv(index_list, function):
     return tv_list
 
 
-def tv2res(tv):
-    print("opening " + METADATA_FILE)
-    with open(METADATA_FILE) as metadata_file:
-        metadata = json.load(metadata_file)
-    print("opening " + INDEX_ASIN_FILE)
-    with open(INDEX_ASIN_FILE) as index_asin_file:
-        index_asin_map = json.load(index_asin_file)
-    res = {}
-    for i in range(len(tv)):
-        if tv[i] != 0:
-            asin = index_asin_map[str(i)]
-            asin_meta = {
-                'name': metadata[asin]['name'],
-                'quantity': tv[i],
-            }
-            res[asin] = asin_meta
-    return res
+#def tv2res(tv):
+#    print("opening " + METADATA_FILE)
+#    with open(METADATA_FILE) as metadata_file:
+#        metadata = json.load(metadata_file)
+#    print("opening " + INDEX_ASIN_FILE)
+#    with open(INDEX_ASIN_FILE) as index_asin_file:
+#        index_asin_map = json.load(index_asin_file)
+#    res = {}
+#    for i in range(len(tv)):
+#        if tv[i] != 0:
+#            asin = index_asin_map[str(i)]
+#            asin_meta = {
+#                'name': metadata[asin]['name'],
+#                'quantity': tv[i],
+#            }
+#            res[asin] = asin_meta
+#    return res
