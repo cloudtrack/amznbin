@@ -102,9 +102,9 @@ if __name__ == '__main__':
     parser.add_argument('--function', metavar='FUNCTION', type=str, choices=['classify', 'count'], default='count', required=True)
 
     # Optional
-    parser.add_argument('--batch', metavar='BATCH_SIZE', type=int, default=200,
+    parser.add_argument('--batch', metavar='BATCH_SIZE', type=int, default=5000,
                         help='the batch size to use when doing gradient descent')
-    parser.add_argument('--learning-rate', metavar='LEARNING-RATE', type=float, default=0.01)
+    parser.add_argument('--learning-rate', metavar='LEARNING-RATE', type=float, default=0.0025)
     parser.add_argument('--no-early', type=str2bool, default=False, help='disable early stopping')
     parser.add_argument('--early-stop-max-iter', metavar='EARLY_STOP_MAX_ITER', type=int, default=300,
                         help='the maximum number of iterations to let the model continue training after reaching a '
@@ -112,6 +112,7 @@ if __name__ == '__main__':
     parser.add_argument('--max-iters', metavar='MAX_ITERS', type=int, default=100,
                         help='the maximum number of iterations to allow the model to train for')
     parser.add_argument('--outfile', type=str, default='modelname', help='output file name')
+    parser.add_argument('--difficulty', type=str, default='moderate', choices=['moderate', 'hard'], help='difficulty of task')    
 
     # Parse args
     args = parser.parse_args()
@@ -124,6 +125,7 @@ if __name__ == '__main__':
     use_early_stop = not (args.no_early)
     early_stop_max_iter = args.early_stop_max_iter
     max_iters = args.max_iters
+    difficulty = args.difficulty
 
     with tf.Session() as sess:
         # Process data
@@ -134,7 +136,7 @@ if __name__ == '__main__':
         # Define computation graph & Initialize
         print('Building network & initializing variables')
         if model_name == 'ALEXNET':
-            model = ALEXNET(function, learning_rate)
+            model = ALEXNET(function, learning_rate, difficulty)
         # elif model_name == 'VGG16' :
         #     model = VGG16()
         # else :
