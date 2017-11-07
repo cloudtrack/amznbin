@@ -48,10 +48,24 @@ class _Base(object):
         raise NotImplementedError()
 
     def _init_vars(self):
-        raise NotImplementedError()
+        """ Build layers of the model """
+        # self.pred = tf.squeeze(self.build_layers(self.image), squeeze_dims=[1])
+        self.pred = tf.squeeze(self.build_layers(self.image))
 
     def _init_ops(self):
-        raise NotImplementedError()
+        """ Calculates loss and performs gradient descent """
+        # Loss     
+        if self.function == 'classify' :
+            self.loss = tf.nn.sigmoid_cross_entropy_with_logits(labels=self.target, logits=self.pred)
+        elif self.difficulty == 'moderate' :
+            self.loss = tf.nn.softmax_cross_entropy_with_logits(labels=self.target, logits=self.pred)
+        else:
+            self.loss = tf.reduce_sum(tf.square(tf.subtract(self.target, self.pred)))
+
+        # Optimizer
+        self.optimizer = tf.train.AdamOptimizer(self.learning_rate)
+        # Optimize the weights
+        self.optimize_steps = self.optimizer.minimize(self.loss, var_list=self.parameters)
 
     def init_sess(self, sess):
         """ 
@@ -101,25 +115,10 @@ class ALEXNET(_Base):
         return 'alexnet'
 
     def _init_vars(self):
-        """ Build layers of the model """
-        # self.pred = tf.squeeze(self.build_layers(self.image), squeeze_dims=[1])
-        self.pred = tf.squeeze(self.build_layers(self.image))
-
+        super(ALEXNET, self)._init_vars()
 
     def _init_ops(self):
-        """ Calculates loss and performs gradient descent """
-        # Loss     
-        if self.function == 'classify' :
-            self.loss = tf.nn.sigmoid_cross_entropy_with_logits(labels=self.target, logits=self.pred)
-        elif self.difficulty == 'moderate' :
-            self.loss = tf.nn.softmax_cross_entropy_with_logits(labels=self.target, logits=self.pred)
-        else:
-            self.loss = tf.reduce_sum(tf.square(tf.subtract(self.target, self.pred)))
-
-        # Optimizer
-        self.optimizer = tf.train.AdamOptimizer(self.learning_rate)
-        # Optimize the weights
-        self.optimize_steps = self.optimizer.minimize(self.loss, var_list=self.parameters)
+        super(ALEXNET, self)._init_ops()
 
     def build_layers(self, image):
         """
