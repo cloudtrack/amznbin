@@ -35,11 +35,30 @@ class _Base(object):
 
         # RMSE
         self.rmse = tf.sqrt(tf.reduce_mean(tf.square(tf.subtract(self.target, self.pred))))
-        #self.rmse, _ = tf.metrics.root_mean_squared_error(labels=self.target, predictions=self.pred)
+ 
         # Accuracy
         pred_labels = tf.greater_equal(self.pred, 0.2)
-        acc, _ = tf.metrics.accuracy(labels=self.target, predictions=pred_labels)
-        self.accuracy = tf.divide(tf.multiply(acc, CLASS_SIZE), tf.cast(tf.count_nonzero(pred_labels), tf.float32))
+
+        count = tf.constant(0)
+        def add(): return tf.add(count, 1)
+        def same(): return count
+
+        if tf.cast(tf.count_nonzero(pred_labels), tf.float32) > tf.cast(tf.count_nonzero(self.target), tf.float32) :
+            total = tf.cast(tf.count_nonzero(pred_labels), tf.float32) 
+            where = tf.equal(pred_labels, tf.constant(1, dtype=tf.float32))
+            indices = tf.where(where)
+            for index in indices :
+                count = tf.cond(tf.equal(self.target[index], tf.constant(1, dtype=tf.float32)), add(), same())
+        else :
+            total = tf.cast(tf.count_nonzero(self.target), tf.float32)
+            where = tf.equal(self.target, tf.constant(1, dtype=tf.float32))
+            indices = tf.where(where)
+            for index in indices :
+                count = tf.cond(tf.equal(pred_labels[index], tf.constant(1, dtype=tf.float32)), add(), same())
+
+        self.accuracy = tf.divide(count, total)
+
+        #acc, _ = tf.metrics.accuracy(labels=self.target, predictions=pred_labels)
         # self.accuracy = tf.subtract(tf.cast(1.0, tf.float64), tf.divide(tf.count_nonzero(tf.subtract(self.target, self.pred)), CLASS_SIZE))
         
 
