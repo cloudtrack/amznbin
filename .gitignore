@@ -1,5 +1,7 @@
 dataset
+mxnet-vgg16-sample
 # IDE
 .idea
 connect.sh
 .DS_Store
+*.pyc
