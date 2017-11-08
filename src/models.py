@@ -255,3 +255,53 @@ class ALEXNET(_Base):
             fc8 = tf.nn.softmax(fc8)
 
         return fc8
+
+
+class ALEXNET(_Base):
+    """ AlexNet model structrue """
+
+    def __init__(self, function, learning_rate, difficulty):
+        super(ALEXNET, self).__init__(function, learning_rate, difficulty)
+
+    @property
+    def filename(self):
+        return 'alexnet'
+
+    def _init_vars(self):
+        super(ALEXNET, self)._init_vars()
+
+    def _init_ops(self):
+        super(ALEXNET, self)._init_ops()
+
+    def build_layers(self, image):
+        """
+        Builds layers 
+        """
+        self.parameters = []
+
+        # conv1
+        with tf.name_scope('conv11') as scope:
+            kernel = tf.Variable(tf.truncated_normal([3, 3, 3, 128], dtype=tf.float32, stddev=1e-1), name='weights')
+            conv = tf.nn.conv2d(image, kernel, [1, 1, 1, 1], padding='VALID')
+            biases = tf.Variable(tf.constant(0.0, shape=[64], dtype=tf.float32), trainable=True, name='biases')
+            bias = tf.nn.bias_add(conv, biases)
+            conv11 = tf.nn.relu(bias, name=scope)
+            # print_activations(conv1)
+            self.parameters += [kernel, biases]
+
+        with tf.name_scope('conv12') as scope:
+            kernel = tf.Variable(tf.truncated_normal([3, 3, 128, 128], dtype=tf.float32, stddev=1e-1), name='weights')
+            conv = tf.nn.conv2d(conv11, kernel, [1, 1, 1, 1], padding='VALID')
+            biases = tf.Variable(tf.constant(0.0, shape=[64], dtype=tf.float32), trainable=True, name='biases')
+            bias = tf.nn.bias_add(conv, biases)
+            conv12 = tf.nn.relu(bias, name=scope)
+            # print_activations(conv1)
+            self.parameters += [kernel, biases]
+
+        #pool1
+        pool1 = tf.nn.max_pool(conv12,
+                             ksize=[1, 2, 2, 1],
+                             strides=[1, 2, 2, 1],
+                             padding='SAME',
+                             name='pool1')
+        
