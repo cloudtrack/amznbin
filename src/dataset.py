@@ -83,7 +83,7 @@ def json2tv(index_list, function, difficulty):
                 tv_index = asin_index_map.get(asin)
                 if tv_index != None:
                     tv[tv_index] = 1
-        elif difficult == "moderate":
+        elif difficulty == "moderate":
             tv = [0] * 12
             quantity = data['TOTAL']
             if quantity > 10:
