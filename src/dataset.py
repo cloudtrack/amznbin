@@ -67,7 +67,7 @@ def make_random_split(train_size, validation_size, test_size):
 ########################
 # Target vector utils
 ########################
-def json2tv(index_list, function):
+def json2tv(index_list, function, difficulty):
     print("making target vectors, function: " +function)
     with open(RAW_METADATA_FILE) as raw_metadata_file:
         raw_metadata = json.load(raw_metadata_file)
@@ -81,16 +81,22 @@ def json2tv(index_list, function):
             data = raw_metadata[index]
             for asin in data['DATA'].keys():
                 tv_index = asin_index_map.get(asin)
-                tv[tv_index] = 1
-        elif function == "count":
+                if tv_index != None:
+                    tv[tv_index] = 1
+        elif difficult == "moderate":
+            tv = [0] * 12
+            quantity = data['TOTAL']
+            if quantity > 10:
+                tv[12] = 1
+            else:
+                tv[quantity] = 1
+        else:
             data = raw_metadata[index]
             tv = [data['TOTAL']]
-        else:
-            print("Invalid function name")
         tv_list.append(tv)
     return tv_list
 
-
+"""
 def tv2res(tv):
     print("opening " + METADATA_FILE)
     with open(METADATA_FILE) as metadata_file:
@@ -108,3 +114,4 @@ def tv2res(tv):
             }
             res[asin] = asin_meta
     return res
+"""
