@@ -7,7 +7,7 @@ from numpy.distutils.fcompiler import str2bool
 
 from constants import VALIDATION_SIZE, TEST_SIZE
 from dataset import load_dataset
-from models import ALEXNET  # , VGG16, INCEPTION
+from models import ALEXNET, VGGNET, LENET
 
 
 def train(model, sess, saver, train_data, valid_data, batch_size, max_iters, use_early_stop, early_stop_max_iter, function):
@@ -95,7 +95,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Trains/evaluates model.')
 
     # Required
-    parser.add_argument('--model', metavar='MODEL_NAME', type=str, choices=['VGG16', 'ALEXNET', 'INCEPTION'],
+    parser.add_argument('--model', metavar='MODEL_NAME', type=str, choices=['VGGNET', 'ALEXNET', 'LENET'],
                         help='the name of the model to use', required=True)
     parser.add_argument('--mode', metavar='MODE', type=str, choices=['train', 'test'],
                         help='the mode to run the program in', default='train', required=True)
@@ -137,10 +137,10 @@ if __name__ == '__main__':
         print('Building network & initializing variables')
         if model_name == 'ALEXNET':
             model = ALEXNET(function, learning_rate, difficulty)
-        # elif model_name == 'VGG16' :
-        #     model = VGG16()
-        # else :
-        #     model = INCEPTION()
+        elif model_name == 'VGGNET' :
+            model = VGGNET(function, learning_rate, difficulty)
+        else :
+            model = LENET(function, learning_rate, difficulty)
 
         model.init_sess(sess)
         saver = tf.train.Saver()
