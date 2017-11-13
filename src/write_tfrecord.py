@@ -1,12 +1,14 @@
 import json
+from os import path
 
 import numpy as np
 import tensorflow as tf
 from PIL import Image
-from os import path
 
 from constants import TOTAL_DATA_SIZE, VALIDATION_SIZE, TEST_SIZE, RANDOM_SPLIT_FILE, IMAGE_DIR, DATASET_DIR
 from dataset import json2tv, make_random_split
+
+IMAGE_CHUNK_SIZE = 1000
 
 
 def _bytes_feature(value):
@@ -15,6 +17,36 @@ def _bytes_feature(value):
 
 def _int64_feature(value):
     return tf.train.Feature(int64_list=tf.train.Int64List(value=value))
+
+
+def write_tfrecord(training_type, difficulty=None):
+    for data_type in ['train', 'validation', 'test']:
+        index_list = random_split_json.get(data_type)
+        index_chunks = [index_list[x:x + IMAGE_CHUNK_SIZE] for x in range(0, len(index_list), IMAGE_CHUNK_SIZE)]
+        for i in range(len(index_chunks)):
+            if difficulty:
+                filename = path.join(DATASET_DIR,
+                                     '{0}_{1}_{2}_{3}.tfrecords'.format(training_type, difficulty, data_type, i))
+            else:
+                filename = path.join(DATASET_DIR, '{0}_{1}_{2}.tfrecords'.format(training_type, data_type, i))
+            print('Start Writing ' + filename)
+            current_chunk = index_chunks[i]
+            writer = tf.python_io.TFRecordWriter(filename)
+            targets = json2tv(current_chunk, training_type, difficulty)
+            for j in range(len(current_chunk)):
+                img = np.array(Image.open('%s%05d.jpg' % (IMAGE_DIR, current_chunk[j])))
+                target = targets[j]
+                # Create a feature
+                feature = {
+                    'image': _bytes_feature(tf.compat.as_bytes(img.tostring())),
+                    'target': _int64_feature(target)
+                }
+                # Create an example protocol buffer
+                example = tf.train.Example(features=tf.train.Features(feature=feature))
+                # Serialize to string and write on the file
+                writer.write(example.SerializeToString())
+            writer.close()
+
 
 if __name__ == '__main__':
     num_training = TOTAL_DATA_SIZE - (VALIDATION_SIZE + TEST_SIZE)
@@ -25,30 +57,8 @@ if __name__ == '__main__':
         make_random_split(num_training, num_validation, num_test)
     with open(RANDOM_SPLIT_FILE, 'r') as random_split_file:
         random_split_json = json.load(random_split_file)
-
-    for training_type in ['count', 'classify']:
-        for data_type in ['train', 'validation', 'test']:
-            filename = path.join(DATASET_DIR, '{0}_{1}.tfrecords'.format(training_type, data_type))
-            print('Start Writing ' + filename)
-            writer = tf.python_io.TFRecordWriter(filename)
-            file_indices = random_split_json.get(data_type)
-            targets = json2tv(file_indices, training_type)
-
-            for i in range(len(file_indices)):
-                if not i % 1000:
-                    print('processing: {}/{}'.format(i, len(file_indices)))
-                # Load the image
-                image_file = '%s%05d.jpg' % (IMAGE_DIR, file_indices[i])
-                img = np.array(Image.open(image_file))
-                target = targets[i]
-                # Create a feature
-                feature = {
-                    'image': _bytes_feature(tf.compat.as_bytes(img.tostring())),
-                    'target': _int64_feature(target)
-                }
-                # Create an example protocol buffer
-                example = tf.train.Example(features=tf.train.Features(feature=feature))
-                # Serialize to string and write on the file
-                writer.write(example.SerializeToString())
-
-            writer.close()
+    # Count
+    for difficulty in ['moderate', 'hard']:
+        write_tfrecord('count', difficulty)
+    # Classify
+    write_tfrecord('classify')
