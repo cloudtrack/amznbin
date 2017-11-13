@@ -76,23 +76,23 @@ def json2tv(index_list, function, difficulty):
     tv_list = []
     tv = []
     for index in index_list:
+        data = raw_metadata[index]
         if function == "classify":
             tv = [0] * len(asin_index_map.keys())
-            data = raw_metadata[index]
             for asin in data['DATA'].keys():
                 tv_index = asin_index_map.get(asin)
                 if tv_index != None:
                     tv[tv_index] = 1
-        elif difficulty == "moderate":
-            tv = [0] * 12
-            quantity = data['TOTAL']
-            if quantity > 10:
-                tv[12] = 1
+        elif function == "count":
+            if difficulty == "moderate":
+                tv = [0] * 12
+                quantity = data['TOTAL']
+                if quantity > 10:
+                    tv[11] = 1
+                else:
+                    tv[quantity] = 1
             else:
-                tv[quantity] = 1
-        else:
-            data = raw_metadata[index]
-            tv = [data['TOTAL']]
+                tv = [data['TOTAL']]
         tv_list.append(tv)
     return tv_list
 
