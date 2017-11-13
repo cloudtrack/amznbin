@@ -2,4 +2,4 @@
 run="python3"
 main="src/main.py"
 
-${run} ${main} --mode train --model "ALEXNET" --function "classify" --difficulty "hard"
+${run} ${main} --mode train --model "ALEXNET" --function "count" --difficulty "hard"
