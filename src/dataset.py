@@ -1,22 +1,30 @@
 import collections
 import json
 import random
-from os import path
 
 import tensorflow as tf
 
 from constants import TOTAL_DATA_SIZE, RANDOM_SPLIT_FILE, RAW_METADATA_FILE, \
-    ASIN_INDEX_FILE, METADATA_FILE, INDEX_ASIN_FILE, DATASET_DIR
+    ASIN_INDEX_FILE, DATASET_DIR
 
 
 class DataSet(object):
-
-    def __init__(self, filename):
-        self._filename = filename
+    def __init__(self, function, type, difficulty):
+        self._function = function
+        self._type = type
+        self._difficulty = difficulty
 
     def get_batch_tensor(self, batch_size, num_epochs=1):
-        print('load dataset from ' + self._filename)
-        filename_queue = tf.train.string_input_producer([self._filename], num_epochs=num_epochs)
+        print('load dataset for {0} {1} {2}'.format(self._function, self._difficulty, self._type))
+        if self._difficulty:
+            filename_format = '{0}{1}_{2}_{3}_*.tfrecords'.format(DATASET_DIR, self._function, self._difficulty,
+                                                                  self._type)
+        else:
+            filename_format = '{0}{1}_{2}_*.tfrecords'.format(DATASET_DIR, self._function, self._type)
+        print('use filename format {0}'.format(filename_format))
+        filename_queue = tf.train.string_input_producer(tf.train.match_filenames_once(filename_format),
+                                                        num_epochs=num_epochs)
+        print(filename_queue)
         reader = tf.TFRecordReader()
         _, serialized_example = reader.read(filename_queue)
         features = tf.parse_single_example(
@@ -42,17 +50,18 @@ class DataSet(object):
         return images, targets
 
 
-def load_dataset(function):
-    train = DataSet(path.join(DATASET_DIR, '{0}_{1}.tfrecords'.format(function, 'train')))
-    validation = DataSet(path.join(DATASET_DIR, '{0}_{1}.tfrecords'.format(function, 'validation')))
-    test = DataSet(path.join(DATASET_DIR, '{0}_{1}.tfrecords'.format(function, 'test')))
+def load_dataset(function, difficulty):
+    train = DataSet(function, 'train', difficulty)
+    validation = DataSet(function, 'validation', difficulty)
+    test = DataSet(function, 'test', difficulty)
     ds = collections.namedtuple('Datasets', ['train', 'validation', 'test'])
     return ds(train=train, validation=validation, test=test)
 
 
 # Randomly split the whole list into train, validation, and test set.
 def make_random_split(train_size, validation_size, test_size):
-    print('make new random_split.json for train:{0}, validation:{1}, test:{2}'.format(train_size, validation_size, test_size))
+    print('make new random_split.json for train:{0}, validation:{1}, test:{2}'.format(train_size, validation_size,
+                                                                                      test_size))
     random_list = list(range(1, TOTAL_DATA_SIZE + 1))
     random.shuffle(random_list)
     result = {
@@ -68,7 +77,7 @@ def make_random_split(train_size, validation_size, test_size):
 # Target vector utils
 ########################
 def json2tv(index_list, function, difficulty):
-    print("making target vectors, function: " +function)
+    print("making target vectors, function: " + function)
     with open(RAW_METADATA_FILE) as raw_metadata_file:
         raw_metadata = json.load(raw_metadata_file)
     with open(ASIN_INDEX_FILE) as asin_index_file:
@@ -95,6 +104,7 @@ def json2tv(index_list, function, difficulty):
                 tv = [data['TOTAL']]
         tv_list.append(tv)
     return tv_list
+
 
 """
 def tv2res(tv):

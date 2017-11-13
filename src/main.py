@@ -130,7 +130,7 @@ if __name__ == '__main__':
     with tf.Session() as sess:
         # Process data
         print("Load dataset")
-        dataset = load_dataset(function)
+        dataset = load_dataset(function, difficulty)
         train_data, validation_data, test_data = dataset.train, dataset.validation, dataset.test
 
         # Define computation graph & Initialize
