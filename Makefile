@@ -7,3 +7,5 @@ load_metadata :
 	ls dataset/metadata | grep -P "^[\d]{1,4}\.[\w]+" | xargs —d”\n” rm
 process_metadata : src/process_metadata.py
 	python3 src/process_metadata.py
+tf_record : src/write_tfrecord.py
+	python3 src/write_tfrecord.py
