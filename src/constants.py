@@ -6,6 +6,7 @@ PROJECT_ROOT = path.dirname(path.dirname(path.abspath(__file__)))
 DATASET_DIR = path.join(PROJECT_ROOT, "dataset/")
 IMAGE_DIR = path.join(DATASET_DIR, "bin-images/")
 METADATA_DIR = path.join(DATASET_DIR, "metadata/")
+PARAM_DIR = path.join(DATASET_DIR, "parameters/")
 
 # File path
 METADATA_FILE = path.join(DATASET_DIR, "metadata.json")
