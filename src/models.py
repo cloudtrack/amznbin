@@ -40,30 +40,36 @@ class _Base(object):
         self._init_vars()
         self._init_ops()
 
-        # RMSE
-        self.rmse = tf.sqrt(tf.reduce_mean(tf.square(tf.subtract(self.target, self.pred))))
- 
-        # Accuracy
-        pred_labels = tf.cast(tf.greater_equal(self.pred, 0.2), tf.int32)
+        if (self.function == 'classify') :
+            # Accuracy
+            pred_labels = tf.cast(tf.greater_equal(self.pred, 0.2), tf.int32)
 
-        def pred_longer() :
-            total = tf.cast(tf.count_nonzero(pred_labels), tf.float32) 
-            where = tf.equal(pred_labels, tf.constant(1, dtype=tf.int32))
-            indices = tf.reshape(tf.where(where), [-1])
-            count = tf.map_fn(lambda x: tf.equal(pred_labels[x], tf.constant(1, dtype=tf.int32)), indices)
-            return tf.cast(tf.reduce_sum(count), tf.float32), total
+            def pred_longer() :
+                total = tf.cast(tf.count_nonzero(pred_labels), tf.float32) 
+                where = tf.equal(pred_labels, tf.constant(1, dtype=tf.int32))
+                indices = tf.reshape(tf.where(where), [-1])
+                count = tf.map_fn(lambda x: tf.cast(tf.equal(pred_labels[x], tf.constant(1, dtype=tf.int32)), tf.int32), indices, tf.int32)
+                return tf.cast(tf.reduce_sum(count), tf.float32), total
 
-        def target_longer() :
-            total = tf.cast(tf.count_nonzero(self.target), tf.float32)
-            where = tf.equal(self.target, tf.constant(1, dtype=tf.float32))
-            indices = tf.reshape(tf.where(where), [-1])
-            count = tf.map_fn(lambda x: tf.equal(pred_labels[x], tf.constant(1, dtype=tf.int32)), indices)
-            return tf.cast(tf.reduce_sum(count), tf.float32), total
+            def target_longer() :
+                total = tf.cast(tf.count_nonzero(self.target), tf.float32)
+                where = tf.equal(self.target, tf.constant(1, dtype=tf.float32))
+                indices = tf.reshape(tf.where(where), [-1])
+                count = tf.map_fn(lambda x: tf.cast(tf.equal(pred_labels[x], tf.constant(1, dtype=tf.int32)), tf.int32), indices, tf.int32)
+                return tf.cast(tf.reduce_sum(count), tf.float32), total
 
-        count, total = tf.cond(tf.greater(tf.cast(tf.count_nonzero(pred_labels), tf.float32), tf.cast(tf.count_nonzero(self.target), tf.float32)), lambda: pred_longer(), lambda: target_longer())
+            count, total = tf.cond(tf.greater(tf.cast(tf.count_nonzero(pred_labels), tf.float32), tf.cast(tf.count_nonzero(self.target), tf.float32)), lambda: pred_longer(), lambda: target_longer())
 
-        self.accuracy = tf.divide(count, total)
+            self.metric = tf.multiply(tf.divide(count, total), 100)
+        
+        elif (self.function == 'count') & (self.difficulty == 'moderate') :
+            # Accuracy 
+            self.metric = tf.multiply(tf.reduce_mean(tf.cast(tf.equal(tf.argmax(pred_labels, 1), tf.argmax(self.target, 1)), tf.float32)), 100)
 
+        else :
+            # RMSE
+            self.metric = tf.sqrt(tf.reduce_mean(tf.square(tf.subtract(self.target, self.pred))))
+        
     @property
     def filename(self):
         raise NotImplementedError()
@@ -77,7 +83,7 @@ class _Base(object):
         # Loss     
         if self.function == 'classify' :
             self.loss = tf.nn.sigmoid_cross_entropy_with_logits(labels=self.target, logits=self.pred)
-        elif self.difficulty == 'moderate' :
+        elif (self.function == 'count') & (self.difficulty == 'moderate') :
             self.loss = tf.nn.softmax_cross_entropy_with_logits(labels=self.target, logits=self.pred)
         else:
             self.loss = tf.reduce_sum(tf.square(tf.subtract(self.target, self.pred)))
@@ -113,7 +119,7 @@ class _Base(object):
         """
         print('eval_metric')
         feed_dict = {self.image: imagedata, self.target: targetdata}
-        return self.sess.run([self.rmse, self.accuracy, self.pred], feed_dict=feed_dict)
+        return self.sess.run([self.metric, self.pred], feed_dict=feed_dict)
 
     def eval_loss(self, imagedata, targetdata):
         """

@@ -10,16 +10,22 @@ from dataset import load_dataset
 from models import ALEXNET, VGGNET, LENET
 
 
-def train(model, sess, saver, train_data, valid_data, batch_size, max_iters, use_early_stop, early_stop_max_iter, function):
+def train(model, sess, saver, train_data, valid_data, batch_size, max_iters, use_early_stop, early_stop_max_iter, function, difficulty):
     """
     Trainer 
     """
     t0 = time.time()
     # Optimize
-    prev_valid_rmse = float("Inf")
+    prev_valid_metric = float("Inf")
     early_stop_iters = 0
     train_image_tensor, train_target_tensor = train_data.get_batch_tensor(batch_size)
     valid_image_tensor, valid_target_tensor = valid_data.get_batch_tensor(batch_size=VALIDATION_SIZE)
+
+    if (function == 'count') & (difficulty == 'hard') :
+        metric = 'rmse'
+    else :
+        metric = 'accuracy'
+
     for i in range(max_iters):
         print('==== New epoch started ====')
         # Training
@@ -34,10 +40,10 @@ def train(model, sess, saver, train_data, valid_data, batch_size, max_iters, use
                     images, labels = _sess.run([train_image_tensor, train_target_tensor])
                     model.train_iteration(images, labels)
                     train_error = model.eval_loss(images, labels)
-                    train_rmse, train_acc, train_pred = model.eval_metric(images, labels)
+                    train_metric, train_pred = model.eval_metric(images, labels)
                     print(model.model_filename)
-                    print("train accuracy: %.4f, train rmse: %.4f,  train loss: %.4f in %ds"
-                          % (train_acc, train_rmse, train_error, time.time() - t2))
+                    print("train " + metric + ": %.4f, train loss: %.4f in %ds" 
+                        % (train_metric, train_error, time.time() - t2))
             except tf.errors.OutOfRangeError:
                 print('Done training -- epoch limit reached')
             finally:
@@ -52,9 +58,9 @@ def train(model, sess, saver, train_data, valid_data, batch_size, max_iters, use
             try:
                 while not coord.should_stop():
                     images, labels = _sess.run([valid_image_tensor, valid_target_tensor])
-                    valid_rmse, valid_acc, valid_pred = model.eval_metric(images, labels)
+                    valid_metric, valid_pred = model.eval_metric(images, labels)
                     print(model.model_filename)
-                    print('validation accuracy: %.4f, validation rmse: %.4f' % (valid_acc, valid_rmse))
+                    print('validation ' + metric +': %.4f' % (valid_metric))
             except tf.errors.OutOfRangeError:
                 print('Done validation -- epoch limit reached')
             finally:
@@ -65,12 +71,12 @@ def train(model, sess, saver, train_data, valid_data, batch_size, max_iters, use
         if use_early_stop:
             print("%d/%d chances left" % (early_stop_max_iter - early_stop_iters, early_stop_max_iter))
             early_stop_iters += 1
-            if valid_rmse < prev_valid_rmse:
-                prev_valid_rmse = valid_rmse
+            if valid_metric < prev_valid_metric:
+                prev_valid_metric = valid_metric
                 early_stop_iters = 0
                 saver.save(sess, model.model_filename)
             elif early_stop_iters == early_stop_max_iter:
-                print("Early stopping ({} vs. {})...".format(prev_valid_rmse, valid_rmse))
+                print("Early stopping ({} vs. {})...".format(prev_valid_metric, valid_metric))
                 traintime = (time.time() - t0)
                 print("total training time %ds" % traintime)
                 return traintime
@@ -83,10 +89,10 @@ def test(model, sess, saver, test_data, log=True):
     Tester
     """
     batch_image, batch_target = test_data.get_batch_tensor(batch_size=TEST_SIZE)
-    test_rmse, _ = model.eval_metric(batch_image, batch_target)
+    test_metric, _ = model.eval_metric(batch_image, batch_target)
     if log:
-        print("Final test RMSE: {}".format(test_rmse))
-    return test_rmse
+        print("Final test metric: {}".format(test_metric))
+    return test_metric
 
 
 if __name__ == '__main__':
@@ -151,12 +157,12 @@ if __name__ == '__main__':
             traintime = train(
                 model, sess, saver, train_data, validation_data,
                 batch_size=batch_size, max_iters=max_iters,
-                use_early_stop=use_early_stop, early_stop_max_iter=early_stop_max_iter, function=function
+                use_early_stop=use_early_stop, early_stop_max_iter=early_stop_max_iter, function=function, difficulty = difficulty
             )
         elif mode == 'test':
             print('Loading best checkpointed model')
             saver.restore(sess, model.model_filename)
-            test_rmse = test(model, sess, saver, test_data)
+            test_metric = test(model, sess, saver, test_data)
 
         # if(args.outfile == 'modelname') :
         #     outfile = model.model_filename
