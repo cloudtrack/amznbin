@@ -8,6 +8,68 @@ from constants import TOTAL_DATA_SIZE, RANDOM_SPLIT_FILE, RAW_METADATA_FILE, \
     ASIN_INDEX_FILE, DATASET_DIR
 
 
+def prefetch_input_data(
+        reader,
+        filename_format,
+        num_epochs,
+        is_training,
+        batch_size,
+        values_per_shard,
+        input_queue_capacity_factor=16,
+        num_reader_threads=1,
+        shard_queue_name="filename_queue",
+        value_queue_name="input_queue"):
+    """
+    Prefetches string values from disk into an input queue.
+    In training the capacity of the queue is important because a larger queue
+    means better mixing of training examples between shards. The minimum number of
+    values kept in the queue is values_per_shard * input_queue_capacity_factor,
+    where input_queue_memory factor should be chosen to trade-off better mixing
+    with memory usage.
+
+    Args:
+      reader: Instance of tf.ReaderBase.
+      is_training: Boolean; whether prefetching for training or eval.
+      batch_size: Model batch size used to determine queue capacity.
+      values_per_shard: Approximate number of values per shard.
+      input_queue_capacity_factor: Minimum number of values to keep in the queue
+      in multiples of values_per_shard. See comments above.
+      num_reader_threads: Number of reader threads to fill the queue.
+    Returns:
+      A Queue containing prefetched string values.
+    """
+    if is_training:
+        print("is_training == True : RandomShuffleQueue")
+        filename_queue = tf.train.string_input_producer(
+            tf.train.match_filenames_once(filename_format),
+            shuffle=True, capacity=16, name=shard_queue_name, num_epochs=num_epochs
+        )
+        min_queue_examples = values_per_shard * input_queue_capacity_factor
+        capacity = min_queue_examples + 100 * batch_size
+        values_queue = tf.RandomShuffleQueue(
+            capacity=capacity,
+            min_after_dequeue=min_queue_examples,
+            dtypes=[tf.string],
+            name="random_" + value_queue_name
+        )
+    else:
+        print("is_training == False : FIFOQueue")
+        filename_queue = tf.train.string_input_producer(
+            tf.train.match_filenames_once(filename_format),
+            shuffle=False, capacity=1, name=shard_queue_name, num_epochs=num_epochs
+        )
+        capacity = values_per_shard + 3 * batch_size
+        values_queue = tf.FIFOQueue(
+            capacity=capacity, dtypes=[tf.string], name="fifo_" + value_queue_name
+        )
+    enqueue_ops = []
+    for _ in range(num_reader_threads):
+        _, value = reader.read(filename_queue)
+        enqueue_ops.append(values_queue.enqueue([value]))
+    tf.train.queue_runner.add_queue_runner(tf.train.queue_runner.QueueRunner(values_queue, enqueue_ops))
+    return values_queue
+
+
 class DataSet(object):
     def __init__(self, function, type, difficulty):
         self._function = function
@@ -24,25 +86,37 @@ class DataSet(object):
         print('use filename format {0}'.format(filename_format))
         filename_queue = tf.train.string_input_producer(tf.train.match_filenames_once(filename_format),
                                                         num_epochs=num_epochs)
-        print(filename_queue)
         reader = tf.TFRecordReader()
-        _, serialized_example = reader.read(filename_queue)
-        features = tf.parse_single_example(
+        # _, serialized_example = reader.read(filename_queue)
+        input_queue = prefetch_input_data(
+            reader,
+            filename_format=filename_format,
+            num_epochs=num_epochs,
+            is_training=True,  # if training, shuffle and random choice
+            batch_size=batch_size,
+            values_per_shard=2300,  # mixing between shards in training.
+            input_queue_capacity_factor=2,  # minimum number of shards to keep in the input queue.
+            num_reader_threads=1  # number of threads for prefetching SequenceExample protos.
+        )
+        serialized_example = input_queue.dequeue()
+        context, sequence = tf.parse_single_sequence_example(
             serialized_example,
-            features={
+            context_features={
                 'image': tf.FixedLenFeature([], tf.string),
-                'target': tf.FixedLenFeature([], tf.int64),
+                'target_size': tf.FixedLenFeature([], tf.int64),
+            },
+            sequence_features={
+                'target': tf.FixedLenSequenceFeature([], tf.int64),
             }
         )
         # Convert the image data from string back to the numbers
-        image = tf.reshape(tf.decode_raw(features['image'], tf.uint8), [224, 224, 3])
-        target = tf.reshape(tf.cast(features['target'], tf.int32), [1])
+        image = tf.reshape(tf.decode_raw(context['image'], tf.uint8), [224, 224, 3])
+        target = sequence['target']
         # Creates batches by randomly shuffling tensors
-        images, targets = tf.train.shuffle_batch(
+        images, targets = tf.train.batch(
             [image, target],
             batch_size=batch_size,
             capacity=batch_size * 3,
-            min_after_dequeue=batch_size,
             num_threads=4
         )
         print(images)

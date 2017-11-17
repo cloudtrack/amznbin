@@ -16,7 +16,11 @@ def _bytes_feature(value):
 
 
 def _int64_feature(value):
-    return tf.train.Feature(int64_list=tf.train.Int64List(value=value))
+    return tf.train.Feature(int64_list=tf.train.Int64List(value=[value]))
+
+
+def _int64_feature_list(values):
+  return tf.train.FeatureList(feature=[_int64_feature(v) for v in values])
 
 
 def write_tfrecord(training_type, difficulty=None):
@@ -37,14 +41,20 @@ def write_tfrecord(training_type, difficulty=None):
                 img = np.array(Image.open('%s%05d.jpg' % (IMAGE_DIR, current_chunk[j])))
                 target = targets[j]
                 # Create a feature
-                feature = {
+                features = tf.train.Features(feature={
                     'image': _bytes_feature(tf.compat.as_bytes(img.tostring())),
-                    'target': _int64_feature(target)
-                }
+                    'target_size': _int64_feature(len(target)),
+                })
+                feature_lists = tf.train.FeatureLists(feature_list={
+                    'target': _int64_feature_list(target)
+                })
                 # Create an example protocol buffer
-                example = tf.train.Example(features=tf.train.Features(feature=feature))
+                sequence_example = tf.train.SequenceExample(
+                    context=features, feature_lists=feature_lists
+                )
+                # example = tf.train.Example(features=tf.train.Features(feature=feature))
                 # Serialize to string and write on the file
-                writer.write(example.SerializeToString())
+                writer.write(sequence_example.SerializeToString())
             writer.close()
 
 
