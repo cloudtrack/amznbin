@@ -62,7 +62,7 @@ class _Base(object):
 
             self.metric = tf.multiply(tf.divide(count, total), 100)
         
-        elif (self.function == 'count') & (self.difficulty == 'moderate') :
+        elif (self.function == 'count') and (self.difficulty == 'moderate') :
             # Accuracy 
             self.metric = tf.multiply(tf.reduce_mean(tf.cast(tf.equal(tf.argmax(self.pred, 1), tf.argmax(self.target, 1)), tf.float32)), 100)
 
@@ -83,7 +83,7 @@ class _Base(object):
         # Loss     
         if self.function == 'classify' :
             self.loss = tf.nn.sigmoid_cross_entropy_with_logits(labels=self.target, logits=self.pred)
-        elif (self.function == 'count') & (self.difficulty == 'moderate') :
+        elif (self.function == 'count') and (self.difficulty == 'moderate'):
             self.loss = tf.nn.softmax_cross_entropy_with_logits(labels=self.target, logits=self.pred)
         else:
             self.loss = tf.reduce_sum(tf.square(tf.subtract(self.target, self.pred)))

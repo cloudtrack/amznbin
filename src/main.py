@@ -3,6 +3,7 @@ import json
 import time
 
 import tensorflow as tf
+from PIL import ImageDraw, Image
 from numpy.distutils.fcompiler import str2bool
 
 from constants import VALIDATION_SIZE, TEST_SIZE
@@ -10,7 +11,8 @@ from dataset import load_dataset
 from models import ALEXNET, VGGNET, LENET
 
 
-def train(model, sess, saver, train_data, valid_data, batch_size, max_iters, use_early_stop, early_stop_max_iter, function, difficulty):
+def train(model, sess, saver, train_data, valid_data, batch_size, max_iters, use_early_stop, early_stop_max_iter,
+          function, difficulty):
     """
     Trainer 
     """
@@ -21,9 +23,9 @@ def train(model, sess, saver, train_data, valid_data, batch_size, max_iters, use
     train_image_tensor, train_target_tensor = train_data.get_batch_tensor(batch_size)
     valid_image_tensor, valid_target_tensor = valid_data.get_batch_tensor(batch_size=VALIDATION_SIZE)
 
-    if (function == 'count') & (difficulty == 'hard') :
+    if function == 'count' and difficulty == 'hard':
         metric = 'rmse'
-    else :
+    else:
         metric = 'accuracy'
 
     for i in range(max_iters):
@@ -38,12 +40,16 @@ def train(model, sess, saver, train_data, valid_data, batch_size, max_iters, use
                     t2 = time.time()
                     print('train - get next batch')
                     images, labels = _sess.run([train_image_tensor, train_target_tensor])
+                    # Debug
+                    # img = Image.fromarray(images[0])
+                    # draw = ImageDraw.Draw(img)
+                    # draw.text((0, 0), 'label: {0}'.format(labels[0]), (255, 255, 255))
+                    # img.show()
                     model.train_iteration(images, labels)
-                    train_error = model.eval_loss(images, labels)
+                    model.eval_loss(images, labels)
                     train_metric, train_pred = model.eval_metric(images, labels)
                     print(model.model_filename)
-                    print("train " + metric + ": %.4f, train loss: %.4f in %ds" 
-                        % (train_metric, train_error, time.time() - t2))
+                    print("train " + metric + ": %.4f in %ds" % (train_metric, time.time() - t2))
             except tf.errors.OutOfRangeError:
                 print('Done training -- epoch limit reached')
             finally:
@@ -60,7 +66,7 @@ def train(model, sess, saver, train_data, valid_data, batch_size, max_iters, use
                     images, labels = _sess.run([valid_image_tensor, valid_target_tensor])
                     valid_metric, valid_pred = model.eval_metric(images, labels)
                     print(model.model_filename)
-                    print('validation ' + metric +': %.4f' % (valid_metric))
+                    print('validation ' + metric + ': %.4f' % (valid_metric))
             except tf.errors.OutOfRangeError:
                 print('Done validation -- epoch limit reached')
             finally:
@@ -105,7 +111,8 @@ if __name__ == '__main__':
                         help='the name of the model to use', required=True)
     parser.add_argument('--mode', metavar='MODE', type=str, choices=['train', 'test'],
                         help='the mode to run the program in', default='train', required=True)
-    parser.add_argument('--function', metavar='FUNCTION', type=str, choices=['classify', 'count'], default='count', required=True)
+    parser.add_argument('--function', metavar='FUNCTION', type=str, choices=['classify', 'count'], default='count',
+                        required=True)
 
     # Optional
     parser.add_argument('--batch', metavar='BATCH_SIZE', type=int, default=5000,
@@ -118,7 +125,8 @@ if __name__ == '__main__':
     parser.add_argument('--max-iters', metavar='MAX_ITERS', type=int, default=100,
                         help='the maximum number of iterations to allow the model to train for')
     parser.add_argument('--outfile', type=str, default='modelname', help='output file name')
-    parser.add_argument('--difficulty', type=str, default='moderate', choices=['moderate', 'hard'], help='difficulty of task')    
+    parser.add_argument('--difficulty', type=str, default='moderate', choices=['moderate', 'hard'],
+                        help='difficulty of task')
 
     # Parse args
     args = parser.parse_args()
@@ -134,22 +142,22 @@ if __name__ == '__main__':
     difficulty = args.difficulty
 
     with tf.Session() as sess:
-        # Process data
-        print("Load dataset")
-        dataset = load_dataset(function, difficulty)
-        train_data, validation_data, test_data = dataset.train, dataset.validation, dataset.test
-
         # Define computation graph & Initialize
         print('Building network & initializing variables')
         if model_name == 'ALEXNET':
             model = ALEXNET(function, learning_rate, difficulty)
-        elif model_name == 'VGGNET' :
+        elif model_name == 'VGGNET':
             model = VGGNET(function, learning_rate, difficulty)
-        else :
+        else:
             model = LENET(function, learning_rate, difficulty)
 
         model.init_sess(sess)
         saver = tf.train.Saver()
+
+        # Process data
+        print("Load dataset")
+        dataset = load_dataset(function, difficulty, model.OUTPUT)
+        train_data, validation_data, test_data = dataset.train, dataset.validation, dataset.test
 
         # Train
         traintime = 0
@@ -157,7 +165,8 @@ if __name__ == '__main__':
             traintime = train(
                 model, sess, saver, train_data, validation_data,
                 batch_size=batch_size, max_iters=max_iters,
-                use_early_stop=use_early_stop, early_stop_max_iter=early_stop_max_iter, function=function, difficulty = difficulty
+                use_early_stop=use_early_stop, early_stop_max_iter=early_stop_max_iter, function=function,
+                difficulty=difficulty
             )
         elif mode == 'test':
             print('Loading best checkpointed model')
