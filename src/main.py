@@ -130,7 +130,7 @@ if __name__ == '__main__':
                         required=True)
 
     # Optional
-    parser.add_argument('--batch', metavar='BATCH_SIZE', type=int, default=5000,
+    parser.add_argument('--batch', metavar='BATCH_SIZE', type=int, default=5,
                         help='the batch size to use when doing gradient descent')
     parser.add_argument('--learning-rate', metavar='LEARNING-RATE', type=float, default=0.0025)
     parser.add_argument('--no-early', type=str2bool, default=False, help='disable early stopping')
