@@ -71,10 +71,11 @@ def prefetch_input_data(
 
 
 class DataSet(object):
-    def __init__(self, function, type, difficulty):
+    def __init__(self, function, type, difficulty, output_len):
         self._function = function
         self._type = type
         self._difficulty = difficulty
+        self._output_len = output_len
 
     def get_batch_tensor(self, batch_size, num_epochs=1):
         print('load dataset for {0} {1} {2}'.format(self._function, self._difficulty, self._type))
@@ -103,7 +104,6 @@ class DataSet(object):
             serialized_example,
             context_features={
                 'image': tf.FixedLenFeature([], tf.string),
-                'target_size': tf.FixedLenFeature([], tf.int64),
             },
             sequence_features={
                 'target': tf.FixedLenSequenceFeature([], tf.int64),
@@ -111,7 +111,7 @@ class DataSet(object):
         )
         # Convert the image data from string back to the numbers
         image = tf.reshape(tf.decode_raw(context['image'], tf.uint8), [224, 224, 3])
-        target_size = 1  # TODO
+        target_size = self._output_len
         target = tf.reshape(sequence['target'], [target_size])
         # Creates batches by randomly shuffling tensors
         images, targets = tf.train.batch(
@@ -125,10 +125,10 @@ class DataSet(object):
         return images, targets
 
 
-def load_dataset(function, difficulty):
-    train = DataSet(function, 'train', difficulty)
-    validation = DataSet(function, 'validation', difficulty)
-    test = DataSet(function, 'test', difficulty)
+def load_dataset(function, difficulty, output_len):
+    train = DataSet(function, 'train', difficulty, output_len)
+    validation = DataSet(function, 'validation', difficulty, output_len)
+    test = DataSet(function, 'test', difficulty, output_len)
     ds = collections.namedtuple('Datasets', ['train', 'validation', 'test'])
     return ds(train=train, validation=validation, test=test)
 

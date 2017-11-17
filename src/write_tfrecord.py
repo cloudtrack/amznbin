@@ -48,7 +48,6 @@ def write_tfrecord(training_type, difficulty=None):
                 # Create a feature
                 features = tf.train.Features(feature={
                     'image': _bytes_feature(tf.compat.as_bytes(img.tostring())),
-                    'target_size': _int64_feature(len(target)),
                 })
                 feature_lists = tf.train.FeatureLists(feature_list={
                     'target': _int64_feature_list(target)
