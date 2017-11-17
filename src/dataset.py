@@ -111,7 +111,8 @@ class DataSet(object):
         )
         # Convert the image data from string back to the numbers
         image = tf.reshape(tf.decode_raw(context['image'], tf.uint8), [224, 224, 3])
-        target = sequence['target']
+        target_size = 1  # TODO
+        target = tf.reshape(sequence['target'], [target_size])
         # Creates batches by randomly shuffling tensors
         images, targets = tf.train.batch(
             [image, target],
