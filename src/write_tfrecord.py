@@ -40,11 +40,6 @@ def write_tfrecord(training_type, difficulty=None):
             for j in range(len(current_chunk)):
                 img = np.array(Image.open('%s%05d.jpg' % (IMAGE_DIR, current_chunk[j])))
                 target = targets[j]
-                if i == 0 and j == 0:
-                    print('show the first feature')
-                    print('image: {0}'.format(img.tostring()))
-                    print('target_size: {0}'.format(len(target)))
-                    print('target: {0}'.format(target))
                 # Create a feature
                 features = tf.train.Features(feature={
                     'image': _bytes_feature(tf.compat.as_bytes(img.tostring())),
