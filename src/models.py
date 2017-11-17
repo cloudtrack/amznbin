@@ -183,7 +183,7 @@ class ALEXNET(_Base):
         pool2 = tf.nn.max_pool(lrn2, ksize=[1, 3, 3, 1], strides=[1, 2, 2, 1], padding='VALID')
 
         # conv3
-        kernel = tf.Variable(tf.truncated_normal([3, 3, 256, self.param['alexnet_conv3_kernel']], dtype=tf.float32, stddev=1e-1))
+        kernel = tf.Variable(tf.truncated_normal([3, 3, self.param['alexnet_conv2_kernel'], self.param['alexnet_conv3_kernel']], dtype=tf.float32, stddev=1e-1))
         conv = tf.nn.conv2d(pool2, kernel, [1, 1, 1, 1], padding='SAME')
         biases = tf.Variable(tf.constant(0.0, shape=[self.param['alexnet_conv3_kernel']], dtype=tf.float32), trainable=True)
         bias = tf.nn.bias_add(conv, biases)
@@ -377,13 +377,13 @@ class VGGNET(_Base):
         # fullyconnected7
         kernel = tf.Variable(tf.constant(0.0, shape=[self.param['vggnet_fc6_kernel2'], self.param['vggnet_fc7_kernel']], dtype=tf.float32), trainable=True)
         biases = tf.Variable(tf.constant(0.0, shape=[self.param['vggnet_fc7_kernel']], dtype=tf.float32), trainable=True)
-        fc7 = tf.nn.relu_layer(fc6, fc7W, fc7b)
+        fc7 = tf.nn.relu_layer(fc6, kernel, biases)
         self.variables += [kernel, biases]
 
         # fullyconnected8
         kernel = tf.Variable(tf.constant(0.0, shape=[self.param['vggnet_fc7_kernel'], self.OUTPUT], dtype=tf.float32), trainable=True)
         biases = tf.Variable(tf.constant(0.0, shape=[self.OUTPUT], dtype=tf.float32), trainable=True)
-        fc8 = tf.nn.xw_plus_b(fc7, fc8W, fc8b)
+        fc8 = tf.nn.xw_plus_b(fc7, kernel, biases)
         self.variables += [kernel, biases]
         
         if self.function == 'classify' :
@@ -435,7 +435,7 @@ class LENET(_Base):
         self.variables += [kernel, biases]
 
         # pool2
-        pool2 = tf.nn.max_pool(lrn2, ksize=[1, 4, 4, 1], strides=[1, 4, 4, 1], padding='VALID')
+        pool2 = tf.nn.max_pool(conv2, ksize=[1, 4, 4, 1], strides=[1, 4, 4, 1], padding='VALID')
  
         # fullyconnected3
         kernel = tf.Variable(tf.constant(0.0, shape=[self.param['lenet_fc3_kernel1'], self.param['lenet_fc3_kernel2']], dtype=tf.float32), trainable=True)
