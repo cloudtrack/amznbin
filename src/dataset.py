@@ -5,7 +5,7 @@ import random
 import tensorflow as tf
 
 from constants import TOTAL_DATA_SIZE, RANDOM_SPLIT_FILE, RAW_METADATA_FILE, \
-    ASIN_INDEX_FILE, DATASET_DIR
+    ASIN_INDEX_FILE, DATASET_DIR, MAXIMUM_COUNT
 
 
 def prefetch_input_data(
@@ -169,10 +169,10 @@ def json2tv(index_list, function, difficulty):
                     tv[tv_index] = 1
         elif function == "count":
             if difficulty == "moderate":
-                tv = [0] * 12
+                tv = [0] * (MAXIMUM_COUNT + 2)
                 quantity = data['TOTAL']
-                if quantity > 10:
-                    tv[11] = 1
+                if quantity > MAXIMUM_COUNT:
+                    tv[MAXIMUM_COUNT + 1] = 1
                 else:
                     tv[quantity] = 1
             else:
