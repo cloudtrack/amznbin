@@ -1,5 +1,4 @@
 import argparse
-import json
 import time
 
 import tensorflow as tf
@@ -20,8 +19,8 @@ def train(model, sess, saver, train_data, valid_data, batch_size, max_iters, use
     # Optimize
     prev_valid_metric = float("Inf")
     early_stop_iters = 0
-    train_image_tensor, train_target_tensor = train_data.get_batch_tensor(batch_size)
-    valid_image_tensor, valid_target_tensor = valid_data.get_batch_tensor(batch_size=VALIDATION_SIZE)
+    train_image_tensor, train_image_index_tensor = train_data.get_batch_tensor(batch_size)
+    valid_image_tensor, valid_image_index_tensor = valid_data.get_batch_tensor(batch_size=VALIDATION_SIZE)
 
     if function == 'count' and difficulty == 'hard':
         metric = 'rmse'
@@ -39,7 +38,8 @@ def train(model, sess, saver, train_data, valid_data, batch_size, max_iters, use
                 while not coord.should_stop():
                     t2 = time.time()
                     print('train - get next batch')
-                    images, labels = _sess.run([train_image_tensor, train_target_tensor])
+                    images, indices = _sess.run([train_image_tensor, train_image_index_tensor])
+                    labels = train_data.get_labels_from_indices(indices, function, difficulty)
                     # Debug
                     # img = Image.fromarray(images[0])
                     # draw = ImageDraw.Draw(img)
@@ -63,7 +63,8 @@ def train(model, sess, saver, train_data, valid_data, batch_size, max_iters, use
             threads = tf.train.start_queue_runners(sess=_sess, coord=coord)
             try:
                 while not coord.should_stop():
-                    images, labels = _sess.run([valid_image_tensor, valid_target_tensor])
+                    images, indices = _sess.run([valid_image_tensor, valid_image_index_tensor])
+                    labels = valid_data.get_labels_from_indices(indices, function, difficulty)
                     valid_metric, valid_pred = model.eval_metric(images, labels)
                     print(model.model_filename)
                     print('validation ' + metric + ': %.4f' % (valid_metric))
@@ -94,11 +95,25 @@ def test(model, sess, saver, test_data, log=True):
     """
     Tester
     """
-    batch_image, batch_target = test_data.get_batch_tensor(batch_size=TEST_SIZE)
-    test_metric, _ = model.eval_metric(batch_image, batch_target)
-    if log:
-        print("Final test metric: {}".format(test_metric))
-    return test_metric
+    batch_image, batch_image_index = test_data.get_batch_tensor(batch_size=TEST_SIZE)
+    with tf.Session() as _sess:
+        _sess.run(tf.local_variables_initializer())
+        coord = tf.train.Coordinator()
+        threads = tf.train.start_queue_runners(sess=_sess, coord=coord)
+        test_metric = None
+        try:
+            while not coord.should_stop():
+                print('train - get next batch')
+                images, indices = _sess.run([batch_image, batch_image_index])
+                labels = test_data.get_labels_from_indices(indices, function, difficulty)
+                test_metric, _ = model.eval_metric(images, labels)
+                print("Final test metric: {}".format(test_metric))
+        except tf.errors.OutOfRangeError:
+            print('Done training -- epoch limit reached')
+        finally:
+            coord.request_stop()
+            coord.join(threads)
+        return test_metric
 
 
 if __name__ == '__main__':
@@ -156,7 +171,7 @@ if __name__ == '__main__':
 
         # Process data
         print("Load dataset")
-        dataset = load_dataset(function, difficulty, model.OUTPUT)
+        dataset = load_dataset()
         train_data, validation_data, test_data = dataset.train, dataset.validation, dataset.test
 
         # Train

@@ -10,15 +10,12 @@ from constants import TOTAL_DATA_SIZE, RANDOM_SPLIT_FILE, RAW_METADATA_FILE, \
 
 def prefetch_input_data(
         reader,
-        filename_format,
-        num_epochs,
+        filename_queue,
         is_training,
         batch_size,
         values_per_shard,
         input_queue_capacity_factor=16,
-        num_reader_threads=1,
-        shard_queue_name="filename_queue",
-        value_queue_name="input_queue"):
+        num_reader_threads=1):
     """
     Prefetches string values from disk into an input queue.
     In training the capacity of the queue is important because a larger queue
@@ -29,7 +26,6 @@ def prefetch_input_data(
 
     Args:
       reader: Instance of tf.ReaderBase.
-      is_training: Boolean; whether prefetching for training or eval.
       batch_size: Model batch size used to determine queue capacity.
       values_per_shard: Approximate number of values per shard.
       input_queue_capacity_factor: Minimum number of values to keep in the queue
@@ -40,28 +36,17 @@ def prefetch_input_data(
     """
     if is_training:
         print("is_training == True : RandomShuffleQueue")
-        filename_queue = tf.train.string_input_producer(
-            tf.train.match_filenames_once(filename_format),
-            shuffle=True, capacity=16, name=shard_queue_name, num_epochs=num_epochs
-        )
         min_queue_examples = values_per_shard * input_queue_capacity_factor
         capacity = min_queue_examples + 100 * batch_size
         values_queue = tf.RandomShuffleQueue(
             capacity=capacity,
             min_after_dequeue=min_queue_examples,
             dtypes=[tf.string],
-            name="random_" + value_queue_name
         )
     else:
         print("is_training == False : FIFOQueue")
-        filename_queue = tf.train.string_input_producer(
-            tf.train.match_filenames_once(filename_format),
-            shuffle=False, capacity=1, name=shard_queue_name, num_epochs=num_epochs
-        )
         capacity = values_per_shard + 3 * batch_size
-        values_queue = tf.FIFOQueue(
-            capacity=capacity, dtypes=[tf.string], name="fifo_" + value_queue_name
-        )
+        values_queue = tf.FIFOQueue(capacity=capacity, dtypes=[tf.string])
     enqueue_ops = []
     for _ in range(num_reader_threads):
         _, value = reader.read(filename_queue)
@@ -71,64 +56,91 @@ def prefetch_input_data(
 
 
 class DataSet(object):
-    def __init__(self, function, type, difficulty, output_len):
-        self._function = function
-        self._type = type
-        self._difficulty = difficulty
-        self._output_len = output_len
+    def __init__(self, data_type):
+        self._data_type = data_type
+        self.raw_metadata = None
+        self.asin_index_map = None
 
     def get_batch_tensor(self, batch_size, num_epochs=1):
-        print('load dataset for {0} {1} {2}'.format(self._function, self._difficulty, self._type))
-        if self._difficulty:
-            filename_format = '{0}{1}_{2}_{3}_*.tfrecords'.format(DATASET_DIR, self._function, self._difficulty,
-                                                                  self._type)
-        else:
-            filename_format = '{0}{1}_{2}_*.tfrecords'.format(DATASET_DIR, self._function, self._type)
+        print('load dataset for {0}'.format(self._data_type))
+        filename_format = '{0}{1}_*.tfrecords'.format(DATASET_DIR, self._data_type)
         print('use filename format {0}'.format(filename_format))
-        filename_queue = tf.train.string_input_producer(tf.train.match_filenames_once(filename_format),
-                                                        num_epochs=num_epochs)
         reader = tf.TFRecordReader()
-        # _, serialized_example = reader.read(filename_queue)
+        is_training = (self._data_type == 'train')
+        filename_queue = tf.train.string_input_producer(
+            tf.train.match_filenames_once(filename_format),
+            shuffle=is_training,
+            num_epochs=num_epochs
+        )
         input_queue = prefetch_input_data(
             reader,
-            filename_format=filename_format,
-            num_epochs=num_epochs,
-            is_training=True,  # if training, shuffle and random choice
+            filename_queue=filename_queue,
+            is_training=is_training,
             batch_size=batch_size,
-            values_per_shard=2300,  # mixing between shards in training.
+            values_per_shard=2000,  # mixing between shards in training.
             input_queue_capacity_factor=2,  # minimum number of shards to keep in the input queue.
-            num_reader_threads=1  # number of threads for prefetching SequenceExample protos.
+            num_reader_threads=4  # number of threads for prefetching SequenceExample protos.
         )
-        serialized_example = input_queue.dequeue()
-        context, sequence = tf.parse_single_sequence_example(
-            serialized_example,
-            context_features={
+        serialized = input_queue.dequeue()
+        features = tf.parse_single_example(
+            serialized,
+            features={
                 'image': tf.FixedLenFeature([], tf.string),
+                'index': tf.FixedLenFeature([], tf.int64),
             },
-            sequence_features={
-                'target': tf.FixedLenSequenceFeature([], tf.int64),
-            }
+            name='features'
         )
-        # Convert the image data from string back to the numbers
-        image = tf.reshape(tf.decode_raw(context['image'], tf.uint8), [224, 224, 3])
-        target_size = self._output_len
-        target = tf.reshape(sequence['target'], [target_size])
-        # Creates batches by randomly shuffling tensors
-        images, targets = tf.train.batch(
-            [image, target],
+        image = tf.reshape(tf.decode_raw(features['image'], tf.uint8), [224, 224, 3])
+        index = features['index']
+
+        min_after_dequeue = batch_size * 3
+        capacity = min_after_dequeue + 10 * batch_size
+        images, indices = tf.train.shuffle_batch(
+            [image, index],
             batch_size=batch_size,
-            capacity=batch_size * 3,
+            capacity=capacity,
+            min_after_dequeue=min_after_dequeue,
             num_threads=4
         )
         print(images)
-        print(targets)
-        return images, targets
+        print(indices)
+        return images, indices
+
+    def get_labels_from_indices(self, index_list, function, difficulty):
+        if not self.raw_metadata:
+            with open(RAW_METADATA_FILE) as raw_metadata_file:
+                self.raw_metadata = json.load(raw_metadata_file)
+        tv_list = []
+        tv = []
+        for index in index_list:
+            data = self.raw_metadata[index]
+            if function == "classify":
+                if not self.asin_index_map:
+                    with open(ASIN_INDEX_FILE) as asin_index_file:
+                        self.asin_index_map = json.load(asin_index_file)
+                tv = [0] * len(self.asin_index_map.keys())
+                for asin in data['DATA'].keys():
+                    tv_index = self.asin_index_map.get(asin)
+                    if tv_index:
+                        tv[tv_index] = 1
+            elif function == "count":
+                if difficulty == "moderate":
+                    tv = [0] * (MAXIMUM_COUNT + 2)
+                    quantity = data['TOTAL']
+                    if quantity > MAXIMUM_COUNT:
+                        tv[MAXIMUM_COUNT + 1] = 1
+                    else:
+                        tv[quantity] = 1
+                else:
+                    tv = [data['TOTAL']]
+            tv_list.append(tv)
+        return tv_list
 
 
-def load_dataset(function, difficulty, output_len):
-    train = DataSet(function, 'train', difficulty, output_len)
-    validation = DataSet(function, 'validation', difficulty, output_len)
-    test = DataSet(function, 'test', difficulty, output_len)
+def load_dataset():
+    train = DataSet('train')
+    validation = DataSet('validation')
+    test = DataSet('test')
     ds = collections.namedtuple('Datasets', ['train', 'validation', 'test'])
     return ds(train=train, validation=validation, test=test)
 
@@ -146,39 +158,6 @@ def make_random_split(train_size, validation_size, test_size):
     }
     with open(RANDOM_SPLIT_FILE, 'w') as random_split_file:
         json.dump(result, random_split_file)
-
-
-########################
-# Target vector utils
-########################
-def json2tv(index_list, function, difficulty):
-    print("making target vectors, function: " + function)
-    with open(RAW_METADATA_FILE) as raw_metadata_file:
-        raw_metadata = json.load(raw_metadata_file)
-    with open(ASIN_INDEX_FILE) as asin_index_file:
-        asin_index_map = json.load(asin_index_file)
-    tv_list = []
-    tv = []
-    for index in index_list:
-        data = raw_metadata[index]
-        if function == "classify":
-            tv = [0] * len(asin_index_map.keys())
-            for asin in data['DATA'].keys():
-                tv_index = asin_index_map.get(asin)
-                if tv_index != None:
-                    tv[tv_index] = 1
-        elif function == "count":
-            if difficulty == "moderate":
-                tv = [0] * (MAXIMUM_COUNT + 2)
-                quantity = data['TOTAL']
-                if quantity > MAXIMUM_COUNT:
-                    tv[MAXIMUM_COUNT + 1] = 1
-                else:
-                    tv[quantity] = 1
-            else:
-                tv = [data['TOTAL']]
-        tv_list.append(tv)
-    return tv_list
 
 
 """

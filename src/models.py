@@ -1,8 +1,10 @@
-import numpy as np
-import tensorflow as tf
 import json
 
+import numpy as np
+import tensorflow as tf
+
 from constants import IMAGE_SIZE, CLASS_SIZE, PARAM_DIR
+
 
 def print_activations(t):
     print(t.op.name, ' ', t.get_shape().as_list())
@@ -40,7 +42,7 @@ class _Base(object):
         self._init_vars()
         self._init_ops()
 
-        if (self.function == 'classify') :
+        if self.function == 'classify':
             # Accuracy
             pred_labels = tf.cast(tf.greater_equal(self.pred, 0.2), tf.int32)
 
@@ -81,9 +83,9 @@ class _Base(object):
     def _init_ops(self):
         """ Calculates loss and performs gradient descent """
         # Loss     
-        if self.function == 'classify' :
+        if self.function == 'classify':
             self.loss = tf.nn.sigmoid_cross_entropy_with_logits(labels=self.target, logits=self.pred)
-        elif (self.function == 'count') and (self.difficulty == 'moderate'):
+        elif self.function == 'count' and self.difficulty == 'moderate':
             self.loss = tf.nn.softmax_cross_entropy_with_logits(labels=self.target, logits=self.pred)
         else:
             self.loss = tf.reduce_sum(tf.square(tf.subtract(self.target, self.pred)))
@@ -104,29 +106,29 @@ class _Base(object):
         self.sess.run(init_g)
         self.sess.run(init_l)        
 
-    def train_iteration(self, imagedata, targetdata):
+    def train_iteration(self, image_data, target_data):
         """
         Runs each train iteration
         """
         print('train_iteration')
-        feed_dict = {self.image: imagedata, self.target: targetdata}
+        feed_dict = {self.image: image_data, self.target: target_data}
         self.sess.run(self.optimize_steps, feed_dict=feed_dict)
         self._iters += 1
 
-    def eval_metric(self, imagedata, targetdata):
+    def eval_metric(self, image_data, target_data):
         """ 
         Calculates RMSE 
         """
         print('eval_metric')
-        feed_dict = {self.image: imagedata, self.target: targetdata}
+        feed_dict = {self.image: image_data, self.target: target_data}
         return self.sess.run([self.metric, self.pred], feed_dict=feed_dict)
 
-    def eval_loss(self, imagedata, targetdata):
+    def eval_loss(self, image_data, target_data):
         """
         Calculates loss
         """
         print('eval_loss')
-        feed_dict = {self.image: imagedata, self.target: targetdata}
+        feed_dict = {self.image: image_data, self.target: target_data}
         return self.sess.run(self.loss, feed_dict=feed_dict)
 
 
