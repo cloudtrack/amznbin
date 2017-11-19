@@ -20,7 +20,7 @@ def train(model, sess, saver, train_data, valid_data, batch_size, max_iters, use
     prev_valid_metric = float("Inf")
     early_stop_iters = 0
     train_image_tensor, train_image_index_tensor = train_data.get_batch_tensor(batch_size)
-    valid_image_tensor, valid_image_index_tensor = valid_data.get_batch_tensor(batch_size=VALIDATION_SIZE)
+    valid_image_tensor, valid_image_index_tensor = valid_data.get_batch_tensor(batch_size)
 
     if function == 'count' and difficulty == 'hard':
         metric = 'rmse'
@@ -64,7 +64,6 @@ def train(model, sess, saver, train_data, valid_data, batch_size, max_iters, use
                     images, indices = _sess.run([valid_image_tensor, valid_image_index_tensor])
                     labels = valid_data.get_labels_from_indices(indices, function, difficulty)
                     valid_metric, valid_pred = model.eval_metric(images, labels)
-                    print(model.model_filename)
                     print('validation ' + metric + ': %.4f' % (valid_metric))
             except tf.errors.OutOfRangeError:
                 print('Done validation -- epoch limit reached')
@@ -89,25 +88,29 @@ def train(model, sess, saver, train_data, valid_data, batch_size, max_iters, use
             saver.save(sess, model.model_filename)
 
 
-def test(model, sess, saver, test_data, log=True):
+def test(model, sess, saver, test_data, function, difficulty, log=True):
     """
     Tester
     """
     batch_image, batch_image_index = test_data.get_batch_tensor(batch_size=TEST_SIZE)
+
+    if function == 'count' and difficulty == 'hard':
+        metric = 'rmse'
+    else:
+        metric = 'accuracy'
+
     with tf.Session() as _sess:
         _sess.run(tf.local_variables_initializer())
         coord = tf.train.Coordinator()
         threads = tf.train.start_queue_runners(sess=_sess, coord=coord)
-        test_metric = None
         try:
             while not coord.should_stop():
-                print('train - get next batch')
                 images, indices = _sess.run([batch_image, batch_image_index])
                 labels = test_data.get_labels_from_indices(indices, function, difficulty)
                 test_metric, _ = model.eval_metric(images, labels)
-                print("Final test metric: {}".format(test_metric))
+                print('test ' + metric + ': %.4f' % (test_metric))
         except tf.errors.OutOfRangeError:
-            print('Done training -- epoch limit reached')
+            print('Something went wrong while testing')
         finally:
             coord.request_stop()
             coord.join(threads)
@@ -175,25 +178,21 @@ if __name__ == '__main__':
         # Train
         traintime = 0
         if mode == 'train':
-            traintime = train(
-                model, sess, saver, train_data, validation_data,
-                batch_size=batch_size, max_iters=max_iters,
-                use_early_stop=use_early_stop, early_stop_max_iter=early_stop_max_iter, function=function,
-                difficulty=difficulty
-            )
-        elif mode == 'test':
-            print('Loading best checkpointed model')
-            saver.restore(sess, model.model_filename)
-            test_metric = test(model, sess, saver, test_data)
+            traintime = train(model, sess, saver, train_data, validation_data, batch_size=batch_size, max_iters=max_iters,
+                use_early_stop=use_early_stop, early_stop_max_iter=early_stop_max_iter, function=function, difficulty=difficulty)
+        
+        print('Loading best checkpointed model')
+        saver.restore(sess, model.model_filename)
+        test_metric = test(model, sess, saver, test_data, function, difficulty)
 
-        # if(args.outfile == 'modelname') :
-        #     outfile = model.model_filename
-        # else :
-        #     outfile = args.outfile
-        # if os.path.exists('out/'+outfile+'.txt') == False:
-        #     with open('out/'+outfile+'.txt', 'w') as myfile:
-        #         myfile.close()
-        #     os.chmod('out/'+outfile+'.txt', 0o777)
-        # with open('out/'+outfile+'.txt', "a") as myfile:
-        #     myfile.write(model.model_filename+(' %.4f %.4f %.4f %ds\n' % (TRAIN, VALID, TEST, traintime)))
-        #     myfile.close()
+        if(args.outfile == 'modelname') :
+            outfile = model.model_filename
+        else :
+            outfile = args.outfile
+        if os.path.exists('out/'+outfile+'.txt') == False:
+            with open('out/'+outfile+'.txt', 'w') as myfile:
+                myfile.close()
+            os.chmod('out/'+outfile+'.txt', 0o777)
+        with open('out/'+outfile+'.txt', "a") as myfile:
+            myfile.write(model.model_filename+(' %.4f %ds\n' % (test_metric, traintime)))
+            myfile.close()
