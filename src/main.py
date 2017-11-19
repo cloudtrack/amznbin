@@ -37,7 +37,6 @@ def train(model, sess, saver, train_data, valid_data, batch_size, max_iters, use
             try:
                 while not coord.should_stop():
                     t2 = time.time()
-                    print('train - get next batch')
                     images, indices = _sess.run([train_image_tensor, train_image_index_tensor])
                     labels = train_data.get_labels_from_indices(indices, function, difficulty)
                     # Debug
@@ -48,7 +47,6 @@ def train(model, sess, saver, train_data, valid_data, batch_size, max_iters, use
                     model.train_iteration(images, labels)
                     model.eval_loss(images, labels)
                     train_metric, train_pred = model.eval_metric(images, labels)
-                    print(model.model_filename)
                     print("train " + metric + ": %.4f in %ds" % (train_metric, time.time() - t2))
             except tf.errors.OutOfRangeError:
                 print('Done training -- epoch limit reached')
