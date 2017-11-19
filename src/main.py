@@ -20,7 +20,7 @@ def train(model, sess, saver, train_data, valid_data, batch_size, max_iters, use
     prev_valid_metric = float("Inf")
     early_stop_iters = 0
     train_image_tensor, train_image_index_tensor = train_data.get_batch_tensor(batch_size)
-    valid_image_tensor, valid_image_index_tensor = valid_data.get_batch_tensor(batch_size)
+    valid_image_tensor, valid_image_index_tensor = valid_data.get_batch_tensor(batch_size=VALIDATION_SIZE)
 
     if function == 'count' and difficulty == 'hard':
         metric = 'rmse'
