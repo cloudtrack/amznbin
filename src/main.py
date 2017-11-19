@@ -20,7 +20,7 @@ def train(model, sess, saver, train_data, valid_data, batch_size, max_iters, use
     prev_valid_metric = float("Inf")
     early_stop_iters = 0
     train_image_tensor, train_image_index_tensor = train_data.get_batch_tensor(batch_size)
-    valid_image_tensor, valid_image_index_tensor = valid_data.get_batch_tensor(batch_size=VALIDATION_SIZE)
+    valid_image_tensor, valid_image_index_tensor = valid_data.get_batch_tensor(batch_size)
 
     if function == 'count' and difficulty == 'hard':
         metric = 'rmse'
@@ -59,13 +59,18 @@ def train(model, sess, saver, train_data, valid_data, batch_size, max_iters, use
             _sess.run(tf.local_variables_initializer())
             coord = tf.train.Coordinator()
             threads = tf.train.start_queue_runners(sess=_sess, coord=coord)
+            final_valid_metric = 0
+            iterations = 0
             try:
                 while not coord.should_stop():
                     images, indices = _sess.run([valid_image_tensor, valid_image_index_tensor])
                     labels = valid_data.get_labels_from_indices(indices, function, difficulty)
                     valid_metric, valid_pred = model.eval_metric(images, labels)
                     print('validation ' + metric + ': %.4f' % (valid_metric))
+                    final_valid_metric = final_valid_metric + valid_metric
+                    iteration = iterations + 1
             except tf.errors.OutOfRangeError:
+                print('final validation ' + metric + ': %.4f' % (final_valid_metric/iterations))
                 print('Done validation -- epoch limit reached')
             finally:
                 coord.request_stop()
@@ -138,7 +143,7 @@ if __name__ == '__main__':
     parser.add_argument('--early-stop-max-iter', metavar='EARLY_STOP_MAX_ITER', type=int, default=300,
                         help='the maximum number of iterations to let the model continue training after reaching a '
                              'minimum validation error')
-    parser.add_argument('--max-iters', metavar='MAX_ITERS', type=int, default=100,
+    parser.add_argument('--max-iters', metavar='MAX_ITERS', type=int, default=500,
                         help='the maximum number of iterations to allow the model to train for')
     parser.add_argument('--outfile', type=str, default='modelname', help='output file name')
     parser.add_argument('--difficulty', type=str, default='moderate', choices=['moderate', 'hard'],
