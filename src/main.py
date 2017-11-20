@@ -1,6 +1,7 @@
 import argparse
 import time
 
+import numpy as np
 import tensorflow as tf
 from PIL import ImageDraw, Image
 from numpy.distutils.fcompiler import str2bool
@@ -38,6 +39,7 @@ def train(model, sess, saver, train_data, valid_data, batch_size, max_iters, use
                 while not coord.should_stop():
                     t2 = time.time()
                     images, indices = _sess.run([train_image_tensor, train_image_index_tensor])
+                    images = images - np.mean(images)
                     labels = train_data.get_labels_from_indices(indices, function, difficulty)
                     # Debug
                     # img = Image.fromarray(images[0])
@@ -138,7 +140,7 @@ if __name__ == '__main__':
     # Optional
     parser.add_argument('--batch', metavar='BATCH_SIZE', type=int, default=5,
                         help='the batch size to use when doing gradient descent')
-    parser.add_argument('--learning-rate', metavar='LEARNING-RATE', type=float, default=0.0025)
+    parser.add_argument('--learning-rate', metavar='LEARNING-RATE', type=float, default=0.01)
     parser.add_argument('--no-early', type=str2bool, default=False, help='disable early stopping')
     parser.add_argument('--early-stop-max-iter', metavar='EARLY_STOP_MAX_ITER', type=int, default=300,
                         help='the maximum number of iterations to let the model continue training after reaching a '
