@@ -102,11 +102,11 @@ def train(model, sess, saver, train_data, valid_data, batch_size, max_iters, use
             saver.save(sess, model.model_filename)
 
 
-def test(model, sess, saver, test_data, function, difficulty, log=True):
+def test(model, sess, saver, test_data, function, difficulty, batch_size, log=True):
     """
     Tester
     """
-    batch_image, batch_image_index = test_data.get_batch_tensor(batch_size=TEST_SIZE)
+    batch_image, batch_image_index = test_data.get_batch_tensor(batch_size=batch_size)
 
     if function == 'count' and difficulty == 'hard':
         metric = 'rmse'
@@ -157,6 +157,7 @@ if __name__ == '__main__':
     parser.add_argument('--outfile', type=str, default='modelname', help='output file name')
     parser.add_argument('--difficulty', type=str, default='moderate', choices=['moderate', 'hard'],
                         help='difficulty of task')
+    parser.add_argument('--continue-train', type=str2bool, default=False, help='whether to continue training from previously trained model')
 
     # Parse args
     args = parser.parse_args()
@@ -170,6 +171,7 @@ if __name__ == '__main__':
     early_stop_max_iter = args.early_stop_max_iter
     max_iters = args.max_iters
     difficulty = args.difficulty
+    continue_train = args.continue_train
 
     with tf.Session() as sess:
         # Define computation graph & Initialize
@@ -184,6 +186,9 @@ if __name__ == '__main__':
         model.init_sess(sess)
         saver = tf.train.Saver()
 
+        if continue_train :
+            saver.restore(sess, model.model_filename)
+
         # Process data
         print("Load dataset")
         dataset = load_dataset()
@@ -197,7 +202,7 @@ if __name__ == '__main__':
         
         print('Loading best checkpointed model')
         saver.restore(sess, model.model_filename)
-        test_metric = test(model, sess, saver, test_data, function, difficulty)
+        test_metric = test(model, sess, saver, test_data, function, difficulty, batch_size)
 
         if(args.outfile == 'modelname') :
             outfile = model.model_filename
