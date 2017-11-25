@@ -6,8 +6,8 @@ from constants import METADATA_DIR, RAW_METADATA_FILE, METADATA_FILE, TOTAL_DATA
 def make_raw_metadata():
     raw_metadata = [{}]
     for i in range(1, TOTAL_DATA_SIZE+1):
-        if i % 1000 == 0:
-            print("make_raw_metadata - processing (%d/%d)..." % (i, TOTAL_DATA_SIZE))
+#        if i % 1000 == 0:
+#            print("make_raw_metadata - processing (%d/%d)..." % (i, TOTAL_DATA_SIZE))
         file_path = '%s%05d.json' % (METADATA_DIR, i)
         json_data = json.loads(open(file_path).read())
         processed_json_data = {
@@ -29,8 +29,8 @@ def make_raw_metadata():
 def make_metadata(raw_metadata):
     metadata = {}
     for i in range(1, len(raw_metadata)):
-        if i % 1000 == 0:
-            print("make_metadata - processing (%d/%d)..." % (i, TOTAL_DATA_SIZE))
+#        if i % 1000 == 0:
+#            print("make_metadata - processing (%d/%d)..." % (i, TOTAL_DATA_SIZE))
         if raw_metadata[i]:
             quantity = raw_metadata[i]['TOTAL']
             if quantity > 0:
@@ -59,10 +59,10 @@ def make_target_vector_map(metadata):
     index = 0
     i = 0
     for asin in metadata.keys():
-        if i % 1000 == 0:
-            print("make_target_vector_map - processing (%d/%d)..." % (i, len(metadata.keys())))
+#        if i % 1000 == 0:
+#            print("make_target_vector_map - processing (%d/%d)..." % (i, len(metadata.keys())))
         i += 1
-        if metadata[asin]['repeat'] >= MINIMUM_REPEAT:
+        if metadata[asin]['repeat'] >= 4:
             if asin not in asin_index_map.keys():
                 asin_index_map[asin] = index
                 index_asin_map[index] = asin
@@ -82,9 +82,7 @@ def classify_images(asin_index_map, raw_metadata):
                 if not bin_index:
                     flag = False
             if flag:
-                valid_images.append('%05d' % i)
-            else:
-                invalid_images.append('%05d' % i)
+                valid_images.append(i)
     return valid_images, invalid_images
 
 
@@ -93,5 +91,5 @@ if __name__ == '__main__':
     raw_metadata = make_raw_metadata()
     metadata = make_metadata(raw_metadata)
     asin_index_map, index_asin_map = make_target_vector_map(metadata)
-    valid_images, invalid_images = count_images(asin_index_map, raw_metadata)
-    print (str(len(valid_images))+" "+str(len(invalid_images)))
+    valid_images, invalid_images = classify_images(asin_index_map, raw_metadata)
+    print ("valid: "+str(len(valid_images))+" invalid: "+str(len(invalid_images)))
