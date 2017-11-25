@@ -26,9 +26,9 @@ def make_raw_metadata():
     return raw_metadata
 
 
-def make_metadata(raw_metadata):
+def make_metadata(raw_metadata, valid_images):
     metadata = {}
-    for i in range(1, len(raw_metadata)):
+    for i in valid_images:
 #        if i % 1000 == 0:
 #            print("make_metadata - processing (%d/%d)..." % (i, TOTAL_DATA_SIZE))
         if raw_metadata[i]:
@@ -62,7 +62,7 @@ def make_target_vector_map(metadata):
 #        if i % 1000 == 0:
 #            print("make_target_vector_map - processing (%d/%d)..." % (i, len(metadata.keys())))
         i += 1
-        if metadata[asin]['repeat'] >= 4:
+        if metadata[asin]['repeat'] >= 3:
             if asin not in asin_index_map.keys():
                 asin_index_map[asin] = index
                 index_asin_map[index] = asin
@@ -72,7 +72,6 @@ def make_target_vector_map(metadata):
 
 def classify_images(asin_index_map, raw_metadata):
     valid_images = []
-    invalid_images = []
     for i in range(1, len(raw_metadata)):
         if raw_metadata[i]:
             bin_info = raw_metadata[i]['DATA']
@@ -83,13 +82,22 @@ def classify_images(asin_index_map, raw_metadata):
                     flag = False
             if flag:
                 valid_images.append(i)
-    return valid_images, invalid_images
+    return valid_images
 
 
 
 if __name__ == '__main__':
     raw_metadata = make_raw_metadata()
-    metadata = make_metadata(raw_metadata)
-    asin_index_map, index_asin_map = make_target_vector_map(metadata)
-    valid_images, invalid_images = classify_images(asin_index_map, raw_metadata)
-    print ("valid: "+str(len(valid_images))+" invalid: "+str(len(invalid_images)))
+    
+    valid_images = []
+    for i in range(1, TOTAL_DATA_SIZE+1):
+        valid_images.append(i)
+    
+    while True:
+        plen = len(valid_images)
+        metadata = make_metadata(raw_metadata, valid_images)
+        asin_index_map, index_asin_map = make_target_vector_map(metadata)
+        valid_images = classify_images(asin_index_map, raw_metadata)
+        if plen == len(valid_images):
+            break;
+    print ("valid: "+str(len(valid_images)))
