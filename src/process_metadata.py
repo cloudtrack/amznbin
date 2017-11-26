@@ -45,11 +45,13 @@ def make_raw_metadata():
     return raw_metadata
 
 
-def make_metadata(raw_metadata):
+def make_metadata(raw_metadata, valid images):
     metadata = {}
-    for i in range(1, len(raw_metadata)):
-        if i % 1000 == 0:
-            print("make_metadata - processing (%d/%d)..." % (i, TOTAL_DATA_SIZE))
+    cnt = 0
+    for i in valid_images:
+        if cnt % 1000 == 0:
+            print("make_metadata - processing (%d/%d)..." % (cnt, len(valid_images)))
+        cnt = cnt + 1
         if raw_metadata[i]:
             quantity = raw_metadata[i]['TOTAL']
             if quantity > 0:
@@ -86,8 +88,21 @@ def make_target_vector_map(metadata):
                 asin_index_map[asin] = index
                 index_asin_map[index] = asin
                 index += 1
-    print(str(index))
     return asin_index_map, index_asin_map
+
+def classify_images(asin_index_map, raw_metadata):
+    valid_images = []
+    for i in range(1, len(raw_metadata)):
+        if raw_metadata[i]:
+            bin_info = raw_metadata[i]['DATA']
+            flag = True
+            for bin_key in bin_info.keys():
+                bin_index = asin_index_map.get(bin_key)
+                if not bin_index:
+                    flag = False
+            if flag:
+                valid_images.append(i)
+    return valid_images
 
 
 if __name__ == '__main__':
@@ -96,12 +111,28 @@ if __name__ == '__main__':
     with open(RAW_METADATA_FILE, 'w') as raw_metadata_file:
         json.dump(raw_metadata, raw_metadata_file)
 
-    metadata = make_metadata(raw_metadata)
+
+    mmt = TOTAL_DATA_SIZE
+    rdc = TOTAL_DATA_SIZE
+
+    for i in range(1, TOTAL_DATA_SIZE + 1):
+        valid_images.append(i)
+
+    while mmt > 0 :
+        plen = len(valid_images)
+        prdc = rdc
+        
+        metadata = make_metadata(raw_metadata, valid_images)
+        asin_index_map, index_asin_map = make_target_vector_map(metadata)
+        valid_images = classify_images(asin_index_map, raw_metadata)
+
+        rdc = plen - len(valid_images)
+        mmt = mmt * 0.9 + (prdc - rdc) * 0.1
+    
     print("dumping " + METADATA_FILE)
     with open(METADATA_FILE, 'w') as metadata_file:
         json.dump(metadata, metadata_file)
 
-    asin_index_map, index_asin_map = make_target_vector_map(metadata)
     print("dumping " + ASIN_INDEX_FILE)
     with open(ASIN_INDEX_FILE, 'w') as asin_index_file:
         json.dump(asin_index_map, asin_index_file)
@@ -109,4 +140,10 @@ if __name__ == '__main__':
     with open(INDEX_ASIN_FILE, 'w') as index_asin_file:
         json.dump(index_asin_map, index_asin_file)
 
+    print("dumping " + VALID_IMAGES_FILE)
+    with open(VALID_IMAGES_FILE, 'w') as valid_images_file:
+        json.dump(valid_images, valid_images_file)
+
     print("Done processing metadata!")
+    print("images: " + str(len(valid_images)))
+    print("objects: " + str(len(asin_index_map)))

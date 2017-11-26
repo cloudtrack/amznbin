@@ -13,6 +13,7 @@ METADATA_FILE = path.join(DATASET_DIR, "metadata.json")
 RAW_METADATA_FILE = path.join(DATASET_DIR, "raw_metadata.json")
 ASIN_INDEX_FILE = path.join(DATASET_DIR, "asin_index_dic.json")
 INDEX_ASIN_FILE = path.join(DATASET_DIR, "index_asin_dic.json")
+VALID_IMAGES_FILE = path.join(DATASET_DIR, "valid_images.json")
 RANDOM_SPLIT_FILE = path.join(DATASET_DIR, "random_split.json")
 
 TOTAL_DATA_SIZE = 535234
