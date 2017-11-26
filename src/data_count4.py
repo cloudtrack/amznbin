@@ -69,33 +69,22 @@ def classify_images(asin_index_map, raw_metadata):
 
 
 if __name__ == '__main__':
-    f = open("4.txt",'w')
     mmt = TOTAL_DATA_SIZE
-    mimt = TOTAL_DATA_SIZE
-    mit = 0
+    rdc = TOTAL_DATA_SIZE
     raw_metadata = make_raw_metadata()
     
     valid_images = []
     for i in range(1, TOTAL_DATA_SIZE+1):
         valid_images.append(i)
     
-    while True:
+    while mmt > 0:
         plen = len(valid_images)
+        prdc = rdc
         metadata = make_metadata(raw_metadata, valid_images)
         asin_index_map = make_target_vector_map(metadata)
         valid_images = classify_images(asin_index_map, raw_metadata)
+        
         rdc = plen - len(valid_images)
-        mmt = mmt * 0.8 + rdc * 0.2
-        if mmt < mimt:
-            mimt = mmt
-            mit = 0
-        else:
-            mit = mit + 1
-        ps = str(len(valid_images)) + "\t" + str(rdc) + "\t" + str(mmt)
-        f.write(ps)
-        print(ps)
-        if (rdc == 0) or (mit >= 1000):
-            break;
-    f.write(str(len(asin_index_map)))
-    f.close()
-    print ("valid: "+str(len(valid_images)))
+        mmt = mmt * 0.95 + (prdc - rdc) * 0.05
+        
+        print(str(len(valid_images)) + "\t" + str(len(asin_index_map)) + "\t" + str(mmt))

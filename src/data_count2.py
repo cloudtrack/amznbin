@@ -69,25 +69,22 @@ def classify_images(asin_index_map, raw_metadata):
 
 
 if __name__ == '__main__':
-    f = open("2.txt",'w')
-    it = 0
-
+    mmt = TOTAL_DATA_SIZE
+    rdc = TOTAL_DATA_SIZE
     raw_metadata = make_raw_metadata()
     
     valid_images = []
     for i in range(1, TOTAL_DATA_SIZE+1):
         valid_images.append(i)
     
-    while True:
-        print(it)
-        it = it + 1
+    while mmt > 0:
         plen = len(valid_images)
+        prdc = rdc
         metadata = make_metadata(raw_metadata, valid_images)
         asin_index_map = make_target_vector_map(metadata)
         valid_images = classify_images(asin_index_map, raw_metadata)
-        f.write(str(plen) + " -> " + str(len(valid_images)) + "\n")
-        if plen == len(valid_images):
-            break;
-    f.write(str(len(asin_index_map)))
-    f.close()
-    print ("valid: "+str(len(valid_images)))
+        
+        rdc = plen - len(valid_images)
+        mmt = mmt * 0.95 + (prdc - rdc) * 0.05
+        
+        print(str(len(valid_images)) + "\t" + str(len(asin_index_map)) + "\t" + str(mmt))
