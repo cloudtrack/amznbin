@@ -6,8 +6,6 @@ from constants import METADATA_DIR, RAW_METADATA_FILE, METADATA_FILE, TOTAL_DATA
 def make_raw_metadata():
     raw_metadata = [{}]
     for i in range(1, TOTAL_DATA_SIZE+1):
-#        if i % 1000 == 0:
-#            print("make_raw_metadata - processing (%d/%d)..." % (i, TOTAL_DATA_SIZE))
         file_path = '%s%05d.json' % (METADATA_DIR, i)
         json_data = json.loads(open(file_path).read())
         processed_json_data = {
@@ -17,8 +15,7 @@ def make_raw_metadata():
         for bin_key in json_data['BIN_FCSKU_DATA'].keys():
             bin_meta = json_data['BIN_FCSKU_DATA'][bin_key]
             useful_meta = {
-                'name': bin_meta['name'],
-                'quantity': bin_meta['quantity'],
+                'a': 'a',
             }
             processed_json_data['DATA'][bin_key] = useful_meta
         raw_metadata.append(processed_json_data)
@@ -29,8 +26,6 @@ def make_raw_metadata():
 def make_metadata(raw_metadata, valid_images):
     metadata = {}
     for i in valid_images:
-#        if i % 1000 == 0:
-#            print("make_metadata - processing (%d/%d)..." % (i, TOTAL_DATA_SIZE))
         if raw_metadata[i]:
             quantity = raw_metadata[i]['TOTAL']
             if quantity > 0:
@@ -41,34 +36,21 @@ def make_metadata(raw_metadata, valid_images):
                     if asin in metadata:
                         # occurance
                         metadata[asin]['repeat'] = metadata[asin]['repeat'] + 1
-                        # quantity
-                        metadata[asin]['quantity'] = metadata[asin]['quantity'] + instance_info['quantity']
-                        metadata[asin]['bin_list'].append(i)
                     else:
                         metadata[asin] = {}
                         metadata[asin]['repeat'] = 1
-                        metadata[asin]['quantity'] = instance_info['quantity']
-                        metadata[asin]['name'] = instance_info['name']
-                        metadata[asin]['bin_list'] = [i]
     return metadata
 
 
 def make_target_vector_map(metadata):
     asin_index_map = {}
-    index_asin_map = {}
     index = 0
-    i = 0
     for asin in metadata.keys():
-#        if i % 1000 == 0:
-#            print("make_target_vector_map - processing (%d/%d)..." % (i, len(metadata.keys())))
-        i += 1
-        if metadata[asin]['repeat'] >= 3:
+        if metadata[asin]['repeat'] >= MINIMUM_REPEAT:
             if asin not in asin_index_map.keys():
                 asin_index_map[asin] = index
-                index_asin_map[index] = asin
                 index += 1
-    print(str(index))
-    return asin_index_map, index_asin_map
+    return asin_index_map
 
 def classify_images(asin_index_map, raw_metadata):
     valid_images = []
@@ -87,6 +69,10 @@ def classify_images(asin_index_map, raw_metadata):
 
 
 if __name__ == '__main__':
+    f = open(str(MINUMUM_REPEAT) + ".txt",'w')
+    mmt = TOTAL_DATA_SIZE
+    mimt = TOTAL_DATA_SIZE
+    mit = 0
     raw_metadata = make_raw_metadata()
     
     valid_images = []
@@ -96,8 +82,20 @@ if __name__ == '__main__':
     while True:
         plen = len(valid_images)
         metadata = make_metadata(raw_metadata, valid_images)
-        asin_index_map, index_asin_map = make_target_vector_map(metadata)
+        asin_index_map = make_target_vector_map(metadata)
         valid_images = classify_images(asin_index_map, raw_metadata)
-        if plen == len(valid_images):
+        rdc = plen - len(valid_images)
+        mmt = mmt * 0.8 + rdc * 0.2
+        if mmt < mimt:
+            mimt = mmt
+            mit = 0
+        else:
+            mit = mit + 1
+        ps = str(len(valid_images)) + "\t" + str(rdc) + "\t" + str(mmt)
+        f.write(ps)
+        print(ps)
+        if (rdc == 0) or (mit >= 1000):
             break;
+    f.write(str(len(asin_index_map)))
+    f.close()
     print ("valid: "+str(len(valid_images)))
