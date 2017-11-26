@@ -85,6 +85,6 @@ if __name__ == '__main__':
         valid_images = classify_images(asin_index_map, raw_metadata)
         
         rdc = plen - len(valid_images)
-        mmt = mmt * 0.95 + (prdc - rdc) * 0.05
+        mmt = mmt * 0.9 + (prdc - rdc) * 0.1
         
         print(str(len(valid_images)) + "\t" + str(len(asin_index_map)) + "\t" + str(mmt))
