@@ -19,7 +19,8 @@ def _int64_feature(value):
     return tf.train.Feature(int64_list=tf.train.Int64List(value=[value]))
 
 
-def write_tfrecord():
+# random_split.json 에 지정된 train, validation, test 데이터 매핑에 따라 tfrecord 를 청크별로 생성한다.
+def write_tfrecord(random_split_json):
     for function_type in ['train', 'validation', 'test']:
         index_list = random_split_json.get(function_type)
         index_chunks = [index_list[x:x + IMAGE_CHUNK_SIZE] for x in range(0, len(index_list), IMAGE_CHUNK_SIZE)]
@@ -65,4 +66,4 @@ if __name__ == '__main__':
         make_random_split(num_training, num_validation, num_test)
     with open(RANDOM_SPLIT_FILE, 'r') as random_split_file:
         random_split_json = json.load(random_split_file)
-    write_tfrecord()
+    write_tfrecord(random_split_json)
