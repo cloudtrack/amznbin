@@ -58,5 +58,5 @@ if __name__ == '__main__':
         'validation': valid_data_list[num_train:num_train + num_validation],
         'test': valid_data_list[num_train + num_validation:],
     }
-    print(random_split_json)
+    # print(random_split_json)
     make_tfrecord(random_split_json)
