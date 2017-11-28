@@ -1,11 +1,9 @@
 import collections
 import json
-import random
 
 import tensorflow as tf
 
-from constants import TOTAL_DATA_SIZE, RANDOM_SPLIT_FILE, RAW_METADATA_FILE, \
-    ASIN_INDEX_FILE, DATASET_DIR, MAXIMUM_COUNT
+from constants import RAW_METADATA_FILE, ASIN_INDEX_FILE, DATASET_DIR, MAXIMUM_COUNT
 
 
 def prefetch_input_data(
@@ -143,21 +141,6 @@ def load_dataset():
     test = DataSet('test')
     ds = collections.namedtuple('Datasets', ['train', 'validation', 'test'])
     return ds(train=train, validation=validation, test=test)
-
-
-# Randomly split the whole list into train, validation, and test set.
-def make_random_split(train_size, validation_size, test_size):
-    print('make new random_split.json for train:{0}, validation:{1}, test:{2}'.format(train_size, validation_size,
-                                                                                      test_size))
-    random_list = list(range(1, TOTAL_DATA_SIZE + 1))
-    random.shuffle(random_list)
-    result = {
-        'train': random_list[:train_size],
-        'validation': random_list[train_size:train_size + validation_size],
-        'test': random_list[train_size + validation_size:],
-    }
-    with open(RANDOM_SPLIT_FILE, 'w') as random_split_file:
-        json.dump(result, random_split_file)
 
 
 """
