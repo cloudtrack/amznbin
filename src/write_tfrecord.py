@@ -6,7 +6,8 @@ import numpy as np
 import tensorflow as tf
 from PIL import Image
 
-from constants import TOTAL_DATA_SIZE, VALIDATION_SIZE, TEST_SIZE, RANDOM_SPLIT_FILE, IMAGE_DIR, DATASET_DIR
+from constants import TOTAL_DATA_SIZE, VALIDATION_SIZE, TEST_SIZE, RANDOM_SPLIT_FILE, IMAGE_DIR, DATASET_DIR, \
+    VALID_IMAGES_FILE
 
 IMAGE_CHUNK_SIZE = 1000
 
@@ -46,12 +47,14 @@ def make_tfrecord(random_split_json):
 def make_random_split(train_size, validation_size, test_size):
     print('make new random_split.json for train:{0}, validation:{1}, test:{2}'
           .format(train_size, validation_size, test_size))
-    random_list = list(range(1, TOTAL_DATA_SIZE + 1))
-    random.shuffle(random_list)
+    # index_list = list(range(1, TOTAL_DATA_SIZE + 1))
+    with open(VALID_IMAGES_FILE, 'r') as valid_images_file:
+        index_list = json.load(valid_images_file)
+    random.shuffle(index_list)
     result = {
-        'train': random_list[:train_size],
-        'validation': random_list[train_size:train_size + validation_size],
-        'test': random_list[train_size + validation_size:],
+        'train': index_list[:train_size],
+        'validation': index_list[train_size:train_size + validation_size],
+        'test': index_list[train_size + validation_size:],
     }
     with open(RANDOM_SPLIT_FILE, 'w') as random_split_file:
         json.dump(result, random_split_file)

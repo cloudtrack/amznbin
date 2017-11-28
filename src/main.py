@@ -6,7 +6,6 @@ import tensorflow as tf
 from PIL import ImageDraw, Image
 from numpy.distutils.fcompiler import str2bool
 
-from constants import VALIDATION_SIZE, TEST_SIZE
 from dataset import load_dataset
 from models import ALEXNET, VGGNET, LENET
 
