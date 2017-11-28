@@ -46,7 +46,7 @@ def train(model, sess, saver, train_data, valid_data, batch_size, max_iters, use
                 while not coord.should_stop():
                     t2 = time.time()
                     images, indices = _sess.run([train_image_tensor, train_image_index_tensor])
-                    images = [color_scaler(image) - np.mean(image) for image in images]
+                    images = [color_scaler(image) for image in images]
                     labels = train_data.get_labels_from_indices(indices, function, difficulty)
                     # Debug
                     # img = Image.fromarray(images[0])
