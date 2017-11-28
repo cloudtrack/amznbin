@@ -6,8 +6,7 @@ import numpy as np
 import tensorflow as tf
 from PIL import Image
 
-from constants import TOTAL_DATA_SIZE, VALIDATION_SIZE, TEST_SIZE, RANDOM_SPLIT_FILE, IMAGE_DIR, DATASET_DIR, \
-    VALID_IMAGES_FILE
+from constants import TOTAL_DATA_SIZE, VALIDATION_RATIO, TEST_RATIO, IMAGE_DIR, DATASET_DIR, VALID_IMAGES_FILE
 
 IMAGE_CHUNK_SIZE = 1000
 
@@ -45,8 +44,7 @@ def make_tfrecord(random_split_json):
 
 # Randomly split the whole list into train, validation, and test set.
 def make_random_split(train_size, validation_size, test_size):
-    print('make new random_split.json for train:{0}, validation:{1}, test:{2}'
-          .format(train_size, validation_size, test_size))
+    print('make random_split for train:{0}, validation:{1}, test:{2}'.format(train_size, validation_size, test_size))
     # index_list = list(range(1, TOTAL_DATA_SIZE + 1))
     with open(VALID_IMAGES_FILE, 'r') as valid_images_file:
         index_list = json.load(valid_images_file)
@@ -56,17 +54,13 @@ def make_random_split(train_size, validation_size, test_size):
         'validation': index_list[train_size:train_size + validation_size],
         'test': index_list[train_size + validation_size:],
     }
-    with open(RANDOM_SPLIT_FILE, 'w') as random_split_file:
-        json.dump(result, random_split_file)
+    return result
 
 
 if __name__ == '__main__':
-    num_training = TOTAL_DATA_SIZE - (VALIDATION_SIZE + TEST_SIZE)
-    num_validation = VALIDATION_SIZE
-    num_test = TEST_SIZE
+    num_validation = int(TOTAL_DATA_SIZE * VALIDATION_RATIO)
+    num_test = int(TOTAL_DATA_SIZE * TEST_RATIO)
+    num_training = TOTAL_DATA_SIZE - (num_validation + num_test)
     print('train:{0}, validation:{1}, test:{2}'.format(num_training, num_validation, num_test))
-    if not tf.gfile.Exists(RANDOM_SPLIT_FILE):
-        make_random_split(num_training, num_validation, num_test)
-    with open(RANDOM_SPLIT_FILE, 'r') as random_split_file:
-        random_split_json = json.load(random_split_file)
+    random_split_json = make_random_split(num_training, num_validation, num_test)
     make_tfrecord(random_split_json)
