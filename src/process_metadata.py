@@ -115,9 +115,7 @@ if __name__ == '__main__':
     mmt = TOTAL_DATA_SIZE
     rdc = TOTAL_DATA_SIZE
 
-    valid_images = []
-    for i in range(1, TOTAL_DATA_SIZE + 1):
-        valid_images.append(i)
+    valid_images = list(range(1, TOTAL_DATA_SIZE + 1))
     it = 0
 
     while mmt > 0 :

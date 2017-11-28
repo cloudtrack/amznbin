@@ -1,12 +1,12 @@
 import json
+import random
 from os import path
 
 import numpy as np
 import tensorflow as tf
 from PIL import Image
 
-from constants import TOTAL_DATA_SIZE, VALIDATION_SIZE, TEST_SIZE, RANDOM_SPLIT_FILE, IMAGE_DIR, DATASET_DIR
-from dataset import make_random_split
+from constants import VALIDATION_RATIO, TEST_RATIO, IMAGE_DIR, DATASET_DIR, VALID_IMAGES_FILE
 
 IMAGE_CHUNK_SIZE = 1000
 
@@ -19,7 +19,8 @@ def _int64_feature(value):
     return tf.train.Feature(int64_list=tf.train.Int64List(value=[value]))
 
 
-def write_tfrecord():
+# random_split.json 에 지정된 train, validation, test 데이터 매핑에 따라 tfrecord 를 청크별로 생성한다.
+def make_tfrecord(random_split_json):
     for function_type in ['train', 'validation', 'test']:
         index_list = random_split_json.get(function_type)
         index_chunks = [index_list[x:x + IMAGE_CHUNK_SIZE] for x in range(0, len(index_list), IMAGE_CHUNK_SIZE)]
@@ -42,12 +43,20 @@ def write_tfrecord():
 
 
 if __name__ == '__main__':
-    num_training = TOTAL_DATA_SIZE - (VALIDATION_SIZE + TEST_SIZE)
-    num_validation = VALIDATION_SIZE
-    num_test = TEST_SIZE
-    print('train:{0}, validation:{1}, test:{2}'.format(num_training, num_validation, num_test))
-    if not tf.gfile.Exists(RANDOM_SPLIT_FILE):
-        make_random_split(num_training, num_validation, num_test)
-    with open(RANDOM_SPLIT_FILE, 'r') as random_split_file:
-        random_split_json = json.load(random_split_file)
-    write_tfrecord()
+    # Randomly split the valid images list into train, validation, and test set.
+    with open(VALID_IMAGES_FILE, 'r') as valid_images_file:
+        valid_data_list = json.load(valid_images_file)
+    valid_data_size = len(valid_data_list)
+    print('valid data list size:{0}'.format(valid_data_size))
+    num_validation = int(valid_data_size * VALIDATION_RATIO)
+    num_test = int(valid_data_size * TEST_RATIO)
+    num_train = valid_data_size - (num_validation + num_test)
+    print('train:{0}, validation:{1}, test:{2}'.format(num_train, num_validation, num_test))
+    random.shuffle(valid_data_list)
+    random_split_json = {
+        'train': valid_data_list[:num_train],
+        'validation': valid_data_list[num_train:num_train + num_validation],
+        'test': valid_data_list[num_train + num_validation:],
+    }
+    print(random_split_json)
+    make_tfrecord(random_split_json)

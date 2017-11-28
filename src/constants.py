@@ -14,11 +14,11 @@ RAW_METADATA_FILE = path.join(DATASET_DIR, "raw_metadata.json")
 ASIN_INDEX_FILE = path.join(DATASET_DIR, "asin_index_dic.json")
 INDEX_ASIN_FILE = path.join(DATASET_DIR, "index_asin_dic.json")
 VALID_IMAGES_FILE = path.join(DATASET_DIR, "valid_images.json")
-RANDOM_SPLIT_FILE = path.join(DATASET_DIR, "random_split.json")
 
 TOTAL_DATA_SIZE = 535234
-VALIDATION_SIZE = 50000
-TEST_SIZE = 10000
+VALIDATION_RATIO = 0.1
+TEST_RATIO = 0.02
+
 IMAGE_SIZE = 224
 TOTAL_CLASS_SIZE = 459558
 CLASS_SIZE = 43053
