@@ -130,7 +130,10 @@ class _Base(object):
         Calculates loss
         """
         feed_dict = {self.image: image_data, self.target: target_data}
-        return self.sess.run(self.loss, feed_dict=feed_dict)
+        loss =  self.sess.run(self.loss, feed_dict=feed_dict)
+        if not (self.function == 'count' and self.difficulty == 'moderate') : 
+            loss = tf.reduce_sum(loss)
+        return loss
 
 
 class ALEXNET(_Base):
