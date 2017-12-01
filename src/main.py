@@ -82,6 +82,8 @@ def train(model, sess, saver, train_data, valid_data, batch_size, max_iters, use
                     labels = valid_data.get_labels_from_indices(indices, function, difficulty)
                     valid_metric, valid_pred = model.eval_metric(images, labels)
                     print('validation ' + metric + ': %.4f' % (valid_metric))
+                    print(valid_pred[0])
+                    print(valid_pred[1])
                     final_valid_metric = final_valid_metric + valid_metric
                     batch_cnt = batch_cnt + 1
             except tf.errors.OutOfRangeError:
@@ -154,7 +156,7 @@ if __name__ == '__main__':
     # Optional
     parser.add_argument('--batch', metavar='BATCH_SIZE', type=int, default=5,
                         help='the batch size to use when doing gradient descent')
-    parser.add_argument('--learning-rate', metavar='LEARNING-RATE', type=float, default=0.01)
+    parser.add_argument('--learning-rate', metavar='LEARNING-RATE', type=float, default=0.0025)
     parser.add_argument('--no-early', type=str2bool, default=False, help='disable early stopping')
     parser.add_argument('--early-stop-max-iter', metavar='EARLY_STOP_MAX_ITER', type=int, default=300,
                         help='the maximum number of iterations to let the model continue training after reaching a '
