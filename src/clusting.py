@@ -25,6 +25,8 @@ def make_raw_metadata():
     """
     raw_metadata = [{}]
     for i in range(1, TOTAL_DATA_SIZE+1):
+        if (i%10000) == 0:
+            print(str(i)+"/"+str(TOTAL_DATA_SIZE))
         file_path = '%s%05d.json' % (METADATA_DIR, i)
         json_data = json.loads(open(file_path).read())
         processed_json_data = {
@@ -80,12 +82,16 @@ def make_target_vector_map(metadata):
     return asin_index_map, index_asin_map
 
 if __name__ == '__main__':
+    print("raw_metadata")
     raw_metadata = make_raw_metadata()
 
+    print("metadata")
     metadata = make_metadata(raw_metadata)
 
+    print("index map")
     asin_index_map, index_asin_map = make_target_vector_map(metadata)
 
+    print("clusting")
     image_mem = [0] * len(raw_metadata)
     metadata_mem = [0] * len(metadata)
 
@@ -97,7 +103,7 @@ if __name__ == '__main__':
     for i in range(0, len(index_asin_map)):
         if metadata_mem[i] == 0:
             metadata_mem[i] = 1
-            iamge_list = []
+            image_list = []
             metadata_list = [index_asin_map[i]]
             image_iter = 0
             metadata_iter = 0
@@ -129,6 +135,7 @@ if __name__ == '__main__':
                     break
 
             clusting_image_map.append(image_list)
-            clusting_metadta_map.append(metadata_list)
-            print(str(num) + ": " + str(len(image_list)) + " images\t" + str(len(metadata_list)) + " items")
+            clusting_metadata_map.append(metadata_list)
+            if len(image_list) >= 10:
+                print(str(num) + ": " + str(len(image_list)) + " images\t" + str(len(metadata_list)) + " items")
             num = num + 1
