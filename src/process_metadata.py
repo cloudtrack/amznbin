@@ -1,6 +1,6 @@
 import json
 
-from constants import METADATA_DIR, RAW_METADATA_FILE, METADATA_FILE, TOTAL_DATA_SIZE, ASIN_INDEX_FILE, INDEX_ASIN_FILE, VALID_IMAGES_FILE, MINIMUM_REPEAT
+from constants import METADATA_DIR, RAW_METADATA_FILE, METADATA_FILE, TOTAL_DATA_SIZE, ASIN_INDEX_FILE, INDEX_ASIN_FILE, VALID_IMAGES_FILE, MINIMUM_REPEAT, MAXIMUM_IMAGE_NUM
 
 
 def make_raw_metadata():
@@ -160,7 +160,7 @@ if __name__ == '__main__':
     valid_images = clustering_image_list
     it = 0
 
-    while len(valid_images) > 10000:
+    while len(valid_images) > MAXIMUM_IMAGE_NUM:
         it = it + 1
         
         print("make metadata, target vector map, valid images (iteration "+str(it)+")")
@@ -169,7 +169,25 @@ if __name__ == '__main__':
         asin_index_map, index_asin_map = make_target_vector_map(metadata, False)
         
         valid_images = classify_images(asin_index_map, raw_metadata)
-        print("valid images: "+str(len(valid_images)))
+        
+        index = 0
+        zero_bin_num = 0
+        for i in valid_images:
+            quantity = raw_metadata[i]['TOTAL']
+            if quantity == 0:
+                zero_bin_num = zero_bin_num + 1
+        
+        while len(valid_images) < 10 * zero_bin_num:
+            if index >= len(valid_images):
+                break
+            image = valid_images[index]
+            quantity = raw_metadata[image]['TOTAL']
+            if quantity == 0:
+                del valid_images[index]
+                zero_bin_num = zero_bin_num - 1
+                index = index - 1
+            index = index + 1
+        print("valid images: "+str(len(valid_images))+"\tobjects: "+str(len(asin_index_map))+"\tempty bin: "+str(zero_bin_num))
 
     print("dumping " + METADATA_FILE)
     with open(METADATA_FILE, 'w') as metadata_file:

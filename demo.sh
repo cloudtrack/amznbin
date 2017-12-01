@@ -2,4 +2,4 @@
 run="python3"
 main="src/main.py"
 
-${run} ${main} --mode train --model "ALEXNET" --function "count" --difficulty "moderate" --batch 500
+${run} ${main} --mode train --model "VGGNET" --function "count" --difficulty "moderate" --batch 98
