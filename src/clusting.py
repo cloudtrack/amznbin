@@ -117,8 +117,9 @@ if __name__ == '__main__':
 
                 plen = len(metadata_list)
 
-                for i in range(image_iter, len(image_list)):
+                for ii in range(image_iter, len(image_list)):
                     image_iter = image_iter + 1
+                    i = image_list[ii]
                     for asin in raw_metadata[i]['DATA'].keys():
                         if metadata_mem[asin_index_map[asin]] == 0:
                             metadata_mem[asin_index_map[asin]] = 1
