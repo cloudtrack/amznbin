@@ -73,8 +73,7 @@ def make_metadata(raw_metadata, valid_images):
                         metadata[asin]['bin_list'] = [i]
     return metadata
 
-
-def make_target_vector_map(metadata):
+def make_target_vector_map(metadata, isClustering):
     asin_index_map = {}
     index_asin_map = {}
     index = 0
@@ -83,7 +82,7 @@ def make_target_vector_map(metadata):
 #        if i % 1000 == 0:
 #            print("make_target_vector_map - processing (%d/%d)..." % (i, len(metadata.keys())))
 #        i += 1
-        if metadata[asin]['repeat'] >= MINIMUM_REPEAT:
+        if isClustering or (metadata[asin]['repeat'] >= MINIMUM_REPEAT):
             if asin not in asin_index_map.keys():
                 asin_index_map[asin] = index
                 index_asin_map[index] = asin
@@ -111,28 +110,67 @@ if __name__ == '__main__':
     with open(RAW_METADATA_FILE, 'w') as raw_metadata_file:
         json.dump(raw_metadata, raw_metadata_file)
 
+    valid_images = range(0, len(raw_metadata))
 
-    mmt = TOTAL_DATA_SIZE
-    rdc = TOTAL_DATA_SIZE
+    metadata = make_metadata(raw_metadata, valid_images)
 
-    valid_images = list(range(1, TOTAL_DATA_SIZE + 1))
+    asin_index_map, index_asin_map = make_target_vector_map(metadata, True)
+
+    image_mem = [0] * len(raw_metadata)
+    metadata_mem = [0] * len(metadata)
+
+    clustering_image_list = []
+
+    for i in range(0, len(index_asin_map)):
+        if metadata_mem[i] == 0:
+            metadata_mem[i] = 1
+            image_list = []
+            metadata_list = [index_asin_map[i]]
+            image_iter = 0
+            metadata_iter = 0
+            while True:
+                plen = len(image_list)
+                
+                for mi in range(metadata_iter, len(metadata_list)):
+                    metadata_iter = metadata_iter + 1
+                    asin = metadata_list[mi]
+                    for i in metadata[asin]['bin_list']:
+                        if image_mem[i] == 0:
+                            image_mem[i] = 1
+                            image_list.append(i)
+                
+                if plen == len(image_list):
+                    break
+
+                plen = len(metadata_list)
+
+                for ii in range(image_iter, len(image_list)):
+                    image_iter = image_iter + 1
+                    i = image_list[ii]
+                    for asin in raw_metadata[i]['DATA'].keys():
+                        if metadata_mem[asin_index_map[asin]] == 0:
+                            metadata_mem[asin_index_map[asin]] = 1
+                            metadata_list.append(asin)
+
+                if plen == len(metadata_list):
+                    break
+            if len(image_list) > len(clustering_image_list):
+                clustering_image_list = image_list
+
+    valid_images = clustering_image_list
     it = 0
 
-    while mmt > 0 :
-        plen = len(valid_images)
-        prdc = rdc
+    while len(valid_images) > 10000:
         it = it + 1
         
         print("make metadata, target vector map, valid images (iteration "+str(it)+")")
         metadata = make_metadata(raw_metadata, valid_images)
         
-        asin_index_map, index_asin_map = make_target_vector_map(metadata)
+        asin_index_map, index_asin_map = make_target_vector_map(metadata, False)
         
         valid_images = classify_images(asin_index_map, raw_metadata)
+        print("valid images: "+str(len(valid_images)))
 
-        rdc = plen - len(valid_images)
-        mmt = mmt * 0.9 + (prdc - rdc) * 0.1
-    
     print("dumping " + METADATA_FILE)
     with open(METADATA_FILE, 'w') as metadata_file:
         json.dump(metadata, metadata_file)
