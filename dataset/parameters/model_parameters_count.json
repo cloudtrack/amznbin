@@ -16,7 +16,7 @@
 "vggnet_conv3_kernel": 256,
 "vggnet_conv4_kernel": 512,
 "vggnet_conv5_kernel": 512,
-"vggnet_fc6_kernel1": 2048,
+"vggnet_fc6_kernel1": 25088,
 "vggnet_fc6_kernel2": 4096,
 "vggnet_fc7_kernel": 4096
 }

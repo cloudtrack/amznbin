@@ -260,114 +260,134 @@ class VGGNET(_Base):
 
         # conv1
         kernel = tf.Variable(tf.truncated_normal([3, 3, 3, self.param['vggnet_conv1_kernel']], dtype=tf.float32, stddev=1e-1))
-        conv = tf.nn.conv2d(image, kernel, [1, 1, 1, 1], padding='VALID')
+        conv = tf.nn.conv2d(image, kernel, [1, 1, 1, 1], padding='SAME')
         biases = tf.Variable(tf.constant(0.0, shape=[self.param['vggnet_conv1_kernel']], dtype=tf.float32), trainable=True)
         bias = tf.nn.bias_add(conv, biases)
         conv11 = tf.nn.relu(bias)
         self.variables += [kernel, biases]
 
         kernel = tf.Variable(tf.truncated_normal([3, 3, self.param['vggnet_conv1_kernel'], self.param['vggnet_conv1_kernel']], dtype=tf.float32, stddev=1e-1))
-        conv = tf.nn.conv2d(conv11, kernel, [1, 1, 1, 1], padding='VALID')
+        conv = tf.nn.conv2d(conv11, kernel, [1, 1, 1, 1], padding='SAME')
         biases = tf.Variable(tf.constant(0.0, shape=[self.param['vggnet_conv1_kernel']], dtype=tf.float32), trainable=True)
         bias = tf.nn.bias_add(conv, biases)
         conv12 = tf.nn.relu(bias)
         self.variables += [kernel, biases]
 
+        print_activations(conv12)
+
         # pool1
-        pool1 = tf.nn.max_pool(conv12, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1], padding='SAME')
+        pool1 = tf.nn.max_pool(conv12, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1], padding='VALID')
         
+        print_activations(pool1)
+
         # conv2
         kernel = tf.Variable(tf.truncated_normal([3, 3, self.param['vggnet_conv1_kernel'], self.param['vggnet_conv2_kernel']], dtype=tf.float32, stddev=1e-1))
-        conv = tf.nn.conv2d(pool1, kernel, [1, 1, 1, 1], padding='VALID')
+        conv = tf.nn.conv2d(pool1, kernel, [1, 1, 1, 1], padding='SAME')
         biases = tf.Variable(tf.constant(0.0, shape=[self.param['vggnet_conv2_kernel']], dtype=tf.float32), trainable=True)
         bias = tf.nn.bias_add(conv, biases)
         conv21 = tf.nn.relu(bias)
         self.variables += [kernel, biases]
 
         kernel = tf.Variable(tf.truncated_normal([3, 3, self.param['vggnet_conv2_kernel'], self.param['vggnet_conv2_kernel']], dtype=tf.float32, stddev=1e-1))
-        conv = tf.nn.conv2d(conv21, kernel, [1, 1, 1, 1], padding='VALID')
+        conv = tf.nn.conv2d(conv21, kernel, [1, 1, 1, 1], padding='SAME')
         biases = tf.Variable(tf.constant(0.0, shape=[self.param['vggnet_conv2_kernel']], dtype=tf.float32), trainable=True)
         bias = tf.nn.bias_add(conv, biases)
         conv22 = tf.nn.relu(bias)
         self.variables += [kernel, biases]
 
+        print_activations(conv22)
+
         # pool2
-        pool2 = tf.nn.max_pool(conv22,ksize=[1, 2, 2, 1],strides=[1, 2, 2, 1],padding='SAME')
+        pool2 = tf.nn.max_pool(conv22,ksize=[1, 2, 2, 1],strides=[1, 2, 2, 1],padding='VALID')
+
+        print_activations(pool2)
 
         # conv3
         kernel = tf.Variable(tf.truncated_normal([3, 3, self.param['vggnet_conv2_kernel'], self.param['vggnet_conv3_kernel']], dtype=tf.float32, stddev=1e-1))
-        conv = tf.nn.conv2d(pool2, kernel, [1, 1, 1, 1], padding='VALID')
+        conv = tf.nn.conv2d(pool2, kernel, [1, 1, 1, 1], padding='SAME')
         biases = tf.Variable(tf.constant(0.0, shape=[self.param['vggnet_conv3_kernel']], dtype=tf.float32), trainable=True)
         bias = tf.nn.bias_add(conv, biases)
         conv31 = tf.nn.relu(bias)
         self.variables += [kernel, biases]
 
         kernel = tf.Variable(tf.truncated_normal([3, 3, self.param['vggnet_conv3_kernel'], self.param['vggnet_conv3_kernel']], dtype=tf.float32, stddev=1e-1))
-        conv = tf.nn.conv2d(conv31, kernel, [1, 1, 1, 1], padding='VALID')
+        conv = tf.nn.conv2d(conv31, kernel, [1, 1, 1, 1], padding='SAME')
         biases = tf.Variable(tf.constant(0.0, shape=[self.param['vggnet_conv3_kernel']], dtype=tf.float32), trainable=True)
         bias = tf.nn.bias_add(conv, biases)
         conv32 = tf.nn.relu(bias)
         self.variables += [kernel, biases]
 
         kernel = tf.Variable(tf.truncated_normal([3, 3, self.param['vggnet_conv3_kernel'], self.param['vggnet_conv3_kernel']], dtype=tf.float32, stddev=1e-1))
-        conv = tf.nn.conv2d(conv32, kernel, [1, 1, 1, 1], padding='VALID')
+        conv = tf.nn.conv2d(conv32, kernel, [1, 1, 1, 1], padding='SAME')
         biases = tf.Variable(tf.constant(0.0, shape=[self.param['vggnet_conv3_kernel']], dtype=tf.float32), trainable=True)
         bias = tf.nn.bias_add(conv, biases)
         conv33 = tf.nn.relu(bias)
         self.variables += [kernel, biases]
 
+        print_activations(conv33)
+
         # pool3
-        pool3 = tf.nn.max_pool(conv33, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1], padding='SAME')
+        pool3 = tf.nn.max_pool(conv33, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1], padding='VALID')
+
+        print_activations(pool3)
 
         # conv4
         kernel = tf.Variable(tf.truncated_normal([3, 3, self.param['vggnet_conv3_kernel'], self.param['vggnet_conv4_kernel']], dtype=tf.float32, stddev=1e-1))
-        conv = tf.nn.conv2d(pool3, kernel, [1, 1, 1, 1], padding='VALID')
+        conv = tf.nn.conv2d(pool3, kernel, [1, 1, 1, 1], padding='SAME')
         biases = tf.Variable(tf.constant(0.0, shape=[self.param['vggnet_conv4_kernel']], dtype=tf.float32), trainable=True)
         bias = tf.nn.bias_add(conv, biases)
         conv41 = tf.nn.relu(bias)
         self.variables += [kernel, biases]
 
         kernel = tf.Variable(tf.truncated_normal([3, 3, self.param['vggnet_conv4_kernel'], self.param['vggnet_conv4_kernel']], dtype=tf.float32, stddev=1e-1))
-        conv = tf.nn.conv2d(conv41, kernel, [1, 1, 1, 1], padding='VALID')
+        conv = tf.nn.conv2d(conv41, kernel, [1, 1, 1, 1], padding='SAME')
         biases = tf.Variable(tf.constant(0.0, shape=[self.param['vggnet_conv4_kernel']], dtype=tf.float32), trainable=True)
         bias = tf.nn.bias_add(conv, biases)
         conv42 = tf.nn.relu(bias)
         self.variables += [kernel, biases]
 
         kernel = tf.Variable(tf.truncated_normal([3, 3, self.param['vggnet_conv4_kernel'], self.param['vggnet_conv4_kernel']], dtype=tf.float32, stddev=1e-1))
-        conv = tf.nn.conv2d(conv42, kernel, [1, 1, 1, 1], padding='VALID')
+        conv = tf.nn.conv2d(conv42, kernel, [1, 1, 1, 1], padding='SAME')
         biases = tf.Variable(tf.constant(0.0, shape=[self.param['vggnet_conv4_kernel']], dtype=tf.float32), trainable=True)
         bias = tf.nn.bias_add(conv, biases)
         conv43 = tf.nn.relu(bias)
         self.variables += [kernel, biases]
 
+        print_activations(conv43)
+
         # pool4
-        pool4 = tf.nn.max_pool(conv43, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1], padding='SAME')
+        pool4 = tf.nn.max_pool(conv43, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1], padding='VALID')
+
+        print_activations(pool4)
 
         # conv5
         kernel = tf.Variable(tf.truncated_normal([3, 3, self.param['vggnet_conv4_kernel'], self.param['vggnet_conv5_kernel']], dtype=tf.float32, stddev=1e-1))
-        conv = tf.nn.conv2d(pool4, kernel, [1, 1, 1, 1], padding='VALID')
+        conv = tf.nn.conv2d(pool4, kernel, [1, 1, 1, 1], padding='SAME')
         biases = tf.Variable(tf.constant(0.0, shape=[self.param['vggnet_conv5_kernel']], dtype=tf.float32), trainable=True)
         bias = tf.nn.bias_add(conv, biases)
         conv51 = tf.nn.relu(bias)
         self.variables += [kernel, biases]
 
         kernel = tf.Variable(tf.truncated_normal([3, 3, self.param['vggnet_conv5_kernel'], self.param['vggnet_conv5_kernel']], dtype=tf.float32, stddev=1e-1))
-        conv = tf.nn.conv2d(conv51, kernel, [1, 1, 1, 1], padding='VALID')
+        conv = tf.nn.conv2d(conv51, kernel, [1, 1, 1, 1], padding='SAME')
         biases = tf.Variable(tf.constant(0.0, shape=[self.param['vggnet_conv5_kernel']], dtype=tf.float32), trainable=True)
         bias = tf.nn.bias_add(conv, biases)
         conv52 = tf.nn.relu(bias)
         self.variables += [kernel, biases]
 
         kernel = tf.Variable(tf.truncated_normal([3, 3, self.param['vggnet_conv5_kernel'], self.param['vggnet_conv5_kernel']], dtype=tf.float32, stddev=1e-1))
-        conv = tf.nn.conv2d(conv52, kernel, [1, 1, 1, 1], padding='VALID')
+        conv = tf.nn.conv2d(conv52, kernel, [1, 1, 1, 1], padding='SAME')
         biases = tf.Variable(tf.constant(0.0, shape=[self.param['vggnet_conv5_kernel']], dtype=tf.float32), trainable=True)
         bias = tf.nn.bias_add(conv, biases)
         conv53 = tf.nn.relu(bias)
         self.variables += [kernel, biases]
 
+        print_activations(conv53)
+
         # pool5
-        pool5 = tf.nn.max_pool(conv53, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1], padding='SAME')
+        pool5 = tf.nn.max_pool(conv53, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1], padding='VALID')
+
+        print_activations(pool5)
 
         # fullyconnected6
         kernel = tf.Variable(tf.constant(0.0, shape=[self.param['vggnet_fc6_kernel1'], self.param['vggnet_fc6_kernel2']], dtype=tf.float32), trainable=True)
