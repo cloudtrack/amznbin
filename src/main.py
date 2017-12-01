@@ -57,9 +57,10 @@ def train(model, sess, saver, train_data, valid_data, batch_size, max_iters, use
                     model.train_iteration(images, labels)
                     train_loss = model.eval_loss(images, labels)
                     train_metric, train_pred = model.eval_metric(images, labels)
-                    print_string = "iter: " + str(i) + "\tbatch: "+str(batch_cnt)+"\ttrain " + metric + ": %.4f \t loss: %.4f in %ds" % (train_metric, train_loss, time.time() - t2)
+                    print_string = "iter: " + str(i) + "\tbatch: "+str(batch_cnt)+"\ttrain " + metric + ": %.4f \tloss: %.4f in %ds" % (train_metric, train_loss, time.time() - t2)
                     print(print_string)
-                    print(train_pred)
+                    print(train_pred[0])
+                    print(train_pred[1])
                     train_log.write(print_string + "\n")
                     batch_cnt = batch_cnt + 1
             except tf.errors.OutOfRangeError:

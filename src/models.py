@@ -89,8 +89,10 @@ class _Base(object):
         # Loss     
         if self.function == 'classify':
             self.loss = tf.nn.sigmoid_cross_entropy_with_logits(labels=self.target, logits=self.pred)
+            self.loss_print = tf.reduce_sum(self.loss)
         elif self.function == 'count' and self.difficulty == 'moderate':
             self.loss = tf.nn.softmax_cross_entropy_with_logits(labels=self.target, logits=self.pred)
+            self.loss_print = tf.reduce_sum(self.loss)
         else:
             self.loss = tf.reduce_sum(tf.square(tf.subtract(self.target, self.pred)))
 
@@ -130,10 +132,10 @@ class _Base(object):
         Calculates loss
         """
         feed_dict = {self.image: image_data, self.target: target_data}
-        loss =  self.sess.run(self.loss, feed_dict=feed_dict)
-        if not (self.function == 'count' and self.difficulty == 'moderate') : 
-            loss = tf.reduce_sum(loss)
-        return loss
+        if not (self.function == 'count' and self.difficulty == 'hard') : 
+            return self.sess.run(self.loss_print, feed_dict=feed_dict)
+        else :
+            return self.sess.run(self.loss, feed_dict=feed_dict)
 
 
 class ALEXNET(_Base):
