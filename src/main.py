@@ -93,12 +93,12 @@ def train(model, sess, saver, train_data, valid_data, batch_size, max_iters, use
         if use_early_stop:
             print("%d/%d chances left" % (early_stop_max_iter - early_stop_iters, early_stop_max_iter))
             early_stop_iters += 1
-            if valid_metric < prev_valid_metric:
-                prev_valid_metric = valid_metric
+            if final_valid_metric < prev_valid_metric:
+                prev_valid_metric = final_valid_metric
                 early_stop_iters = 0
                 saver.save(sess, model.model_filename)
             elif early_stop_iters == early_stop_max_iter:
-                print("Early stopping ({} vs. {})...".format(prev_valid_metric, valid_metric))
+                print("Early stopping ({} vs. {})...".format(prev_valid_metric, final_valid_metric))
                 traintime = (time.time() - t0)
                 print("total training time %ds" % traintime)
                 return traintime
