@@ -73,7 +73,7 @@ def train(model, sess, saver, train_data, valid_data, batch_size, max_iters, use
             coord = tf.train.Coordinator()
             threads = tf.train.start_queue_runners(sess=_sess, coord=coord)
             final_valid_metric = 0
-            iterations = 0
+            batch_cnt = 0
             try:
                 while not coord.should_stop():
                     images, indices = _sess.run([valid_image_tensor, valid_image_index_tensor])
@@ -81,9 +81,9 @@ def train(model, sess, saver, train_data, valid_data, batch_size, max_iters, use
                     valid_metric, valid_pred = model.eval_metric(images, labels)
                     print('validation ' + metric + ': %.4f' % (valid_metric))
                     final_valid_metric = final_valid_metric + valid_metric
-                    iteration = iterations + 1
+                    batch_cnt = batch_cnt + 1
             except tf.errors.OutOfRangeError:
-                print('final validation ' + metric + ': %.4f' % (final_valid_metric/iterations))
+                print('final validation ' + metric + ': %.4f' % (final_valid_metric/batch_cnt))
                 print('Done validation -- epoch limit reached')
             finally:
                 coord.request_stop()
