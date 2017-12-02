@@ -1,6 +1,6 @@
 import json
 
-from constants import METADATA_DIR, RAW_METADATA_FILE, METADATA_FILE, TOTAL_DATA_SIZE, ASIN_INDEX_FILE, INDEX_ASIN_FILE, VALID_IMAGES_FILE, MINIMUM_REPEAT, MAXIMUM_IMAGE_NUM, MAXIMUM_COUNT
+from constants import METADATA_DIR, RAW_METADATA_FILE, METADATA_FILE, TOTAL_DATA_SIZE, ASIN_INDEX_FILE, INDEX_ASIN_FILE, VALID_IMAGES_FILE, MINIMUM_REPEAT, MAXIMUM_IMAGE_NUM, MAXIMUM_COUNT, BALANCE_RATE
 
 
 def make_raw_metadata():
@@ -120,6 +120,7 @@ if __name__ == '__main__':
     metadata_mem = [0] * len(metadata)
 
     clustering_image_list = []
+    bin_cnt = []
 
     for i in range(0, len(index_asin_map)):
         if metadata_mem[i] == 0:
@@ -171,38 +172,45 @@ if __name__ == '__main__':
         valid_images = classify_images(asin_index_map, raw_metadata)
         
         index = 0
-        zero_bin_num = 0
+        
+        print("data balancing")
+        bin_cnt = [0]*(MAXIMUM_COUNT + 2)
         for i in valid_images:
             quantity = raw_metadata[i]['TOTAL']
-            if quantity == 0:
-                zero_bin_num = zero_bin_num + 1
-        
-        while len(valid_images) < 10 * zero_bin_num:
+            if quantity > MAXIMUM_COUNT:
+                bin_cnt[MAXIMUM_COUNT+1] = bin_cnt[MAXIMUM_COUNT+1] + 1
+            else:
+                bin_cnt[quantity] = bin_cnt[quantity] + 1
+
+        bb = [0]*(MAXIMUM_COUNT+2)
+        while True:
             if index >= len(valid_images):
+                index = 0
+            bbt = False
+            for i in range(0, MAXIMUM_COUNT+2):
+                bb[i] = (bin_cnt[i] > len(valid_images)*BALANCE_RATE)
+                bbt = (bbt or bb[i])
+            if not bbt:
                 break
             image = valid_images[index]
             quantity = raw_metadata[image]['TOTAL']
-            if quantity == 0:
-                del valid_images[index]
-                zero_bin_num = zero_bin_num - 1
-                index = index - 1
+            if quantity > MAXIMUM_COUNT:
+                if bb[MAXIMUM_COUNT+1]:
+                    del valid_images[index]
+                    bin_cnt[MAXIMUM_COUNT+1] = bin_cnt[MAXIMUM_COUNT+1] - 1
+                    index = index - 1
+            else:
+                if bb[quantity]:
+                    del valid_images[index]
+                    bin_cnt[quantity] = bin_cnt[quantity] - 1
+                    index = index - 1
             index = index + 1
-        print("valid images: "+str(len(valid_images))+"\tobjects: "+str(len(asin_index_map))+"\tempty bin: "+str(zero_bin_num))
+        print("valid images: "+str(len(valid_images))+"\tobjects: "+str(len(asin_index_map)))
+        print("bin status")
+        for i in range(0, MAXIMUM_COUNT+1):
+            print(str(i)+":\t "+str(bin_cnt[i]))
+        print(str(MAXIMUM_COUNT)+"up: \t "+str(bin_cnt[MAXIMUM_COUNT+1]))
 
-    bin_cnt = [0]*(MAXIMUM_COUNT + 2)
-    for i in valid_images:
-        quantity = raw_metadata[i]['TOTAL']
-        if quantity > MAXIMUM_COUNT:
-            bin_cnt[MAXIMUM_COUNT+1] = bin_cnt[MAXIMUM_COUNT+1] + 1
-        else:
-            bin_cnt[quantity] = bin_cnt[quantity] + 1
-
-    print("bin status")
-    for i in range(0, MAXIMUM_COUNT+1):
-        print(str(i)+":\t "+str(bin_cnt[i]))
-    print(str(MAXIMUM_COUNT)+"up: \t "+str(bin_cnt[MAXIMUM_COUNT+1]))
-
-    
     print("dumping " + METADATA_FILE)
     with open(METADATA_FILE, 'w') as metadata_file:
         json.dump(metadata, metadata_file)
@@ -221,3 +229,16 @@ if __name__ == '__main__':
     print("Done processing metadata!")
     print("images: " + str(len(valid_images)))
     print("objects: " + str(len(asin_index_map)))
+    bin_cnt = [0]*(MAXIMUM_COUNT + 2)
+    for i in valid_images:
+        quantity = raw_metadata[i]['TOTAL']
+        if quantity > MAXIMUM_COUNT:
+            bin_cnt[MAXIMUM_COUNT+1] = bin_cnt[MAXIMUM_COUNT+1] + 1
+        else:
+            bin_cnt[quantity] = bin_cnt[quantity] + 1
+
+    print("bin status")
+    for i in range(0, MAXIMUM_COUNT+1):
+        print(str(i)+":\t "+str(bin_cnt[i]))
+    print(str(MAXIMUM_COUNT)+"up: \t "+str(bin_cnt[MAXIMUM_COUNT+1]))
+
