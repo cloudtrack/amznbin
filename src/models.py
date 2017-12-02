@@ -88,9 +88,9 @@ class _Base(object):
         """ Calculates loss and performs gradient descent """
         # Loss     
         if self.function == 'classify':
-            self.loss = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(labels=self.target, logits=self.pred))
+            self.loss = tf.reduce_sum(tf.nn.sigmoid_cross_entropy_with_logits(labels=self.target, logits=self.pred))
         elif self.function == 'count' and self.difficulty == 'moderate':
-            self.loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(labels=self.target, logits=self.pred))
+            self.loss = tf.reduce_sum(tf.nn.softmax_cross_entropy_with_logits(labels=self.target, logits=self.pred))
         else:
             self.loss = tf.reduce_sum(tf.square(tf.subtract(self.target, self.pred)))
 
