@@ -1,6 +1,6 @@
 import json
 
-from constants import METADATA_DIR, RAW_METADATA_FILE, METADATA_FILE, TOTAL_DATA_SIZE, ASIN_INDEX_FILE, INDEX_ASIN_FILE, VALID_IMAGES_FILE, MINIMUM_REPEAT, MAXIMUM_IMAGE_NUM
+from constants import METADATA_DIR, RAW_METADATA_FILE, METADATA_FILE, TOTAL_DATA_SIZE, ASIN_INDEX_FILE, INDEX_ASIN_FILE, VALID_IMAGES_FILE, MINIMUM_REPEAT, MAXIMUM_IMAGE_NUM, MAXIMUM_COUNT
 
 
 def make_raw_metadata():
@@ -189,6 +189,20 @@ if __name__ == '__main__':
             index = index + 1
         print("valid images: "+str(len(valid_images))+"\tobjects: "+str(len(asin_index_map))+"\tempty bin: "+str(zero_bin_num))
 
+    bin_cnt = [0]*(MAXIMUM_COUNT + 2)
+    for i in valid_images:
+        quantity = raw_metadata[i]['TOTAL']
+        if quantity > MAXIMUM_COUNT:
+            bin_cnt[MAXIMUM_COUNT+1] = bin_cnt[MAXIMUM_COUNT+1] + 1
+        else:
+            bin_cnt[quantity] = bin_cnt[quantity] + 1
+
+    print("bin status")
+    for i in range(0, MAXIMUM_COUNT+1):
+        print(str(i)+":\t "+bin_cnt[i])
+    print(str(MAXIMUM_COUNT)+"up: \t "+bin_cnt[MAXIMUM_COUNT+1])
+
+    
     print("dumping " + METADATA_FILE)
     with open(METADATA_FILE, 'w') as metadata_file:
         json.dump(metadata, metadata_file)
