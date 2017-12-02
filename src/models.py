@@ -12,7 +12,7 @@ def print_activations(t):
 class _Base(object):
 
     """ Base structure """
-    def __init__(self, function, learning_rate, difficulty):
+    def __init__(self, model, function, learning_rate, difficulty):
         # Internal counter to keep track of current iteration
         self._iters = 0
 
@@ -36,7 +36,7 @@ class _Base(object):
 
         self.function = function
 
-        self.model_filename = 'model/' + function + '_'+ difficulty +'.ckpt'
+        self.model_filename = 'model/' + model + '_' + function + '_'+ difficulty +'.ckpt'
 
         # Call methods to initialize variables and operations 
         self._init_vars()
@@ -138,7 +138,7 @@ class ALEXNET(_Base):
     """ AlexNet model structrue """
 
     def __init__(self, function, learning_rate, difficulty):
-        super(ALEXNET, self).__init__(function, learning_rate, difficulty)
+        super(ALEXNET, self).__init__('ALEX', function, learning_rate, difficulty)
 
     @property
     def filename(self):
@@ -241,7 +241,7 @@ class VGGNET(_Base):
     """ VGGNet model structrue """
 
     def __init__(self, function, learning_rate, difficulty):
-        super(VGGNET, self).__init__(function, learning_rate, difficulty)
+        super(VGGNET, self).__init__('VGG', function, learning_rate, difficulty)
 
     @property
     def filename(self):
@@ -399,7 +399,7 @@ class LENET(_Base):
     """ LeNet model structrue """
 
     def __init__(self, function, learning_rate, difficulty):
-        super(LENET, self).__init__(function, learning_rate, difficulty)
+        super(LENET, self).__init__('LE', function, learning_rate, difficulty)
 
     @property
     def filename(self):
