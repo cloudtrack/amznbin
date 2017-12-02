@@ -66,7 +66,6 @@ def train(model, sess, saver, train_data, valid_data, batch_size, max_iters, use
                     #print(train_pred[1])
                     #print(labels[1])
                     train_log.write(print_string + "\n")
-                    writer  = tf.summary.FileWriter('../graphs', sess.graph)
                     batch_cnt = batch_cnt + 1
             except tf.errors.OutOfRangeError:
                 print('Done training -- epoch limit reached')
