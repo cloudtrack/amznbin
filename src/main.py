@@ -35,6 +35,7 @@ def train(model, sess, saver, train_data, valid_data, batch_size, max_iters, use
         metric = 'accuracy'
 
     train_log = open("train_log.txt", 'w')
+
     for i in range(max_iters):
         print('==== New epoch started ====')
         # Training
@@ -63,6 +64,7 @@ def train(model, sess, saver, train_data, valid_data, batch_size, max_iters, use
                     print(train_pred[0])
                     print(train_pred[1])
                     train_log.write(print_string + "\n")
+                    writer  = tf.summary.FileWriter('../graphs', sess.graph)
                     batch_cnt = batch_cnt + 1
             except tf.errors.OutOfRangeError:
                 print('Done training -- epoch limit reached')
@@ -183,6 +185,7 @@ if __name__ == '__main__':
     difficulty = args.difficulty
     continue_train = args.continue_train
 
+    tf.reset_default_graph()
     with tf.Session() as sess:
         # Define computation graph & Initialize
         print('Building network & initializing variables')
