@@ -89,9 +89,9 @@ def make_target_vector_map(metadata, isClustering):
                 index += 1
     return asin_index_map, index_asin_map
 
-def classify_images(asin_index_map, raw_metadata):
+def classify_images(asin_index_map, raw_metadata, pvalid_images):
     valid_images = []
-    for i in range(1, len(raw_metadata)):
+    for i in pvalid_images:
         if raw_metadata[i]:
             bin_info = raw_metadata[i]['DATA']
             flag = True
@@ -103,6 +103,16 @@ def classify_images(asin_index_map, raw_metadata):
                 valid_images.append(i)
     return valid_images
 
+def count_bin(raw_metadata, valid_images):
+    bin_cnt = [0]*(MAXIMUM_COUNT + 2)
+    for i in valid_images:
+        quantity = raw_metadata[i]['TOTAL']
+        if quantity > MAXIMUM_COUNT:
+            bin_cnt[MAXIMUM_COUNT+1] = bin_cnt[MAXIMUM_COUNT+1] + 1
+        else:
+            bin_cnt[quantity] = bin_cnt[quantity] + 1
+    return bin_cnt
+
 
 if __name__ == '__main__':
     raw_metadata = make_raw_metadata()
@@ -110,7 +120,7 @@ if __name__ == '__main__':
     with open(RAW_METADATA_FILE, 'w') as raw_metadata_file:
         json.dump(raw_metadata, raw_metadata_file)
 
-    valid_images = range(0, len(raw_metadata))
+    valid_images = range(1, len(raw_metadata))
 
     metadata = make_metadata(raw_metadata, valid_images)
 
@@ -159,28 +169,27 @@ if __name__ == '__main__':
                 clustering_image_list = image_list
 
     valid_images = clustering_image_list
+    for i in range(1, len(raw_metadata)):
+        quantity = raw_metadata[i]['TOTAL']
+        if quantity == 0:
+            valid_images.append(i)
     it = 0
 
     while len(valid_images) > MAXIMUM_IMAGE_NUM:
         it = it + 1
         
         print("make metadata, target vector map, valid images (iteration "+str(it)+")")
+        
         metadata = make_metadata(raw_metadata, valid_images)
-        
+
         asin_index_map, index_asin_map = make_target_vector_map(metadata, False)
-        
-        valid_images = classify_images(asin_index_map, raw_metadata)
-        
-        index = 0
-        
+
+        valid_images = classify_images(asin_index_map, raw_metadata, valid_images)
+
+
         print("data balancing")
-        bin_cnt = [0]*(MAXIMUM_COUNT + 2)
-        for i in valid_images:
-            quantity = raw_metadata[i]['TOTAL']
-            if quantity > MAXIMUM_COUNT:
-                bin_cnt[MAXIMUM_COUNT+1] = bin_cnt[MAXIMUM_COUNT+1] + 1
-            else:
-                bin_cnt[quantity] = bin_cnt[quantity] + 1
+        index = 0
+        bin_cnt = count_bin(raw_metadata, valid_images)
 
         bb = [0]*(MAXIMUM_COUNT+2)
         while True:
@@ -205,8 +214,10 @@ if __name__ == '__main__':
                     bin_cnt[quantity] = bin_cnt[quantity] - 1
                     index = index - 1
             index = index + 1
+
         print("valid images: "+str(len(valid_images))+"\tobjects: "+str(len(asin_index_map)))
         print("bin status")
+        bin_cnt = count_bin(raw_metadata, valid_images)
         for i in range(0, MAXIMUM_COUNT+1):
             print(str(i)+":\t "+str(bin_cnt[i]))
         print(str(MAXIMUM_COUNT)+"up: \t "+str(bin_cnt[MAXIMUM_COUNT+1]))
@@ -229,13 +240,7 @@ if __name__ == '__main__':
     print("Done processing metadata!")
     print("images: " + str(len(valid_images)))
     print("objects: " + str(len(asin_index_map)))
-    bin_cnt = [0]*(MAXIMUM_COUNT + 2)
-    for i in valid_images:
-        quantity = raw_metadata[i]['TOTAL']
-        if quantity > MAXIMUM_COUNT:
-            bin_cnt[MAXIMUM_COUNT+1] = bin_cnt[MAXIMUM_COUNT+1] + 1
-        else:
-            bin_cnt[quantity] = bin_cnt[quantity] + 1
+    bin_cnt = count_bin(raw_metadata, valid_images)
 
     print("bin status")
     for i in range(0, MAXIMUM_COUNT+1):
