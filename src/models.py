@@ -95,8 +95,8 @@ class _Base(object):
             self.loss = tf.reduce_sum(tf.square(tf.subtract(self.target, self.pred)))
 
         # Optimizer
-        # self.optimizer = tf.train.AdamOptimizer(self.learning_rate)
-        self.optimizer = tf.train.MomentumOptimizer(learning_rate=self.learning_rate, momentum=0.9)
+        self.optimizer = tf.train.AdamOptimizer(self.learning_rate)
+        # self.optimizer = tf.train.MomentumOptimizer(learning_rate=self.learning_rate, momentum=0.9)
         # Optimize the weights
         self.optimize_steps = self.optimizer.minimize(self.loss, var_list=self.variables)
 
