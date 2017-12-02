@@ -70,7 +70,8 @@ class _Base(object):
         
         elif (self.function == 'count') and (self.difficulty == 'moderate') :
             # Accuracy 
-            self.metric = tf.multiply(tf.reduce_mean(tf.cast(tf.equal(tf.argmax(self.pred, 0), tf.argmax(self.target, 0)), tf.float32)), 100)
+            self.pred_one = tf.argmax(self.pred, 0)
+            self.metric = tf.multiply(tf.cast(tf.equal(self.pred_one, tf.argmax(self.target, 0)), tf.float32), 100)
 
         else :
             # RMSE
@@ -124,7 +125,7 @@ class _Base(object):
         Calculates RMSE 
         """
         feed_dict = {self.image: image_data, self.target: target_data}
-        return self.sess.run([self.metric, self.pred], feed_dict=feed_dict)
+        return self.sess.run([self.metric, self.pred, self.pred_one], feed_dict=feed_dict)
 
     def eval_loss(self, image_data, target_data):
         """
