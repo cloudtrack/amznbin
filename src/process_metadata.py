@@ -199,8 +199,8 @@ if __name__ == '__main__':
 
     print("bin status")
     for i in range(0, MAXIMUM_COUNT+1):
-        print(str(i)+":\t "+bin_cnt[i])
-    print(str(MAXIMUM_COUNT)+"up: \t "+bin_cnt[MAXIMUM_COUNT+1])
+        print(str(i)+":\t "+str(bin_cnt[i]))
+    print(str(MAXIMUM_COUNT)+"up: \t "+str(bin_cnt[MAXIMUM_COUNT+1]))
 
     
     print("dumping " + METADATA_FILE)
