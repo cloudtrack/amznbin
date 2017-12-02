@@ -62,7 +62,9 @@ def train(model, sess, saver, train_data, valid_data, batch_size, max_iters, use
                     print_string = "iter: " + str(i) + "\tbatch: "+str(batch_cnt)+"\ttrain " + metric + ": %.4f \tloss: %.4f in %ds" % (train_metric, train_loss, time.time() - t2)
                     print(print_string)
                     print(train_pred[0])
-                    print(train_pred[1])
+                    print(labels[0])
+                    #print(train_pred[1])
+                    #print(labels[1])
                     train_log.write(print_string + "\n")
                     writer  = tf.summary.FileWriter('../graphs', sess.graph)
                     batch_cnt = batch_cnt + 1
