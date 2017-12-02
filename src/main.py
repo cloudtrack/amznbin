@@ -86,10 +86,12 @@ def train(model, sess, saver, train_data, valid_data, batch_size, max_iters, use
                 while not coord.should_stop():
                     images, indices = _sess.run([valid_image_tensor, valid_image_index_tensor])
                     labels = valid_data.get_labels_from_indices(indices, function, difficulty)
-                    valid_metric, valid_pred = model.eval_metric(images, labels)
+                    valid_metric, valid_pred, valid_pred_one = model.eval_metric(images, labels)
+                    valid_metric = valid_metric[0]
                     print('validation ' + metric + ': %.4f' % (valid_metric))
-                    print(valid_pred[0])
-                    print(valid_pred[1])
+                    print(valid_pred)
+                    print('predicted: ' + str(valid_pred_one) + ' by %.2f percent' % (valid_pred[valid_pred_one] * 100))
+                    print('target:    ' + str(np.argmax(labels[0])))
                     final_valid_metric = final_valid_metric + valid_metric
                     batch_cnt = batch_cnt + 1
             except tf.errors.OutOfRangeError:

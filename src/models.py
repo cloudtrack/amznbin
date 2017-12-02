@@ -71,7 +71,7 @@ class _Base(object):
         elif (self.function == 'count') and (self.difficulty == 'moderate') :
             # Accuracy 
             self.pred_one = tf.argmax(self.pred, 0)
-            self.metric = tf.cast(tf.equal(self.pred_one, tf.argmax(self.target, 1)), tf.float32)
+            self.metric = tf.multiply(tf.cast(tf.equal(self.pred_one, tf.argmax(self.target, 1)), tf.float32), 100)
 
         else :
             # RMSE
@@ -89,9 +89,9 @@ class _Base(object):
         """ Calculates loss and performs gradient descent """
         # Loss     
         if self.function == 'classify':
-            self.loss = tf.reduce_sum(tf.nn.sigmoid_cross_entropy_with_logits(labels=self.target, logits=self.pred))
+            self.loss = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(labels=self.target, logits=self.pred))
         elif self.function == 'count' and self.difficulty == 'moderate':
-            self.loss = tf.reduce_sum(tf.nn.softmax_cross_entropy_with_logits(labels=self.target, logits=self.pred))
+            self.loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(labels=self.target, logits=self.pred))
         else:
             self.loss = tf.reduce_sum(tf.square(tf.subtract(self.target, self.pred)))
 
@@ -125,7 +125,13 @@ class _Base(object):
         Calculates RMSE 
         """
         feed_dict = {self.image: image_data, self.target: target_data}
-        return self.sess.run([self.metric, self.pred, self.pred_one], feed_dict=feed_dict)
+
+        if self.function == 'classify' :
+            return self.sess.run([self.metric, tf.nn.sigmoid(self.pred), self.pred_one], feed_dict=feed_dict)
+        elif self.difficulty == 'moderate' :
+            return self.sess.run([self.metric, tf.nn.softmax(self.pred), self.pred_one], feed_dict=feed_dict)
+        else : 
+            return self.sess.run([self.metric, self.pred, self.pred_one], feed_dict=feed_dict)
 
     def eval_loss(self, image_data, target_data):
         """
@@ -229,11 +235,6 @@ class ALEXNET(_Base):
         biases = tf.Variable(tf.constant(1e-4, shape=[self.OUTPUT], dtype=tf.float32), trainable=True)
         fc8 = tf.nn.xw_plus_b(fc7, kernel, biases)
         self.variables += [kernel, biases]
-        
-        if self.function == 'classify' :
-            fc8 = tf.sigmoid(fc8)
-        elif self.difficulty == 'moderate' :
-            fc8 = tf.nn.softmax(fc8)
 
         return fc8
 
@@ -388,11 +389,6 @@ class VGGNET(_Base):
         biases = tf.Variable(tf.constant(1e-4, shape=[self.OUTPUT], dtype=tf.float32), trainable=True)
         fc8 = tf.nn.xw_plus_b(fc7, kernel, biases)
         self.variables += [kernel, biases]
-        
-        if self.function == 'classify' :
-            fc8 = tf.sigmoid(fc8)
-        elif self.difficulty == 'moderate' :
-            fc8 = tf.nn.softmax(fc8)
 
         return fc8
 
@@ -451,10 +447,5 @@ class LENET(_Base):
         biases = tf.Variable(tf.constant(1e-4, shape=[self.OUTPUT], dtype=tf.float32), trainable=True)
         fc4 = tf.nn.xw_plus_b(fc3, kernel, biases)
         self.variables += [kernel, biases]
-        
-        if self.function == 'classify' :
-            fc4 = tf.sigmoid(fc4)
-        elif self.difficulty == 'moderate' :
-            fc4 = tf.nn.softmax(fc4)
 
         return fc4
