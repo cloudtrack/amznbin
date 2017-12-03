@@ -70,8 +70,10 @@ class _Base(object):
         
         elif (self.function == 'count') and (self.difficulty == 'moderate') :
             # Accuracy 
-            self.pred_one = tf.argmax(self.pred, 0)
-            self.metric = tf.multiply(tf.cast(tf.equal(self.pred_one, tf.argmax(self.target, 1)), tf.float32), 100)
+            # self.pred_one = tf.argmax(self.pred, 0)
+            # self.metric = tf.multiply(tf.cast(tf.equal(self.pred_one, tf.argmax(self.target, 1)), tf.float32), 100)
+            self.pred_one = tf.argmax(self.pred, 1)
+            self.metric = tf.multiply(tf.reduce_mean(tf.cast(tf.equal(self.pred_one, tf.argmax(self.target, 1)), tf.float32)), 100)
 
         else :
             # RMSE
