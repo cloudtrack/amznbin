@@ -34,7 +34,7 @@ def train(model, sess, saver, train_data, valid_data, batch_size, max_iters, use
     else:
         metric = 'accuracy'
 
-    train_log = open("train_log.txt", 'w')
+    #train_log = open("train_log.txt", 'w')
 
     for i in range(max_iters):
         print('==== New epoch started ====')
@@ -67,7 +67,7 @@ def train(model, sess, saver, train_data, valid_data, batch_size, max_iters, use
                     print('target:    ' + str(np.argmax(labels[0])))
                     #print(train_pred[1])
                     #print(labels[1])
-                    train_log.write(print_string + "\n")
+                    #train_log.write(print_string + "\n")
                     batch_cnt = batch_cnt + 1
             except tf.errors.OutOfRangeError:
                 print('Done training -- epoch limit reached')
