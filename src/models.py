@@ -3,7 +3,7 @@ import json
 import numpy as np
 import tensorflow as tf
 
-from constants import IMAGE_SIZE, CLASS_SIZE, PARAM_DIR
+from constants import IMAGE_SIZE, PARAM_DIR, ASIN_INDEX_FILE
 
 
 def print_activations(t):
@@ -24,7 +24,9 @@ class _Base(object):
         
         if function == 'classify':
             self.param = json.loads(open(PARAM_DIR+'model_parameters_classify.json').read())
-            self.OUTPUT = CLASS_SIZE
+            with open(ASIN_INDEX_FILE, 'r') as asin_index_file:
+                asin_index = json.load(asin_index_file)
+            self.OUTPUT = len(asin_index.keys())
         else :
             self.param = json.loads(open(PARAM_DIR+'model_parameters_count.json').read())
             if difficulty == 'moderate' :
