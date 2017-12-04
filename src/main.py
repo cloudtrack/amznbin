@@ -63,12 +63,12 @@ def train(model, sess, saver, train_data, valid_data, batch_size, max_iters, use
                     print_string = "iter: " + str(i) + "\tbatch: "+str(batch_cnt)+"\ttrain " + metric + ": %.4f \tloss: %.4f in %ds" % (train_metric, train_loss, time.time() - t2)
                     print(print_string)
                     print(train_pred[0])
-                    #print('predicted: ' + str(train_pred_one[0]) + ' by %.2f percent' % (train_pred[0][train_pred_one[0]] * 100))
-                    #print('target:    ' + str(np.argmax(labels[0])))
-                    #print(train_pred[1])
-                    #print('predicted: ' + str(train_pred_one[1]) + ' by %.2f percent' % (train_pred[1][train_pred_one[1]] * 100))
-                    #print('target:    ' + str(np.argmax(labels[1])))
-                    #print('------------------------------------------------------------------------------')
+                    print('predicted: ' + str(train_pred_one[0]) + ' by %.2f percent' % (train_pred[0][train_pred_one[0]] * 100))
+                    print('target:    ' + str(np.argmax(labels[0])))
+                    print(train_pred[1])
+                    print('predicted: ' + str(train_pred_one[1]) + ' by %.2f percent' % (train_pred[1][train_pred_one[1]] * 100))
+                    print('target:    ' + str(np.argmax(labels[1])))
+                    print('------------------------------------------------------------------------------')
                     #train_log.write(print_string + "\n")
                     batch_cnt = batch_cnt + 1
             except tf.errors.OutOfRangeError:
@@ -92,8 +92,8 @@ def train(model, sess, saver, train_data, valid_data, batch_size, max_iters, use
                     # valid_metric = valid_metric[0]
                     print('validation ' + metric + ': %.4f' % (valid_metric))
                     print(valid_pred)
-                    #print('predicted: ' + str(valid_pred_one[0]) + ' by %.2f percent' % (valid_pred[0][valid_pred_one[0]] * 100))
-                    #print('target:    ' + str(np.argmax(labels[0])))
+                    print('predicted: ' + str(valid_pred_one[0]) + ' by %.2f percent' % (valid_pred[0][valid_pred_one[0ㄴ]] * 100))
+                    print('target:    ' + str(np.argmax(labels[0])))
                     final_valid_metric = final_valid_metric + valid_metric
                     batch_cnt = batch_cnt + 1
             except tf.errors.OutOfRangeError:
