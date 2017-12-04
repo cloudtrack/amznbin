@@ -192,7 +192,6 @@ if __name__ == '__main__':
     difficulty = args.difficulty
     continue_train = args.continue_train
 
-    tf.reset_default_graph()
     with tf.Session() as sess:
         # Define computation graph & Initialize
         print('Building network & initializing variables')
