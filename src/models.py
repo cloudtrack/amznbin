@@ -66,7 +66,7 @@ class _Base(object):
             tp = tf.reduce_sum(tf.multiply(self.target, pred_labels), 1)
             fn = tf.reduce_sum(tf.multiply(self.target, 1-pred_labels), 1)
             fp = tf.reduce_sum(tf.multiply(1-self.target, pred_labels), 1)
-            self.metric = tf.multiply(1 - (tp / (tp + fn + fp)), 100)
+            self.metric = tf.reduce_mean(tf.multiply(1 - (tp / (tp + fn + fp)), 100))
         
         elif (self.function == 'count') and (self.difficulty == 'moderate') :
             # Accuracy 
@@ -129,7 +129,7 @@ class _Base(object):
         feed_dict = {self.image: image_data, self.target: target_data}
 
         if self.function == 'classify' :
-            return self.sess.run([self.metric, tf.nn.sigmoid(self.pred), self.pred_one], feed_dict=feed_dict)
+            return self.sess.run([self.metric, tf.nn.sigmoid(self.pred), self.pred], feed_dict=feed_dict)
         elif self.difficulty == 'moderate' :
             return self.sess.run([self.metric, tf.nn.softmax(self.pred), self.pred_one], feed_dict=feed_dict)
         else : 
