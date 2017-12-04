@@ -45,33 +45,20 @@ class _Base(object):
         self._init_ops()
 
         if self.function == 'classify':
-            # Accuracy
-            pred_labels = tf.cast(tf.greater_equal(self.pred, 0.2), tf.float32)
+            # For multilabel accuracy
+            # pred_labels = tf.cast(tf.greater_equal(self.pred, 0.2), tf.float32)
+            # tp = tf.reduce_sum(tf.multiply(self.target, pred_labels), 1)
+            # fn = tf.reduce_sum(tf.multiply(self.target, 1-pred_labels), 1)
+            # fp = tf.reduce_sum(tf.multiply(1-self.target, pred_labels), 1)
+            # self.metric = tf.multiply(tf.reduce_mean(1 - (tp / (tp + fn + fp))), 100)
 
-            # def pred_longer() :
-            #     total = tf.cast(tf.count_nonzero(pred_labels), tf.float32) 
-            #     where = tf.equal(pred_labels, tf.constant(1, dtype=tf.int32))
-            #     indices = tf.reshape(tf.where(where), [-1])
-            #     count = tf.map_fn(lambda x: tf.cast(tf.equal(pred_labels[x], tf.constant(1, dtype=tf.int32)), tf.int32), indices, tf.int32)
-            #     return tf.cast(tf.reduce_sum(count), tf.float32), total
-
-            # def target_longer() :
-            #     total = tf.cast(tf.count_nonzero(self.target), tf.float32)
-            #     where = tf.equal(self.target, tf.constant(1, dtype=tf.float32))
-            #     indices = tf.reshape(tf.where(where), [-1])
-            #     count = tf.map_fn(lambda x: tf.cast(tf.equal(pred_labels[x], tf.constant(1, dtype=tf.int32)), tf.int32), indices, tf.int32)
-            #     return tf.cast(tf.reduce_sum(count), tf.float32), total
-
-            # count, total = tf.cond(tf.greater(tf.cast(tf.count_nonzero(pred_labels), tf.float32), tf.cast(tf.count_nonzero(self.target), tf.float32)), lambda: pred_longer(), lambda: target_longer())
-            # self.metric = tf.multiply(tf.divide(count, total), 100)
-
-            tp = tf.reduce_sum(tf.multiply(self.target, pred_labels), 1)
-            fn = tf.reduce_sum(tf.multiply(self.target, 1-pred_labels), 1)
-            fp = tf.reduce_sum(tf.multiply(1-self.target, pred_labels), 1)
-            self.metric = tf.reduce_mean(tf.multiply(1 - (tp / (tp + fn + fp)), 100))
-        
+            # For single label accuracy
+            self.pred_one = tf.argmax(self.pred, 1)
+            self.metric = tf.multiply(tf.reduce_mean(tf.cast(tf.equal(self.pred_one, tf.argmax(self.target, 1)), tf.float32)), 100)
+ 
         elif (self.function == 'count') and (self.difficulty == 'moderate') :
             # Accuracy 
+            # batch 1
             # self.pred_one = tf.argmax(self.pred, 0)
             # self.metric = tf.multiply(tf.cast(tf.equal(self.pred_one, tf.argmax(self.target, 1)), tf.float32), 100)
             self.pred_one = tf.argmax(self.pred, 1)
@@ -93,7 +80,12 @@ class _Base(object):
         """ Calculates loss and performs gradient descent """
         # Loss     
         if self.function == 'classify':
-            self.loss = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(labels=self.target, logits=self.pred))
+            # multilabel
+            # self.loss = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(labels=self.target, logits=self.pred))
+            
+            # single label
+            self.loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(labels=self.target, logits=self.pred))
+
         elif self.function == 'count' and self.difficulty == 'moderate':
             self.loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(labels=self.target, logits=self.pred))
         else:
@@ -131,7 +123,11 @@ class _Base(object):
         feed_dict = {self.image: image_data, self.target: target_data}
 
         if self.function == 'classify' :
-            return self.sess.run([self.metric, tf.nn.sigmoid(self.pred), self.pred], feed_dict=feed_dict)
+            # multilabel
+            # return self.sess.run([self.metric, tf.nn.sigmoid(self.pred), self.pred], feed_dict=feed_dict)
+
+            # single label
+            return self.sess.run([self.metric, tf.nn.softmax(self.pred), self.pred_one], feed_dict=feed_dict)
         elif self.difficulty == 'moderate' :
             return self.sess.run([self.metric, tf.nn.softmax(self.pred), self.pred_one], feed_dict=feed_dict)
         else : 
