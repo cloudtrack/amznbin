@@ -26,9 +26,10 @@ class _Base(object):
 
         if function == 'classify':
             self.param = json.loads(open(PARAM_DIR+'model_parameters_classify.json').read())
-            with open(ASIN_INDEX_FILE, 'r') as asin_index_file:
-                asin_index = json.load(asin_index_file)
-            self.OUTPUT = len(asin_index.keys())
+            #with open(ASIN_INDEX_FILE, 'r') as asin_index_file:
+            #    asin_index = json.load(asin_index_file)
+            #self.OUTPUT = len(asin_index.keys())
+            self.OUTPUT = 10
         else :
             self.param = json.loads(open(PARAM_DIR+'model_parameters_count.json').read())
             if difficulty == 'moderate' :
@@ -422,30 +423,36 @@ class LENET(_Base):
         biases = tf.Variable(tf.constant(0.1, shape=[self.param['lenet_conv1_kernel']], dtype=tf.float32), trainable=True)
         conv1 = tf.nn.relu(conv + biases)
         self.variables += [kernel, biases]
+        print_activations(conv1)
 
         # pool1
         pool1 = tf.nn.max_pool(conv1, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1], padding='SAME')
+        print_activations(pool1)
 
         # conv2
-        kernel = tf.Variable(tf.truncated_normal([5, 5, self.param['lenet_conv1_kernel'], self.param['lenet_conv2_kernel']], dtype=tf.float32,  stddev=0.1), trainable=True)
+        kernel = tf.Variable(tf.truncated_normal([5, 5, self.param['lenet_conv1_kernel'], self.param['lenet_conv2_kernel']], dtype=tf.float32, stddev=0.1), trainable=True)
         conv = tf.nn.conv2d(pool1, kernel, [1, 1, 1, 1], padding='SAME')
         biases = tf.Variable(tf.constant(0.1, shape=[self.param['lenet_conv2_kernel']], dtype=tf.float32), trainable=True)
         conv2 = tf.nn.relu(conv + biases)
         self.variables += [kernel, biases]
+        print_activations(conv2)
 
         # pool2
         pool2 = tf.nn.max_pool(conv2, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1], padding='SAME')
+        print_activations(pool2)
  
         # fullyconnected3
-        kernel = tf.Variable(tf.truncated_normal(self.param['lenet_fc3_kernel1'], self.param['lenet_fc3_kernel2'], dype=tf.float32, stddev=0.1), trainable=True)
+        kernel = tf.Variable(tf.truncated_normal([self.param['lenet_fc3_kernel1'], self.param['lenet_fc3_kernel2']], dtype=tf.float32, stddev=0.1), trainable=True)
         biases = tf.Variable(tf.constant(0.1, shape=[self.param['lenet_fc3_kernel2']], dtype=tf.float32), trainable=True)
         fc3 = tf.nn.relu(tf.nn.xw_plus_b(tf.reshape(pool2, [-1, int(np.prod(pool2.get_shape()[1:]))]), kernel, biases))
         self.variables += [kernel, biases]
+        print_activations(fc3)
 
         # fullyconnected4
-        kernel = tf.Variable(tf.truncated_normal(self.param['lenet_fc3_kernel2'], self.OUTPUT, dtype=tf.float32, stddev=0.1), trainable=True)
+        kernel = tf.Variable(tf.truncated_normal([self.param['lenet_fc3_kernel2'], self.OUTPUT], dtype=tf.float32, stddev=0.1), trainable=True)
         biases = tf.Variable(tf.constant(0.1, shape=[self.OUTPUT], dtype=tf.float32), trainable=True)
         fc4 = tf.nn.xw_plus_b(fc3, kernel, biases)
         self.variables += [kernel, biases]
+        print_activations(fc4)
 
         return fc4
