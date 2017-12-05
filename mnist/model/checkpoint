@@ -1,0 +1,2 @@
+model_checkpoint_path: "LE_classify_hard.ckpt"
+all_model_checkpoint_paths: "LE_classify_hard.ckpt"
