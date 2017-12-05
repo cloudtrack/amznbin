@@ -12,11 +12,11 @@ from models import ALEXNET, VGGNET, LENET
 
 def color_scaler(img) :
     r, g, b = img[:,:,0], img[:,:,1], img[:,:,2]
-    gray = 0.2989 * r + 0.5870 * g + 0.1140 * b
+    #gray = 0.2989 * r + 0.5870 * g + 0.1140 * b
     #img[:,:,0] = gray
     #img[:,:,1] = 0
     #img[:,:,2] = b
-    return gray.reshape(224,224,1)
+    return r.reshape(28,28,1)
 
 def train(model, sess, saver, train_data, valid_data, batch_size, max_iters, use_early_stop, early_stop_max_iter,
           function, difficulty):
@@ -52,12 +52,6 @@ def train(model, sess, saver, train_data, valid_data, batch_size, max_iters, use
                     images = [color_scaler(image) for image in images]
                     images = [image - np.mean(image) for image in images]
                     labels = train_data.get_labels_from_indices(indices, function, difficulty)
-                    print(images[0])
-                    # Debug
-                    # img = Image.fromarray(images[0])
-                    # draw = ImageDraw.Draw(img)
-                    # draw.text((0, 0), 'label: {0}'.format(labels[0]), (255, 255, 255))
-                    # img.show()
 
                     model.train_iteration(images, labels)
                     train_loss = model.eval_loss(images, labels)
@@ -65,16 +59,16 @@ def train(model, sess, saver, train_data, valid_data, batch_size, max_iters, use
                     # train_metric = train_metric[0]
                     print_string = "iter: " + str(i) + "\tbatch: "+str(batch_cnt)+"\ttrain " + metric + ": %.4f \tloss: %.4f in %ds" % (train_metric, train_loss, time.time() - t2)
                     print(print_string)
-                    plt.imshow(images[0], interpolation='nearest')
-                    plt.axis('off')
-                    plt.show()
+                    # plt.imshow(images[0], interpolation='nearest')
+                    # plt.axis('off')
+                    # plt.show()
                     print(train_pred[0])
                     print('predicted: ' + str(train_pred_one[0]) + ' by %.2f percent' % (train_pred[0][train_pred_one[0]] * 100))
                     print('target:    ' + str(np.argmax(labels[0])))
-                    plt.close()
-                    plt.imshow(images[1], interpolation='nearest')
-                    plt.axis('off')
-                    plt.show()
+                    # plt.close()
+                    # plt.imshow(images[1], interpolation='nearest')
+                    # plt.axis('off')
+                    # plt.show()
                     print(train_pred[1])
                     print('predicted: ' + str(train_pred_one[1]) + ' by %.2f percent' % (train_pred[1][train_pred_one[1]] * 100))
                     print('target:    ' + str(np.argmax(labels[1])))
@@ -98,6 +92,7 @@ def train(model, sess, saver, train_data, valid_data, batch_size, max_iters, use
                 while not coord.should_stop():
                     images, indices = _sess.run([valid_image_tensor, valid_image_index_tensor])
                     images = [color_scaler(image) for image in images]
+                    images = [image - np.mean(image) for image in images]
                     labels = valid_data.get_labels_from_indices(indices, function, difficulty)
                     valid_metric, valid_pred, valid_pred_one = model.eval_metric(images, labels)
                     # valid_metric = valid_metric[0]
@@ -150,6 +145,7 @@ def test(model, sess, saver, test_data, function, difficulty, batch_size, log=Tr
         try:
             while not coord.should_stop():
                 images, indices = _sess.run([batch_image, batch_image_index])
+                images = [color_scaler(image) for image in images]
                 labels = test_data.get_labels_from_indices(indices, function, difficulty)
                 test_metric, _ = model.eval_metric(images, labels)
                 print('test ' + metric + ': %.4f' % (test_metric))
