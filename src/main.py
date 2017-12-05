@@ -92,7 +92,7 @@ def train(model, sess, saver, train_data, valid_data, batch_size, max_iters, use
                     # valid_metric = valid_metric[0]
                     print('validation ' + metric + ': %.4f' % (valid_metric))
                     print(valid_pred)
-                    print('predicted: ' + str(valid_pred_one[0]) + ' by %.2f percent' % (valid_pred[0][valid_pred_one[0ㄴ]] * 100))
+                    print('predicted: ' + str(valid_pred_one[0]) + ' by %.2f percent' % (valid_pred[0][valid_pred_one[0]] * 100))
                     print('target:    ' + str(np.argmax(labels[0])))
                     final_valid_metric = final_valid_metric + valid_metric
                     batch_cnt = batch_cnt + 1
