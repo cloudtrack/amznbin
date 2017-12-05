@@ -20,8 +20,10 @@ class _Base(object):
         self.learning_rate = learning_rate
         self.difficulty = difficulty
 
-        self.image = tf.placeholder(tf.float32, [None, IMAGE_SIZE, IMAGE_SIZE, 3])
-        
+        # self.image = tf.placeholder(tf.float32, [None, IMAGE_SIZE, IMAGE_SIZE, 3])
+        self.image = tf.placeholder(tf.float32, [None, IMAGE_SIZE, IMAGE_SIZE, 1])
+            
+
         if function == 'classify':
             self.param = json.loads(open(PARAM_DIR+'model_parameters_classify.json').read())
             with open(ASIN_INDEX_FILE, 'r') as asin_index_file:
@@ -415,36 +417,34 @@ class LENET(_Base):
         self.variables = []
 
         # conv1
-        kernel = tf.Variable(tf.truncated_normal([33, 33, 3, self.param['lenet_conv1_kernel']], dtype=tf.float32, mean=1e-1, stddev=5e-1))
+        kernel = tf.Variable(tf.truncated_normal([5, 5, 1, self.param['lenet_conv1_kernel']], dtype=tf.float32, stddev=0.1), trainable=True)
         conv = tf.nn.conv2d(image, kernel, [1, 1, 1, 1], padding='SAME')
-        biases = tf.Variable(tf.constant(1e-4, shape=[self.param['lenet_conv1_kernel']], dtype=tf.float32), trainable=True)
-        bias = tf.nn.bias_add(conv, biases)
-        conv1 = tf.nn.tanh(bias)
+        biases = tf.Variable(tf.constant(0.1, shape=[self.param['lenet_conv1_kernel']], dtype=tf.float32), trainable=True)
+        conv1 = tf.nn.relu(conv + biases)
         self.variables += [kernel, biases]
 
         # pool1
-        pool1 = tf.nn.max_pool(conv1, ksize=[1, 4, 4, 1], strides=[1, 4, 4, 1], padding='VALID')
+        pool1 = tf.nn.max_pool(conv1, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1], padding='SAME')
 
         # conv2
-        kernel = tf.Variable(tf.truncated_normal([33, 33, self.param['lenet_conv1_kernel'], self.param['lenet_conv2_kernel']], dtype=tf.float32, mean=1e-1, stddev=5e-1))
+        kernel = tf.Variable(tf.truncated_normal([5, 5, self.param['lenet_conv1_kernel'], self.param['lenet_conv2_kernel']], dtype=tf.float32,  stddev=0.1), trainable=True)
         conv = tf.nn.conv2d(pool1, kernel, [1, 1, 1, 1], padding='SAME')
-        biases = tf.Variable(tf.constant(1e-4, shape=[self.param['lenet_conv2_kernel']], dtype=tf.float32), trainable=True)
-        bias = tf.nn.bias_add(conv, biases)
-        conv2 = tf.nn.tanh(bias)
+        biases = tf.Variable(tf.constant(0.1, shape=[self.param['lenet_conv2_kernel']], dtype=tf.float32), trainable=True)
+        conv2 = tf.nn.relu(conv + biases)
         self.variables += [kernel, biases]
 
         # pool2
-        pool2 = tf.nn.max_pool(conv2, ksize=[1, 4, 4, 1], strides=[1, 4, 4, 1], padding='VALID')
+        pool2 = tf.nn.max_pool(conv2, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1], padding='SAME')
  
         # fullyconnected3
-        kernel = tf.Variable(tf.constant(0.0, shape=[self.param['lenet_fc3_kernel1'], self.param['lenet_fc3_kernel2']], dtype=tf.float32), trainable=True)
-        biases = tf.Variable(tf.constant(1e-4, shape=[self.param['lenet_fc3_kernel2']], dtype=tf.float32), trainable=True)
-        fc3 = tf.nn.tanh(tf.nn.xw_plus_b(tf.reshape(pool2, [-1, int(np.prod(pool2.get_shape()[1:]))]), kernel, biases))
+        kernel = tf.Variable(tf.truncated_normal(self.param['lenet_fc3_kernel1'], self.param['lenet_fc3_kernel2'], dype=tf.float32, stddev=0.1), trainable=True)
+        biases = tf.Variable(tf.constant(0.1, shape=[self.param['lenet_fc3_kernel2']], dtype=tf.float32), trainable=True)
+        fc3 = tf.nn.relu(tf.nn.xw_plus_b(tf.reshape(pool2, [-1, int(np.prod(pool2.get_shape()[1:]))]), kernel, biases))
         self.variables += [kernel, biases]
 
         # fullyconnected4
-        kernel = tf.Variable(tf.constant(0.0, shape=[self.param['lenet_fc3_kernel2'], self.OUTPUT], dtype=tf.float32), trainable=True)
-        biases = tf.Variable(tf.constant(1e-4, shape=[self.OUTPUT], dtype=tf.float32), trainable=True)
+        kernel = tf.Variable(tf.truncated_normal(self.param['lenet_fc3_kernel2'], self.OUTPUT, dtype=tf.float32, stddev=0.1), trainable=True)
+        biases = tf.Variable(tf.constant(0.1, shape=[self.OUTPUT], dtype=tf.float32), trainable=True)
         fc4 = tf.nn.xw_plus_b(fc3, kernel, biases)
         self.variables += [kernel, biases]
 
