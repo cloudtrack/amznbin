@@ -1,26 +1,7 @@
 import json
-import constant
+from constants import TOTAL_DATA_SIZE, METADATA_DIR, RAW_METADATA_FILE, METADATA_FILE, ASIN_INDEX_FILE, INDEX_ASIN_FILE, VALID_IMAGES_FILE
 
 def make_raw_metadata():
-        """
-    metadata 각 파일들에서 필요한 정보만 모은 리스트를 리턴한다.
-    리스트의 index 는 파일 이름과 동일함 (즉, 0에는 dummy data)
-    * example of each item_metadata format
-    {
-        "TOTAL": 2,
-        "DATA": {
-            "B01DDF6WWS": {
-                "quantity": 1,
-                "name": "iPhone SE Case, araree\u00ae [Airfit] Ultra Slim SOFT-Interior Scratch Protection with Perfect Fit for iPhone SE, 5S and 5 (2016) (BLUE(Matt))"
-            },
-            "B019775SYE": {
-                "quantity": 1,
-                "name": "Midline Lacrosse Logo Crew Socks (Columbia Blue/Navy, Small)"
-            }
-        }
-    }
-    :return: The list of item_metadata
-    """
     raw_metadata = [{}]
     for i in range(1, TOTAL_DATA_SIZE+1):
         if i % 1000 == 0:
@@ -42,7 +23,7 @@ def make_raw_metadata():
 
     return raw_metadata
 
-make_metadata(raw_metadata, valid_images):
+def make_metadata(raw_metadata, valid_images):
     metadata = {}
     for i in valid_images:
         data = raw_metadata[i]
@@ -50,14 +31,15 @@ make_metadata(raw_metadata, valid_images):
             if len(data['DATA'].keys()) == 1:
                 for asin in data['DATA'].keys():
                     if asin in metadata:
-                        metadata[asin]['repeat'] = d[asin]['repeat'] + 1
+                        metadata[asin]['repeat'] = metadata[asin]['repeat'] + 1
                         metadata[asin]['bin_list'].append(i)
                     else:
+                        metadata[asin] = {}
                         metadata[asin]['repeat'] = 1
                         metadata[asin]['bin_list'] = [i]
     return metadata
 
-make_target_vector_map(metadata, isClustering):
+def make_target_vector_map(metadata):
     asin_index_map = {}
     index_asin_map = {}
     index = 0
@@ -70,7 +52,8 @@ make_target_vector_map(metadata, isClustering):
 
 
 if __name__ == '__main__':
-    raw_metadata = make_raw_metadata()
+    with open(RAW_METADATA_FILE, 'r') as raw_metadata_file:
+        raw_metadata = json.load(raw_metadata_file)
 
     valid_images = range(1, len(raw_metadata))
 
@@ -79,7 +62,7 @@ if __name__ == '__main__':
     valid_object = []
 
     for asin in metadata.keys():
-        if 20 <= d[asin]['repeat'] <= 70:
+        if 20 <= metadata[asin]['repeat']:
             valid_object.append(asin)
 
     valid_images = []
@@ -102,7 +85,7 @@ if __name__ == '__main__':
         json.dump(index_asin_map, index_asin_file)
 
     with open(VALID_IMAGES_FILE, 'w') as valid_images_file:
-        json.dump(valid_images, valid_images_file)
+        json.dump(sorted(valid_images), valid_images_file, indent=4)
 
     print(len(valid_images))
     print(len(asin_index_map))
