@@ -3,6 +3,7 @@ import time
 
 import numpy as np
 import tensorflow as tf
+import matplotlib.pyplot as plt
 from PIL import ImageDraw, Image
 from numpy.distutils.fcompiler import str2bool
 
@@ -57,15 +58,23 @@ def train(model, sess, saver, train_data, valid_data, batch_size, max_iters, use
                     # draw = ImageDraw.Draw(img)
                     # draw.text((0, 0), 'label: {0}'.format(labels[0]), (255, 255, 255))
                     # img.show()
+
                     model.train_iteration(images, labels)
                     train_loss = model.eval_loss(images, labels)
                     train_metric, train_pred, train_pred_one = model.eval_metric(images, labels)
                     # train_metric = train_metric[0]
                     print_string = "iter: " + str(i) + "\tbatch: "+str(batch_cnt)+"\ttrain " + metric + ": %.4f \tloss: %.4f in %ds" % (train_metric, train_loss, time.time() - t2)
                     print(print_string)
+                    plt.imshow(images[0], interpolation='nearest')
+                    plt.axis('off')
+                    plt.show()
                     print(train_pred[0])
                     print('predicted: ' + str(train_pred_one[0]) + ' by %.2f percent' % (train_pred[0][train_pred_one[0]] * 100))
                     print('target:    ' + str(np.argmax(labels[0])))
+                    plt.close()
+                    plt.imshow(images[1], interpolation='nearest')
+                    plt.axis('off')
+                    plt.show()
                     print(train_pred[1])
                     print('predicted: ' + str(train_pred_one[1]) + ' by %.2f percent' % (train_pred[1][train_pred_one[1]] * 100))
                     print('target:    ' + str(np.argmax(labels[1])))
