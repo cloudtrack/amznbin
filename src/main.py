@@ -130,14 +130,20 @@ def test(model, sess, saver, test_data, function, difficulty, batch_size, log=Tr
         _sess.run(tf.local_variables_initializer())
         coord = tf.train.Coordinator()
         threads = tf.train.start_queue_runners(sess=_sess, coord=coord)
+        final_test_metric = 0
+        batch_cnt = 0
         try:
             while not coord.should_stop():
                 images, indices = _sess.run([batch_image, batch_image_index])
                 labels = test_data.get_labels_from_indices(indices, function, difficulty)
-                test_metric, _ = model.eval_metric(images, labels)
+                test_metric, _, _ = model.eval_metric(images, labels)
                 print('test ' + metric + ': %.4f' % (test_metric))
+                final_test_metric = final_test_metric + test_metric
+                batch_cnt = batch_cnt + 1
+                
         except tf.errors.OutOfRangeError:
-            print('Something went wrong while testing')
+            print('final test accuracy : %.4f' % (final_test_metric/batch_cnt))
+            print('Done testing -- epoch limit reached')
         finally:
             coord.request_stop()
             coord.join(threads)
@@ -162,7 +168,7 @@ if __name__ == '__main__':
                         help='the batch size to use when doing gradient descent')
     parser.add_argument('--learning-rate', metavar='LEARNING-RATE', type=float, default=0.0001)
     parser.add_argument('--no-early', type=str2bool, default=False, help='disable early stopping')
-    parser.add_argument('--early-stop-max-iter', metavar='EARLY_STOP_MAX_ITER', type=int, default=300,
+    parser.add_argument('--early-stop-max-iter', metavar='EARLY_STOP_MAX_ITER', type=int, default=50,
                         help='the maximum number of iterations to let the model continue training after reaching a '
                              'minimum validation error')
     parser.add_argument('--max-iters', metavar='MAX_ITERS', type=int, default=500,
@@ -217,14 +223,3 @@ if __name__ == '__main__':
         saver.restore(sess, model.model_filename)
         test_metric = test(model, sess, saver, test_data, function, difficulty, batch_size)
 
-        if(args.outfile == 'modelname') :
-            outfile = model.model_filename
-        else :
-            outfile = args.outfile
-        if os.path.exists('out/'+outfile+'.txt') == False:
-            with open('out/'+outfile+'.txt', 'w') as myfile:
-                myfile.close()
-            os.chmod('out/'+outfile+'.txt', 0o777)
-        with open('out/'+outfile+'.txt', "a") as myfile:
-            myfile.write(model.model_filename+(' %.4f %ds\n' % (test_metric, traintime)))
-            myfile.close()
