@@ -185,6 +185,6 @@ if __name__ == '__main__':
                 use_early_stop=use_early_stop, early_stop_max_iter=early_stop_max_iter, function=function, difficulty=difficulty)
         
         print('Loading best checkpointed model')
-        saver.restore(sess, model.model_filename)
+        saver.restore(sess, "../"+model.model_filename)
         test_metric = test(model, sess, saver, test_data, function, difficulty, batch_size)
 
