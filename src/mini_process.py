@@ -61,8 +61,10 @@ if __name__ == '__main__':
 
     valid_object = []
 
+    repeat_num = int(input())
+
     for asin in metadata.keys():
-        if 20 <= metadata[asin]['repeat']:
+        if repeat_num <= metadata[asin]['repeat']:
             valid_object.append(asin)
 
     valid_images = []
