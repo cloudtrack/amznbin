@@ -2,4 +2,4 @@
 run="python3"
 main="src/main.py"
 
-${run} ${main} --mode train --model "VGGNET" --function "classify" --difficulty "hard" --batch 50 #--continue-train True
+${run} ${main} --mode train --model "LENET" --function "count" --difficulty "moderate" --batch 5 #--continue-train True
