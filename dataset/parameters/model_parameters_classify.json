@@ -11,12 +11,12 @@
 "lenet_conv2_kernel" : 64,
 "lenet_fc3_kernel1" : 200704,
 "lenet_fc3_kernel2" : 1024,
-"vggnet_conv1_kernel" : 128,
-"vggnet_conv2_kernel" : 512,
-"vggnet_conv3_kernel" : 2048,
-"vggnet_conv4_kernel" : 8192,
-"vggnet_conv5_kernel" : 8192,
-"vggnet_fc6_kernel1" : 32768,
-"vggnet_fc6_kernel2" : 65536,
-"vggnet_fc7_kernel" : 65536
+"vggnet_conv1_kernel" : 64,
+"vggnet_conv2_kernel" : 128,
+"vggnet_conv3_kernel" : 256,
+"vggnet_conv4_kernel" : 512,
+"vggnet_conv5_kernel" : 512,
+"vggnet_fc6_kernel1" : 25088,
+"vggnet_fc6_kernel2" : 4096,
+"vggnet_fc7_kernel" : 4096
 }
