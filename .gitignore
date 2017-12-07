@@ -112,3 +112,4 @@ mxnet-vgg16-sample
 connect.sh
 .DS_Store
 /model
+/sample/mnist/model
