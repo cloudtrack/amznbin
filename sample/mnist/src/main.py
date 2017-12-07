@@ -3,8 +3,7 @@ import time
 
 import numpy as np
 import tensorflow as tf
-import matplotlib.pyplot as plt
-from PIL import ImageDraw, Image
+#import matplotlib.pyplot as plt
 from numpy.distutils.fcompiler import str2bool
 
 from models import ALEXNET, VGGNET, LENET
@@ -117,7 +116,7 @@ def test(model, sess, saver, test_data, function, difficulty, batch_size, log=Tr
     with tf.Session() as _sess:
         _sess.run(tf.local_variables_initializer())
 
-        batch = test_data.next_batch(batch_size)
+        batch = test_data.next_batch(batch_size*100)
         images = [img.reshape(28,28,1) for img in batch[0]]
         labels = batch[1]
         test_metric, _, _ = model.eval_metric(images, labels)
@@ -195,6 +194,6 @@ if __name__ == '__main__':
                 use_early_stop=use_early_stop, early_stop_max_iter=early_stop_max_iter, function=function, difficulty=difficulty)
         
         print('Loading best checkpointed model')
-        saver.restore(sess, "../"+model.model_filename)
+        saver.restore(sess, model.model_filename)
         test_metric = test(model, sess, saver, test_data, function, difficulty, batch_size)
 

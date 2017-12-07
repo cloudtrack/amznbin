@@ -4,7 +4,6 @@ import time
 import numpy as np
 import tensorflow as tf
 # import matplotlib.pyplot as plt
-from PIL import ImageDraw, Image
 from numpy.distutils.fcompiler import str2bool
 
 from dataset import load_dataset
