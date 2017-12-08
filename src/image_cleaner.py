@@ -80,9 +80,7 @@ checked = json.loads(open("dataset/checked_images.json").read())
 dataset = load_dataset()
 train, valid, test = dataset.train, dataset.validation, dataset.test
 
-# train:3459, validation:392, test:78
-
-clean(train, invalid, semi, checked)
+# clean(train, invalid, semi, checked)
 # clean(valid, invalid, semi, checked)
 # clean(test, invalid, semi, checked)
 
