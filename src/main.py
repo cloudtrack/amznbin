@@ -164,12 +164,13 @@ def test(model, sess, saver, test_data, function, difficulty, batch_size, log=Tr
                 batch_cnt = batch_cnt + 1
                 
         except tf.errors.OutOfRangeError:
-            print('final test accuracy : %.4f' % (final_test_metric/batch_cnt))
+            final_test_metric = final_test_metric/batch_cnt
+            print('final test accuracy : %.4f' % (final_test_metric))
             print('Done testing -- epoch limit reached')
         finally:
             coord.request_stop()
             coord.join(threads)
-        return test_metric
+        return final_test_metric
 
 
 if __name__ == '__main__':
