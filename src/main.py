@@ -111,7 +111,7 @@ def train(model, sess, saver, train_data, valid_data, batch_size, max_iters, use
                     print("Early stopping ({} vs. {})...".format(prev_valid_metric, final_valid_metric))
                     traintime = (time.time() - t0)
                     print("total training time %ds" % traintime)
-                    return traintime
+                    return train_metric, prev_valid_metric, traintime
             else :
                 if final_valid_metric < prev_valid_metric:
                     prev_valid_metric = final_valid_metric
@@ -121,11 +121,13 @@ def train(model, sess, saver, train_data, valid_data, batch_size, max_iters, use
                     print("Early stopping ({} vs. {})...".format(prev_valid_metric, final_valid_metric))
                     traintime = (time.time() - t0)
                     print("total training time %ds" % traintime)
-                    return traintime
+                    return train_metric, prev_valid_metric, traintime
         else:
             saver.save(sess, model.model_filename)
-    # train_log.close()
+    
+    return train_metric, prev_valid_metric, time.time() - t0
 
+    # train_log.close()
 
 def test(model, sess, saver, test_data, function, difficulty, batch_size, log=True):
     """
@@ -180,10 +182,10 @@ if __name__ == '__main__':
                         help='the batch size to use when doing gradient descent')
     parser.add_argument('--learning-rate', metavar='LEARNING-RATE', type=float, default=0.0001)
     parser.add_argument('--no-early', type=str2bool, default=False, help='disable early stopping')
-    parser.add_argument('--early-stop-max-iter', metavar='EARLY_STOP_MAX_ITER', type=int, default=50,
+    parser.add_argument('--early-stop-max-iter', metavar='EARLY_STOP_MAX_ITER', type=int, default=10,
                         help='the maximum number of iterations to let the model continue training after reaching a '
                              'minimum validation error')
-    parser.add_argument('--max-iters', metavar='MAX_ITERS', type=int, default=500,
+    parser.add_argument('--max-iters', metavar='MAX_ITERS', type=int, default=100,
                         help='the maximum number of iterations to allow the model to train for')
     parser.add_argument('--outfile', type=str, default='modelname', help='output file name')
     parser.add_argument('--difficulty', type=str, default='moderate', choices=['moderate', 'hard'],
@@ -226,12 +228,18 @@ if __name__ == '__main__':
         train_data, validation_data, test_data = dataset.train, dataset.validation, dataset.test
 
         # Train
-        traintime = 0
+        train_metric=0
+        valid_metric=0
+        traintime=0
         if mode == 'train':
-            traintime = train(model, sess, saver, train_data, validation_data, batch_size=batch_size, max_iters=max_iters,
+            train_metric, valid_metric, traintime = train(model, sess, saver, train_data, validation_data, batch_size=batch_size, max_iters=max_iters,
                 use_early_stop=use_early_stop, early_stop_max_iter=early_stop_max_iter, function=function, difficulty=difficulty)
         
         print('Loading best checkpointed model')
         saver.restore(sess, model.model_filename)
         test_metric = test(model, sess, saver, test_data, function, difficulty, batch_size)
+
+        results = open("results.txt", 'w')
+        results.write("train: %.4f\t valid: %.4f\t test: %.4f\t in %ds \n" % (train_metric, valid_metric, test_metric, traintime))
+        results.close()
 
