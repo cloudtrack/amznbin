@@ -22,9 +22,11 @@ def train(model, sess, saver, train_data, valid_data, batch_size, max_iters, use
 
     if function == 'count' and difficulty == 'hard':
         metric = 'rmse'
+        prev_train_metric = float("Inf")
         prev_valid_metric = float("Inf")
     else:
         metric = 'accuracy'
+        prev_train_metric = 0
         prev_valid_metric = 0
 
     #train_log = open("train_log.txt", 'w')
@@ -32,6 +34,7 @@ def train(model, sess, saver, train_data, valid_data, batch_size, max_iters, use
     for i in range(max_iters):
         print('==== New epoch started ====')
         # Training
+        final_train_metric = 0
         for batch_cnt in range(100) :
             t2 = time.time()
             
@@ -59,8 +62,11 @@ def train(model, sess, saver, train_data, valid_data, batch_size, max_iters, use
             print('predicted: ' + str(train_pred_one[1]) + ' by %.2f percent' % (train_pred[1][train_pred_one[1]] * 100))
             print('target:    ' + str(np.argmax(labels[1])))
             print('------------------------------------------------------------------------------')
+            final_train_metric = final_train_metric + train_metric
             #train_log.write(print_string + "\n")
 
+        final_train_metric = final_train_metric/100
+        
         # Validation
         batch = valid_data.next_batch(batch_size*100)
         images = [img.reshape(28,28,1) for img in batch[0]]
@@ -81,13 +87,14 @@ def train(model, sess, saver, train_data, valid_data, batch_size, max_iters, use
             if metric == 'accuracy' :
                 if valid_metric > prev_valid_metric:
                     prev_valid_metric = valid_metric
+                    prev_train_metric = final_train_metric
                     early_stop_iters = 0
                     saver.save(sess, model.model_filename)
                 elif early_stop_iters == early_stop_max_iter:
                     print("Early stopping ({} vs. {})...".format(prev_valid_metric, final_valid_metric))
                     traintime = (time.time() - t0)
                     print("total training time %ds" % traintime)
-                    return train_metric, prev_valid_metric, traintime
+                    return prev_train_metric, prev_valid_metric, traintime
             else :
                 if valid_metric < prev_valid_metric:
                     prev_valid_metric = valid_metric
@@ -97,12 +104,12 @@ def train(model, sess, saver, train_data, valid_data, batch_size, max_iters, use
                     print("Early stopping ({} vs. {})...".format(prev_valid_metric, final_valid_metric))
                     traintime = (time.time() - t0)
                     print("total training time %ds" % traintime)
-                    return train_metric, prev_valid_metric, traintime
+                    return prev_train_metric, prev_valid_metric, traintime
 
         else:
             saver.save(sess, model.model_filename)
             
-    return train_metric, prev_valid_metric, time.time() - t0
+    return prev_train_metric, prev_valid_metric, time.time() - t0
 
     # train_log.close()
 
