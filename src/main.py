@@ -247,7 +247,7 @@ if __name__ == '__main__':
         saver.restore(sess, model.model_filename)
         test_metric = test(model, sess, saver, test_data, function, difficulty, batch_size)
 
-        results = open("results.txt", 'w')
+        results = open("results.txt", 'a')
         results.write("train: %.4f\t valid: %.4f\t test: %.4f\t in %ds \n" % (train_metric, valid_metric, test_metric, traintime))
         results.close()
 
