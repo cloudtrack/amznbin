@@ -98,6 +98,7 @@ def train(model, sess, saver, train_data, valid_data, batch_size, max_iters, use
             else :
                 if valid_metric < prev_valid_metric:
                     prev_valid_metric = valid_metric
+                    prev_train_metric = final_train_metric
                     early_stop_iters = 0
                     saver.save(sess, model.model_filename)
                 elif early_stop_iters == early_stop_max_iter:
@@ -108,7 +109,8 @@ def train(model, sess, saver, train_data, valid_data, batch_size, max_iters, use
 
         else:
             saver.save(sess, model.model_filename)
-            
+    
+    prev_train_metric = final_train_metric
     return prev_train_metric, prev_valid_metric, time.time() - t0
 
     # train_log.close()
