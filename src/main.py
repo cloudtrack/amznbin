@@ -196,7 +196,7 @@ if __name__ == '__main__':
                              'minimum validation error')
     parser.add_argument('--max-iters', metavar='MAX_ITERS', type=int, default=100,
                         help='the maximum number of iterations to allow the model to train for')
-    parser.add_argument('--outfile', type=str, default='modelname', help='output file name')
+    parser.add_argument('--model-filename', type=str, default='model_filename', help='output model file name')
     parser.add_argument('--difficulty', type=str, default='moderate', choices=['moderate', 'hard'],
                         help='difficulty of task')
     parser.add_argument('--continue-train', type=str2bool, default=False, help='whether to continue training from previously trained model')
@@ -212,6 +212,7 @@ if __name__ == '__main__':
     use_early_stop = not (args.no_early)
     early_stop_max_iter = args.early_stop_max_iter
     max_iters = args.max_iters
+    model_filename = args.model_filename
     difficulty = args.difficulty
     continue_train = args.continue_train
 
@@ -219,11 +220,11 @@ if __name__ == '__main__':
         # Define computation graph & Initialize
         print('Building network & initializing variables')
         if model_name == 'ALEXNET':
-            model = ALEXNET(function, learning_rate, difficulty)
+            model = ALEXNET(function, learning_rate, difficulty, model_filename)
         elif model_name == 'VGGNET':
-            model = VGGNET(function, learning_rate, difficulty)
+            model = VGGNET(function, learning_rate, difficulty, model_filename)
         else:
-            model = LENET(function, learning_rate, difficulty)
+            model = LENET(function, learning_rate, difficulty, model_filename)
 
         model.init_sess(sess)
         saver = tf.train.Saver()

@@ -12,7 +12,7 @@ def print_activations(t):
 class _Base(object):
 
     """ Base structure """
-    def __init__(self, model, function, learning_rate, difficulty):
+    def __init__(self, model, function, learning_rate, difficulty, model_filename):
         # Internal counter to keep track of current iteration
         self._iters = 0
 
@@ -43,7 +43,10 @@ class _Base(object):
 
         self.function = function
 
-        self.model_filename = 'model/' + model + '_' + function + '_'+ difficulty +'.ckpt'
+        if model_filename == 'model_filename':
+            self.model_filename = 'model/' + model + '_' + function + '_'+ difficulty +'.ckpt'
+        else :
+            self.model_filename = 'model/' + model_filename + '.ckpt'
 
         # Call methods to initialize variables and operations 
         self._init_vars()
@@ -149,8 +152,8 @@ class _Base(object):
 class ALEXNET(_Base):
     """ AlexNet model structrue """
 
-    def __init__(self, function, learning_rate, difficulty):
-        super(ALEXNET, self).__init__('ALEX', function, learning_rate, difficulty)
+    def __init__(self, function, learning_rate, difficulty, model_filename):
+        super(ALEXNET, self).__init__('ALEX', function, learning_rate, difficulty, model_filename)
 
     @property
     def filename(self):
@@ -242,8 +245,8 @@ class ALEXNET(_Base):
 class VGGNET(_Base):
     """ VGGNet model structrue """
 
-    def __init__(self, function, learning_rate, difficulty):
-        super(VGGNET, self).__init__('VGG', function, learning_rate, difficulty)
+    def __init__(self, function, learning_rate, difficulty, model_filename):
+        super(VGGNET, self).__init__('VGG', function, learning_rate, difficulty, model_filename)
 
     @property
     def filename(self):
@@ -382,8 +385,8 @@ class VGGNET(_Base):
 class LENET(_Base):
     """ LeNet model structrue """
 
-    def __init__(self, function, learning_rate, difficulty):
-        super(LENET, self).__init__('LE', function, learning_rate, difficulty)
+    def __init__(self, function, learning_rate, difficulty, model_filename):
+        super(LENET, self).__init__('LE', function, learning_rate, difficulty, model_filename)
 
     @property
     def filename(self):
