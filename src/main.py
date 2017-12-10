@@ -108,7 +108,7 @@ def train(model, sess, saver, train_data, valid_data, batch_size, max_iters, use
             print("previous: {} vs. current: {})...".format(prev_valid_metric, final_valid_metric))
             early_stop_iters += 1
             if metric == 'accuracy' :
-                if final_valid_metric > prev_valid_metric:
+                if final_valid_metric >= prev_valid_metric:
                     prev_valid_metric = final_valid_metric
                     prev_train_metric = final_train_metric
                     early_stop_iters = 0
@@ -119,7 +119,7 @@ def train(model, sess, saver, train_data, valid_data, batch_size, max_iters, use
                     print("total training time %ds" % traintime)
                     return prev_train_metric, prev_valid_metric, traintime
             else :
-                if final_valid_metric < prev_valid_metric:
+                if final_valid_metric <= prev_valid_metric:
                     prev_valid_metric = final_valid_metric
                     prev_train_metric = final_train_metric
                     early_stop_iters = 0
@@ -187,14 +187,14 @@ if __name__ == '__main__':
                         required=True)
 
     # Optional
-    parser.add_argument('--batch', metavar='BATCH_SIZE', type=int, default=5,
+    parser.add_argument('--batch', metavar='BATCH_SIZE', type=int, default=10,
                         help='the batch size to use when doing gradient descent')
-    parser.add_argument('--learning-rate', metavar='LEARNING-RATE', type=float, default=0.0001)
+    parser.add_argument('--learning-rate', metavar='LEARNING-RATE', type=float, default=0.00005)
     parser.add_argument('--no-early', type=str2bool, default=False, help='disable early stopping')
-    parser.add_argument('--early-stop-max-iter', metavar='EARLY_STOP_MAX_ITER', type=int, default=10,
+    parser.add_argument('--early-stop-max-iter', metavar='EARLY_STOP_MAX_ITER', type=int, default=60,
                         help='the maximum number of iterations to let the model continue training after reaching a '
                              'minimum validation error')
-    parser.add_argument('--max-iters', metavar='MAX_ITERS', type=int, default=100,
+    parser.add_argument('--max-iters', metavar='MAX_ITERS', type=int, default=60,
                         help='the maximum number of iterations to allow the model to train for')
     parser.add_argument('--model-filename', type=str, default='model_filename', help='output model file name')
     parser.add_argument('--difficulty', type=str, default='moderate', choices=['moderate', 'hard'],
