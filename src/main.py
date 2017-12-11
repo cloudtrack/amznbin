@@ -9,7 +9,7 @@ from numpy.distutils.fcompiler import str2bool
 from dataset import load_dataset
 from models import ALEXNET, VGGNET, LENET
 
-def train(model, sess, saver, train_data, valid_data, batch_size, max_iters, use_early_stop, early_stop_max_iter,
+def train(model, sess, saver, train_data, valid_data, test_data, batch_size, max_iters, use_early_stop, early_stop_max_iter,
           function, difficulty):
     """
     Trainer 
@@ -102,13 +102,38 @@ def train(model, sess, saver, train_data, valid_data, batch_size, max_iters, use
                 coord.request_stop()
                 coord.join(threads)
 
+        batch_image, batch_image_index = test_data.get_batch_tensor(batch_size=batch_size)
+
+        with tf.Session() as _sess:
+            _sess.run(tf.local_variables_initializer())
+            coord = tf.train.Coordinator()
+            threads = tf.train.start_queue_runners(sess=_sess, coord=coord)
+            final_test_metric = 0
+            batch_cnt = 0
+            try:
+                while not coord.should_stop():
+                    images, indices = _sess.run([batch_image, batch_image_index])
+                    labels = test_data.get_labels_from_indices(indices, function, difficulty)
+                    test_metric, _, _ = model.eval_metric(images, labels)
+                    print('test ' + metric + ': %.4f' % (test_metric))
+                    final_test_metric = final_test_metric + test_metric
+                    batch_cnt = batch_cnt + 1
+                    
+            except tf.errors.OutOfRangeError:
+                final_test_metric = final_test_metric/batch_cnt
+                print('final test accuracy : %.4f' % (final_test_metric))
+                print('Done testing -- epoch limit reached')
+            finally:
+                coord.request_stop()
+                coord.join(threads)
+
         # Checkpointing/early stopping
         if use_early_stop:
             print("%d/%d chances left" % (early_stop_max_iter - early_stop_iters, early_stop_max_iter))
             print("previous: {} vs. current: {})...".format(prev_valid_metric, final_valid_metric))
             early_stop_iters += 1
             if metric == 'accuracy' :
-                if final_valid_metric >= prev_valid_metric:
+                if final_valid_metric > prev_valid_metric:
                     prev_valid_metric = final_valid_metric
                     prev_train_metric = final_train_metric
                     early_stop_iters = 0
@@ -119,7 +144,7 @@ def train(model, sess, saver, train_data, valid_data, batch_size, max_iters, use
                     print("total training time %ds" % traintime)
                     return prev_train_metric, prev_valid_metric, traintime
             else :
-                if final_valid_metric <= prev_valid_metric:
+                if final_valid_metric < prev_valid_metric:
                     prev_valid_metric = final_valid_metric
                     prev_train_metric = final_train_metric
                     early_stop_iters = 0
@@ -191,10 +216,10 @@ if __name__ == '__main__':
                         help='the batch size to use when doing gradient descent')
     parser.add_argument('--learning-rate', metavar='LEARNING-RATE', type=float, default=0.00005)
     parser.add_argument('--no-early', type=str2bool, default=False, help='disable early stopping')
-    parser.add_argument('--early-stop-max-iter', metavar='EARLY_STOP_MAX_ITER', type=int, default=60,
+    parser.add_argument('--early-stop-max-iter', metavar='EARLY_STOP_MAX_ITER', type=int, default=30,
                         help='the maximum number of iterations to let the model continue training after reaching a '
                              'minimum validation error')
-    parser.add_argument('--max-iters', metavar='MAX_ITERS', type=int, default=60,
+    parser.add_argument('--max-iters', metavar='MAX_ITERS', type=int, default=100,
                         help='the maximum number of iterations to allow the model to train for')
     parser.add_argument('--model-filename', type=str, default='model_filename', help='output model file name')
     parser.add_argument('--difficulty', type=str, default='moderate', choices=['moderate', 'hard'],
@@ -242,7 +267,7 @@ if __name__ == '__main__':
         valid_metric=0
         traintime=0
         if mode == 'train':
-            train_metric, valid_metric, traintime = train(model, sess, saver, train_data, validation_data, batch_size=batch_size, max_iters=max_iters,
+            train_metric, valid_metric, traintime = train(model, sess, saver, train_data, validation_data, test_data, batch_size=batch_size, max_iters=max_iters,
                 use_early_stop=use_early_stop, early_stop_max_iter=early_stop_max_iter, function=function, difficulty=difficulty)
         
         print('Loading best checkpointed model')
@@ -252,4 +277,3 @@ if __name__ == '__main__':
         results = open("results.txt", 'a')
         results.write("train: %.4f\t valid: %.4f\t test: %.4f\t in %ds \n" % (train_metric, valid_metric, test_metric, traintime))
         results.close()
-
