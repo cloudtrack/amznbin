@@ -42,7 +42,7 @@ def make_metadata(raw_metadata, valid_images):
 def make_target_vector_map(metadata):
     asin_index_map = {}
     index_asin_map = {}
-    index = 0
+    index = 1  #0 is for empty bin
     for asin in metadata.keys():
         if asin not in asin_index_map.keys():
             asin_index_map[asin] = index
@@ -89,7 +89,7 @@ if __name__ == '__main__':
 
 
     with open(METADATA_FILE, 'w') as metadata_file:
-        json.dump(metadata, metadata_file)
+        json.dump(metadata, metadata_file, indent=4)
 
     with open(ASIN_INDEX_FILE, 'w') as asin_index_file:
         json.dump(asin_index_map, asin_index_file)
