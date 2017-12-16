@@ -29,7 +29,7 @@ class _Base(object):
             
             with open(ASIN_INDEX_FILE, 'r') as asin_index_file:
                asin_index = json.load(asin_index_file)
-            self.OUTPUT = len(asin_index.keys())
+            self.OUTPUT = len(asin_index.keys()) + 1
             # mnist
             #self.OUTPUT = 10
         else :
@@ -375,8 +375,8 @@ class VGGNET(_Base):
         self.variables += [kernel, biases]
 
         # fullyconnected8
-        kernel = tf.Variable(tf.truncated_normal([self.param['vggnet_fc7_kernel'], self.OUTPUT], dtype=tf.float32, stddev=0.1), trainable=True)
-        biases = tf.Variable(tf.constant(0.1, shape=[self.OUTPUT], dtype=tf.float32), trainable=True)
+        kernel = tf.Variable(tf.truncated_normal([self.param['vggnet_fc7_kernel'], self.OUTPUT], dtype=tf.float32, stddev=0.0001), trainable=True)
+        biases = tf.Variable(tf.constant(0.01, shape=[self.OUTPUT], dtype=tf.float32), trainable=True)
         fc8 = tf.nn.xw_plus_b(fc7, kernel, biases)
         self.variables += [kernel, biases]
 

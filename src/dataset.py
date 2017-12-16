@@ -116,11 +116,14 @@ class DataSet(object):
                 if not self.asin_index_map:
                     with open(ASIN_INDEX_FILE) as asin_index_file:
                         self.asin_index_map = json.load(asin_index_file)
-                tv = [0] * len(self.asin_index_map.keys())
-                for asin in data['DATA'].keys():
-                    tv_index = self.asin_index_map.get(asin)
-                    if tv_index:
-                        tv[tv_index] = 1
+                tv = [0] * (len(self.asin_index_map.keys()) + 1)
+                if data['TOTAL'] == 0:
+                    tv[0] = 1
+                else:
+                    for asin in data['DATA'].keys():
+                        tv_index = self.asin_index_map.get(asin)
+                        if tv_index:
+                            tv[tv_index] = 1
             elif function == "count":
                 if difficulty == "moderate":
                     tv = [0] * (MAXIMUM_COUNT + 2)
