@@ -20,7 +20,8 @@ To reduce the complexity of the tasks and training time,
 
 ## Demo
   - Run `make demo` to checkout our training demo
-  - To run the demo of our pretrained model, open `jupyter notebook` and run `src/demo.ipynb`
+  - To run the demo of our pretrained model, open `jupyter notebook` and run `src/demo.ipynb` 
+    - our pretrained model was too big to upload on github, you can train the model and use your own trained model to use this file
 
 ## Results
 We accomplished 68.5714% accuracy on count task, and 41.4286% accuracy on classify task
