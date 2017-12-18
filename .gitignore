@@ -105,7 +105,7 @@ venv.bak/
 
 # customized
 #dataset
-mxnet-vgg16-sample
+#mxnet-vgg16-sample
 
 # IDE
 .idea
