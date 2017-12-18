@@ -16,7 +16,7 @@ INDEX_ASIN_FILE = path.join(DATASET_DIR, "index_asin_dic.json")
 VALID_IMAGES_FILE = path.join(DATASET_DIR, "valid_images.json")
 
 TOTAL_DATA_SIZE = 535234
-VALIDATION_RATIO = 0.03
+VALIDATION_RATIO = 0.1
 TEST_RATIO = 0.1
 
 IMAGE_SIZE = 224
