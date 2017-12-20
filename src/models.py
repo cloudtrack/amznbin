@@ -63,7 +63,8 @@ class _Base(object):
             # For single label accuracy
             self.pred_one = tf.argmax(self.pred, 1)
             self.metric = tf.multiply(tf.reduce_mean(tf.cast(tf.equal(self.pred_one, tf.argmax(self.target, 1)), tf.float32)), 100)
- 
+            self.metric_top_k = tf.multiply(tf.reduce_mean(tf.cast(tf.nn.in_top_k(self.pred, tf.argmax(self.target, 1), 5), tf.float32)), 100)
+
         elif (self.function == 'count') and (self.difficulty == 'moderate') :
             # Accuracy 
             # batch 1
@@ -71,10 +72,12 @@ class _Base(object):
             # self.metric = tf.multiply(tf.cast(tf.equal(self.pred_one, tf.argmax(self.target, 1)), tf.float32), 100)
             self.pred_one = tf.argmax(self.pred, 1)
             self.metric = tf.multiply(tf.reduce_mean(tf.cast(tf.equal(self.pred_one, tf.argmax(self.target, 1)), tf.float32)), 100)
+            self.metric_top_k = tf.multiply(tf.reduce_mean(tf.cast(tf.nn.in_top_k(self.pred, tf.argmax(self.target, 1), 3), tf.float32)), 100)
 
         else :
             # RMSE
             self.metric = tf.sqrt(tf.reduce_mean(tf.square(tf.subtract(self.target, self.pred))))
+            self.metric_top_k = self.metric
         
     @property
     def filename(self):
@@ -135,11 +138,11 @@ class _Base(object):
             # return self.sess.run([self.metric, tf.nn.sigmoid(self.pred), self.pred], feed_dict=feed_dict)
 
             # single label
-            return self.sess.run([self.metric, tf.nn.softmax(self.pred), self.pred_one], feed_dict=feed_dict)
+            return self.sess.run([self.metric, self.metric_top_k, tf.nn.softmax(self.pred), self.pred_one], feed_dict=feed_dict)
         elif self.difficulty == 'moderate' :
-            return self.sess.run([self.metric, tf.nn.softmax(self.pred), self.pred_one], feed_dict=feed_dict)
+            return self.sess.run([self.metric, self.metric_top_k, tf.nn.softmax(self.pred), self.pred_one], feed_dict=feed_dict)
         else : 
-            return self.sess.run([self.metric, self.pred, self.pred_one], feed_dict=feed_dict)
+            return self.sess.run([self.metric, self.metric_top_k, self.pred, self.pred_one], feed_dict=feed_dict)
 
     def eval_loss(self, image_data, target_data):
         """
@@ -437,3 +440,4 @@ class LENET(_Base):
         self.variables += [kernel, biases]
 
         return fc4
+
