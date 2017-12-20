@@ -15,7 +15,7 @@ To reduce the complexity of the tasks and training time,
 ## How to Start
 - On root directory run ` pip install -r requirements.txt ` to install required libraries
 - Run `make image_dataset` and `make load_metadata` on command line to download the images and metadata (Using tmux would be a good idea)
-- After `make load_metadata` is finished, run `prepare_train` and insert the number of repetition you want (we recommend 20 or higher)
+- After `make load_metadata` is finished, run `make prepare_train` and insert the number of repetition you want (we recommend 20 or higher)
 - When all above is finished you are ready to run our program!
 
 ## Demo
