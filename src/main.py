@@ -93,9 +93,9 @@ def train(model, sess, saver, train_data, valid_data, test_data, batch_size, max
                     labels = valid_data.get_labels_from_indices(indices, function, difficulty)
                     valid_metric, valid_metric_top_k, valid_pred, valid_pred_one = model.eval_metric(images, labels)
                     print('validation ' + metric + ': %.4f' % (valid_metric))
-                    print(valid_pred[0])
-                    print('predicted: ' + str(valid_pred_one[0]) + ' by %.2f percent' % (valid_pred[0][valid_pred_one[0]] * 100))
-                    print('target:    ' + str(np.argmax(labels[0])))
+                    #print(valid_pred[0])
+                    #print('predicted: ' + str(valid_pred_one[0]) + ' by %.2f percent' % (valid_pred[0][valid_pred_one[0]] * 100))
+                    #print('target:    ' + str(np.argmax(labels[0])))
                     final_valid_metric = final_valid_metric + valid_metric
                     final_valid_metric_top_k = final_valid_metric_top_k + valid_metric_top_k
                     batch_cnt = batch_cnt + 1
