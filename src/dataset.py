@@ -104,7 +104,7 @@ class DataSet(object):
         print(indices)
         return images, indices
 
-    def get_labels_from_indices(self, index_list, function, difficulty):
+    def get_labels_from_indices(self, index_list, function):
         if not self.raw_metadata:
             with open(RAW_METADATA_FILE) as raw_metadata_file:
                 self.raw_metadata = json.load(raw_metadata_file)
@@ -125,15 +125,12 @@ class DataSet(object):
                         if tv_index:
                             tv[tv_index] = 1
             elif function == "count":
-                if difficulty == "moderate":
-                    tv = [0] * (MAXIMUM_COUNT + 2)
-                    quantity = data['TOTAL']
-                    if quantity > MAXIMUM_COUNT:
-                        tv[MAXIMUM_COUNT + 1] = 1
-                    else:
-                        tv[quantity] = 1
+                tv = [0] * (MAXIMUM_COUNT + 2)
+                quantity = data['TOTAL']
+                if quantity > MAXIMUM_COUNT:
+                    tv[MAXIMUM_COUNT + 1] = 1
                 else:
-                    tv = [data['TOTAL']]
+                    tv[quantity] = 1
             tv_list.append(tv)
         return tv_list
 

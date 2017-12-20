@@ -12,13 +12,12 @@ def print_activations(t):
 class _Base(object):
 
     """ Base structure """
-    def __init__(self, model, function, learning_rate, difficulty, model_filename):
+    def __init__(self, model, function, learning_rate, model_filename):
         # Internal counter to keep track of current iteration
         self._iters = 0
 
         # Input
         self.learning_rate = learning_rate
-        self.difficulty = difficulty
 
         self.image = tf.placeholder(tf.float32, [None, IMAGE_SIZE, IMAGE_SIZE, 3])
         # mnist
@@ -34,17 +33,14 @@ class _Base(object):
             #self.OUTPUT = 10
         else :
             self.param = json.loads(open(PARAM_DIR+'model_parameters_count.json').read())
-            if difficulty == 'moderate' :
-                self.OUTPUT = 12   
-            else:
-                self.OUTPUT = 1
+            self.OUTPUT = 12   
 
         self.target = tf.placeholder(tf.float32, [None, self.OUTPUT])
 
         self.function = function
 
         if model_filename == 'model_filename':
-            self.model_filename = 'model/' + model + '_' + function + '_'+ difficulty +'.ckpt'
+            self.model_filename = 'model/' + model + '_' + function + '.ckpt'
         else :
             self.model_filename = 'model/' + model_filename + '.ckpt'
 
@@ -65,7 +61,7 @@ class _Base(object):
             self.metric = tf.multiply(tf.reduce_mean(tf.cast(tf.equal(self.pred_one, tf.argmax(self.target, 1)), tf.float32)), 100)
             self.metric_top_k = tf.multiply(tf.reduce_mean(tf.cast(tf.nn.in_top_k(self.pred, tf.argmax(self.target, 1), 5), tf.float32)), 100)
 
-        elif (self.function == 'count') and (self.difficulty == 'moderate') :
+        elif (self.function == 'count') :
             # Accuracy 
             # batch 1
             # self.pred_one = tf.argmax(self.pred, 0)
@@ -73,11 +69,6 @@ class _Base(object):
             self.pred_one = tf.argmax(self.pred, 1)
             self.metric = tf.multiply(tf.reduce_mean(tf.cast(tf.equal(self.pred_one, tf.argmax(self.target, 1)), tf.float32)), 100)
             self.metric_top_k = tf.multiply(tf.reduce_mean(tf.cast(tf.nn.in_top_k(self.pred, tf.argmax(self.target, 1), 3), tf.float32)), 100)
-
-        else :
-            # RMSE
-            self.metric = tf.sqrt(tf.reduce_mean(tf.square(tf.subtract(self.target, self.pred))))
-            self.metric_top_k = self.metric
         
     @property
     def filename(self):
@@ -97,10 +88,8 @@ class _Base(object):
             # single label
             self.loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(labels=self.target, logits=self.pred))
 
-        elif self.function == 'count' and self.difficulty == 'moderate':
+        else :
             self.loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(labels=self.target, logits=self.pred))
-        else:
-            self.loss = tf.reduce_sum(tf.square(tf.subtract(self.target, self.pred)))
 
         # Optimizer
         self.optimizer = tf.train.AdamOptimizer(self.learning_rate)
@@ -139,10 +128,8 @@ class _Base(object):
 
             # single label
             return self.sess.run([self.metric, self.metric_top_k, tf.nn.softmax(self.pred), self.pred_one], feed_dict=feed_dict)
-        elif self.difficulty == 'moderate' :
+        else :
             return self.sess.run([self.metric, self.metric_top_k, tf.nn.softmax(self.pred), self.pred_one], feed_dict=feed_dict)
-        else : 
-            return self.sess.run([self.metric, self.metric_top_k, self.pred, self.pred_one], feed_dict=feed_dict)
 
     def eval_loss(self, image_data, target_data):
         """
@@ -155,8 +142,8 @@ class _Base(object):
 class ALEXNET(_Base):
     """ AlexNet model structrue """
 
-    def __init__(self, function, learning_rate, difficulty, model_filename):
-        super(ALEXNET, self).__init__('ALEX', function, learning_rate, difficulty, model_filename)
+    def __init__(self, function, learning_rate, model_filename):
+        super(ALEXNET, self).__init__('ALEX', function, learning_rate, model_filename)
 
     @property
     def filename(self):
@@ -248,8 +235,8 @@ class ALEXNET(_Base):
 class VGGNET(_Base):
     """ VGGNet model structrue """
 
-    def __init__(self, function, learning_rate, difficulty, model_filename):
-        super(VGGNET, self).__init__('VGG', function, learning_rate, difficulty, model_filename)
+    def __init__(self, function, learning_rate, model_filename):
+        super(VGGNET, self).__init__('VGG', function, learning_rate, model_filename)
 
     @property
     def filename(self):
@@ -388,8 +375,8 @@ class VGGNET(_Base):
 class VGGNET_S(_Base):
     """ small VGGNet model structrue """
 
-    def __init__(self, function, learning_rate, difficulty, model_filename):
-        super(VGGNET_S, self).__init__('VGGS', function, learning_rate, difficulty, model_filename)
+    def __init__(self, function, learning_rate, model_filename):
+        super(VGGNET_S, self).__init__('VGGS', function, learning_rate, model_filename)
 
     @property
     def filename(self):
@@ -492,8 +479,8 @@ class VGGNET_S(_Base):
 class LENET(_Base):
     """ LeNet model structrue """
 
-    def __init__(self, function, learning_rate, difficulty, model_filename):
-        super(LENET, self).__init__('LE', function, learning_rate, difficulty, model_filename)
+    def __init__(self, function, learning_rate, model_filename):
+        super(LENET, self).__init__('LE', function, learning_rate, model_filename)
 
     @property
     def filename(self):
@@ -547,10 +534,10 @@ class LENET(_Base):
 
 
 class FC(_Base):
-    """ LeNet model structrue """
+    """ Fully Connected model structure """
 
-    def __init__(self, function, learning_rate, difficulty, model_filename):
-        super(FC, self).__init__('FC', function, learning_rate, difficulty, model_filename)
+    def __init__(self, function, learning_rate, model_filename):
+        super(FC, self).__init__('FC', function, learning_rate, model_filename)
 
     @property
     def filename(self):

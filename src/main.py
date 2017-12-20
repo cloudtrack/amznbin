@@ -9,8 +9,7 @@ from numpy.distutils.fcompiler import str2bool
 from dataset import load_dataset
 from models import ALEXNET, VGGNET, LENET, FC, VGGNET_S
 
-def train(model, sess, saver, train_data, valid_data, test_data, batch_size, max_iters, use_early_stop, early_stop_max_iter,
-          function, difficulty):
+def train(model, sess, saver, train_data, valid_data, test_data, batch_size, max_iters, use_early_stop, early_stop_max_iter, function):
     """
     Trainer 
     """
@@ -21,7 +20,7 @@ def train(model, sess, saver, train_data, valid_data, test_data, batch_size, max
     train_image_tensor, train_image_index_tensor = train_data.get_batch_tensor(batch_size)
     valid_image_tensor, valid_image_index_tensor = valid_data.get_batch_tensor(batch_size)
 
-    if function == 'count' and difficulty == 'hard':
+    if function == 'count' :
         metric = 'rmse'
         prev_train_metric = float("Inf")
         prev_valid_metric = float("Inf")
@@ -46,7 +45,7 @@ def train(model, sess, saver, train_data, valid_data, test_data, batch_size, max
                 while not coord.should_stop():
                     t2 = time.time()
                     images, indices = _sess.run([train_image_tensor, train_image_index_tensor])
-                    labels = train_data.get_labels_from_indices(indices, function, difficulty)
+                    labels = train_data.get_labels_from_indices(indices, function)
 
                     model.train_iteration(images, labels)
                     train_loss = model.eval_loss(images, labels)
@@ -90,7 +89,7 @@ def train(model, sess, saver, train_data, valid_data, test_data, batch_size, max
             try:
                 while not coord.should_stop():
                     images, indices = _sess.run([valid_image_tensor, valid_image_index_tensor])
-                    labels = valid_data.get_labels_from_indices(indices, function, difficulty)
+                    labels = valid_data.get_labels_from_indices(indices, function)
                     valid_metric, valid_metric_top_k, valid_pred, valid_pred_one = model.eval_metric(images, labels)
                     print('validation ' + metric + ': %.4f' % (valid_metric))
                     #print(valid_pred[0])
@@ -109,34 +108,34 @@ def train(model, sess, saver, train_data, valid_data, test_data, batch_size, max
                 coord.request_stop()
                 coord.join(threads)
 
-        batch_image, batch_image_index = test_data.get_batch_tensor(batch_size=batch_size)
+        # batch_image, batch_image_index = test_data.get_batch_tensor(batch_size=batch_size)
 
-        with tf.Session() as _sess:
-            _sess.run(tf.local_variables_initializer())
-            coord = tf.train.Coordinator()
-            threads = tf.train.start_queue_runners(sess=_sess, coord=coord)
-            final_test_metric = 0
-            final_test_metric_top_k = 0
-            batch_cnt = 0
-            try:
-                while not coord.should_stop():
-                    images, indices = _sess.run([batch_image, batch_image_index])
-                    labels = test_data.get_labels_from_indices(indices, function, difficulty)
-                    test_metric, test_metric_top_k, _, _ = model.eval_metric(images, labels)
-                    print('test ' + metric + ': %.4f' % (test_metric))
-                    final_test_metric = final_test_metric + test_metric
-                    final_test_metric_top_k = final_test_metric_top_k + test_metric_top_k
-                    batch_cnt = batch_cnt + 1
+        # with tf.Session() as _sess:
+        #     _sess.run(tf.local_variables_initializer())
+        #     coord = tf.train.Coordinator()
+        #     threads = tf.train.start_queue_runners(sess=_sess, coord=coord)
+        #     final_test_metric = 0
+        #     final_test_metric_top_k = 0
+        #     batch_cnt = 0
+        #     try:
+        #         while not coord.should_stop():
+        #             images, indices = _sess.run([batch_image, batch_image_index])
+        #             labels = test_data.get_labels_from_indices(indices, function)
+        #             test_metric, test_metric_top_k, _, _ = model.eval_metric(images, labels)
+        #             print('test ' + metric + ': %.4f' % (test_metric))
+        #             final_test_metric = final_test_metric + test_metric
+        #             final_test_metric_top_k = final_test_metric_top_k + test_metric_top_k
+        #             batch_cnt = batch_cnt + 1
                     
-            except tf.errors.OutOfRangeError:
-                final_test_metric = final_test_metric/batch_cnt
-                final_test_metric_top_k = final_test_metric_top_k/batch_cnt
-                print('final test accuracy : %.4f' % (final_test_metric))
-                print('final test top k accuracy : %.4f' % (final_test_metric_top_k))
-                print('Done testing -- epoch limit reached')
-            finally:
-                coord.request_stop()
-                coord.join(threads)
+        #     except tf.errors.OutOfRangeError:
+        #         final_test_metric = final_test_metric/batch_cnt
+        #         final_test_metric_top_k = final_test_metric_top_k/batch_cnt
+        #         print('final test accuracy : %.4f' % (final_test_metric))
+        #         print('final test top k accuracy : %.4f' % (final_test_metric_top_k))
+        #         print('Done testing -- epoch limit reached')
+        #     finally:
+        #         coord.request_stop()
+        #         coord.join(threads)
 
         # Checkpointing/early stopping
         if use_early_stop:
@@ -178,13 +177,13 @@ def train(model, sess, saver, train_data, valid_data, test_data, batch_size, max
 
     # train_log.close()
 
-def test(model, sess, saver, test_data, function, difficulty, batch_size, log=True):
+def test(model, sess, saver, test_data, function, batch_size, log=True):
     """
     Tester
     """
     batch_image, batch_image_index = test_data.get_batch_tensor(batch_size=batch_size)
 
-    if function == 'count' and difficulty == 'hard':
+    if function == 'count' :
         metric = 'rmse'
     else:
         metric = 'accuracy'
@@ -199,7 +198,7 @@ def test(model, sess, saver, test_data, function, difficulty, batch_size, log=Tr
         try:
             while not coord.should_stop():
                 images, indices = _sess.run([batch_image, batch_image_index])
-                labels = test_data.get_labels_from_indices(indices, function, difficulty)
+                labels = test_data.get_labels_from_indices(indices, function)
                 test_metric, test_metric_top_k, _, _ = model.eval_metric(images, labels)
                 print('test ' + metric + ': %.4f' % (test_metric))
                 print('test top k ' + metric + ': %.4f' % (test_metric_top_k))
@@ -243,8 +242,6 @@ if __name__ == '__main__':
     parser.add_argument('--max-iters', metavar='MAX_ITERS', type=int, default=100,
                         help='the maximum number of iterations to allow the model to train for')
     parser.add_argument('--model-filename', type=str, default='model_filename', help='output model file name')
-    parser.add_argument('--difficulty', type=str, default='moderate', choices=['moderate', 'hard'],
-                        help='difficulty of task')
     parser.add_argument('--continue-train', type=str2bool, default=False, help='whether to continue training from previously trained model')
 
     # Parse args
@@ -259,22 +256,21 @@ if __name__ == '__main__':
     early_stop_max_iter = args.early_stop_max_iter
     max_iters = args.max_iters
     model_filename = args.model_filename
-    difficulty = args.difficulty
     continue_train = args.continue_train
 
     with tf.Session() as sess:
         # Define computation graph & Initialize
         print('Building network & initializing variables')
         if model_name == 'ALEXNET':
-            model = ALEXNET(function, learning_rate, difficulty, model_filename)
+            model = ALEXNET(function, learning_rate, model_filename)
         elif model_name == 'VGGNET':
-            model = VGGNET(function, learning_rate, difficulty, model_filename)
+            model = VGGNET(function, learning_rate, model_filename)
         elif model_name == 'LENET' :
-            model = LENET(function, learning_rate, difficulty, model_filename)
+            model = LENET(function, learning_rate, model_filename)
         elif model_name == 'FC' :
-            model = FC(function, learning_rate, difficulty, model_filename)
+            model = FC(function, learning_rate, model_filename)
         else :
-            model = VGGNET_S(function, learning_rate, difficulty, model_filename)
+            model = VGGNET_S(function, learning_rate, model_filename)
 
         model.init_sess(sess)
         saver = tf.train.Saver()
@@ -293,11 +289,11 @@ if __name__ == '__main__':
         traintime=0
         if mode == 'train':
             train_metric, train_metric_top_k, valid_metric, valid_metric_top_k, traintime = train(model, sess, saver, train_data, validation_data, test_data, batch_size=batch_size, max_iters=max_iters,
-                use_early_stop=use_early_stop, early_stop_max_iter=early_stop_max_iter, function=function, difficulty=difficulty)
+                use_early_stop=use_early_stop, early_stop_max_iter=early_stop_max_iter, function=function)
         
         print('Loading best checkpointed model')
         saver.restore(sess, model.model_filename)
-        test_metric, test_metric_top_k = test(model, sess, saver, test_data, function, difficulty, batch_size)
+        test_metric, test_metric_top_k = test(model, sess, saver, test_data, function, batch_size)
 
         results = open("results.txt", 'a')
         results.write("train: %.4f\t train_top_k: %.4f\t valid: %.4f\t valid_top_k: %.4f\t test: %.4f\t test_top_k: %.4f\t in %ds \n" % (train_metric, train_metric_top_k, valid_metric, valid_metric_top_k, test_metric, test_metric_top_k, traintime))
