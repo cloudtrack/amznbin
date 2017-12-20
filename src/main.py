@@ -194,7 +194,7 @@ def test(model, sess, saver, test_data, function, difficulty, batch_size, log=Tr
         coord = tf.train.Coordinator()
         threads = tf.train.start_queue_runners(sess=_sess, coord=coord)
         final_test_metric = 0
-        final_test_metric_top_k
+        final_test_metric_top_k = 0
         batch_cnt = 0
         try:
             while not coord.should_stop():
