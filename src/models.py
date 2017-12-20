@@ -484,7 +484,7 @@ class VGGNET_S(_Base):
         # fullyconnected7
         kernel = tf.Variable(tf.truncated_normal([self.param['vggnet_fc6_kernel2'], self.OUTPUT], dtype=tf.float32, stddev=0.0001), trainable=True)
         biases = tf.Variable(tf.constant(0.01, shape=[self.OUTPUT], dtype=tf.float32), trainable=True)
-        fc7 = tf.nn.xw_plus_b(fc7, kernel, biases)
+        fc7 = tf.nn.xw_plus_b(fc6, kernel, biases)
         self.variables += [kernel, biases]
 
         return fc7
