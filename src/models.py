@@ -574,7 +574,7 @@ class FC(_Base):
         # fullyconnected1
         kernel = tf.Variable(tf.truncated_normal([self.param['fc_fc1_kernel1'], self.param['fc_fc1_kernel2']], dtype=tf.float32, stddev=0.1), trainable=True)
         biases = tf.Variable(tf.constant(0.1, shape=[self.param['fc_fc1_kernel2']], dtype=tf.float32), trainable=True)
-        fc1 = tf.nn.relu(tf.nn.xw_plus_b(tf.reshape(pool1, [-1, int(np.prod(poo1.get_shape()[1:]))]), kernel, biases))
+        fc1 = tf.nn.relu(tf.nn.xw_plus_b(tf.reshape(pool1, [-1, int(np.prod(pool1.get_shape()[1:]))]), kernel, biases))
         self.variables += [kernel, biases]
         
         # fullyconnected2
