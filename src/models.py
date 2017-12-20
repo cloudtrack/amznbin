@@ -234,8 +234,8 @@ class ALEXNET(_Base):
         self.variables += [kernel, biases]
 
         # fullyconnected8
-        kernel = tf.Variable(tf.truncated_normal([self.param['alexnet_fc7_kernel'], self.OUTPUT], dtype=tf.float32, stddev=0.1), trainable=True)
-        biases = tf.Variable(tf.constant(0.1, shape=[self.OUTPUT], dtype=tf.float32), trainable=True)
+        kernel = tf.Variable(tf.truncated_normal([self.param['alexnet_fc7_kernel'], self.OUTPUT], dtype=tf.float32, stddev=0.0001), trainable=True)
+        biases = tf.Variable(tf.constant(0.01, shape=[self.OUTPUT], dtype=tf.float32), trainable=True)
         fc8 = tf.nn.xw_plus_b(fc7, kernel, biases)
         self.variables += [kernel, biases]
 
@@ -431,8 +431,8 @@ class LENET(_Base):
         self.variables += [kernel, biases]
 
         # fullyconnected4
-        kernel = tf.Variable(tf.truncated_normal([self.param['lenet_fc3_kernel2'], self.OUTPUT], dtype=tf.float32, stddev=0.1), trainable=True)
-        biases = tf.Variable(tf.constant(0.1, shape=[self.OUTPUT], dtype=tf.float32), trainable=True)
+        kernel = tf.Variable(tf.truncated_normal([self.param['lenet_fc3_kernel2'], self.OUTPUT], dtype=tf.float32, stddev=0.0001), trainable=True)
+        biases = tf.Variable(tf.constant(0.01, shape=[self.OUTPUT], dtype=tf.float32), trainable=True)
         fc4 = tf.nn.xw_plus_b(fc3, kernel, biases)
         self.variables += [kernel, biases]
 
