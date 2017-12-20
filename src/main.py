@@ -20,14 +20,9 @@ def train(model, sess, saver, train_data, valid_data, test_data, batch_size, max
     train_image_tensor, train_image_index_tensor = train_data.get_batch_tensor(batch_size)
     valid_image_tensor, valid_image_index_tensor = valid_data.get_batch_tensor(batch_size)
 
-    if function == 'count' :
-        metric = 'rmse'
-        prev_train_metric = float("Inf")
-        prev_valid_metric = float("Inf")
-    else:
-        metric = 'accuracy'
-        prev_train_metric = 0
-        prev_valid_metric = 0
+    metric = 'accuracy'
+    prev_train_metric = 0
+    prev_valid_metric = 0
 
     #train_log = open("train_log.txt", 'w')
 
