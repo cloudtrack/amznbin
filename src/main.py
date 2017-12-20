@@ -7,7 +7,7 @@ import tensorflow as tf
 from numpy.distutils.fcompiler import str2bool
 
 from dataset import load_dataset
-from models import ALEXNET, VGGNET, LENET
+from models import ALEXNET, VGGNET, LENET, FC
 
 def train(model, sess, saver, train_data, valid_data, test_data, batch_size, max_iters, use_early_stop, early_stop_max_iter,
           function, difficulty):
@@ -225,7 +225,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Trains/evaluates model.')
 
     # Required
-    parser.add_argument('--model', metavar='MODEL_NAME', type=str, choices=['VGGNET', 'ALEXNET', 'LENET'],
+    parser.add_argument('--model', metavar='MODEL_NAME', type=str, choices=['VGGNET', 'ALEXNET', 'LENET', 'FC'],
                         help='the name of the model to use', required=True)
     parser.add_argument('--mode', metavar='MODE', type=str, choices=['train', 'test'],
                         help='the mode to run the program in', default='train', required=True)
@@ -269,8 +269,10 @@ if __name__ == '__main__':
             model = ALEXNET(function, learning_rate, difficulty, model_filename)
         elif model_name == 'VGGNET':
             model = VGGNET(function, learning_rate, difficulty, model_filename)
-        else:
+        elif model_name == 'LENET' :
             model = LENET(function, learning_rate, difficulty, model_filename)
+        else :
+            model = FC(function, learning_rate, difficulty, model_filename)
 
         model.init_sess(sess)
         saver = tf.train.Saver()
