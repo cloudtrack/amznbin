@@ -40,6 +40,7 @@ def train(model, sess, saver, train_data, valid_data, test_data, batch_size, max
             coord = tf.train.Coordinator()
             threads = tf.train.start_queue_runners(sess=_sess, coord=coord)
             final_train_metric = 0
+            final_train_metric_top_k = 0
             batch_cnt = 0
             try:
                 while not coord.should_stop():
@@ -49,7 +50,7 @@ def train(model, sess, saver, train_data, valid_data, test_data, batch_size, max
 
                     model.train_iteration(images, labels)
                     train_loss = model.eval_loss(images, labels)
-                    train_metric, train_pred, train_pred_one = model.eval_metric(images, labels)
+                    train_metric, train_metric_top_k, train_pred, train_pred_one = model.eval_metric(images, labels)
                     print_string = "iter: " + str(i) + "\tbatch: "+str(batch_cnt)+"\ttrain " + metric + ": %.4f \tloss: %.4f in %ds" % (train_metric, train_loss, time.time() - t2)
                     print(print_string)
                     # plt.imshow(images[0], interpolation='nearest')
@@ -68,9 +69,11 @@ def train(model, sess, saver, train_data, valid_data, test_data, batch_size, max
                     print('------------------------------------------------------------------------------')
                     #train_log.write(print_string + "\n")
                     final_train_metric = final_train_metric + train_metric
+                    final_train_metric_top_k = final_train_metric_top_k + train_metric_top_k
                     batch_cnt = batch_cnt + 1
             except tf.errors.OutOfRangeError:
                 final_train_metric = final_train_metric/batch_cnt
+                final_train_metric_top_k = final_train_metric_top_k/batch_cnt
                 print('Done training -- epoch limit reached')
             finally:
                 coord.request_stop()
@@ -82,21 +85,25 @@ def train(model, sess, saver, train_data, valid_data, test_data, batch_size, max
             coord = tf.train.Coordinator()
             threads = tf.train.start_queue_runners(sess=_sess, coord=coord)
             final_valid_metric = 0
+            final_valid_metric_top_k=0
             batch_cnt = 0
             try:
                 while not coord.should_stop():
                     images, indices = _sess.run([valid_image_tensor, valid_image_index_tensor])
                     labels = valid_data.get_labels_from_indices(indices, function, difficulty)
-                    valid_metric, valid_pred, valid_pred_one = model.eval_metric(images, labels)
+                    valid_metric, valid_metric_top_k, valid_pred, valid_pred_one = model.eval_metric(images, labels)
                     print('validation ' + metric + ': %.4f' % (valid_metric))
                     print(valid_pred[0])
                     print('predicted: ' + str(valid_pred_one[0]) + ' by %.2f percent' % (valid_pred[0][valid_pred_one[0]] * 100))
                     print('target:    ' + str(np.argmax(labels[0])))
                     final_valid_metric = final_valid_metric + valid_metric
+                    final_valid_metric_top_k = final_valid_metric_top_k + valid_metric_top_k
                     batch_cnt = batch_cnt + 1
             except tf.errors.OutOfRangeError:
                 final_valid_metric = final_valid_metric/batch_cnt
+                final_valid_metric_top_k = final_valid_metric_top_k/batch_cnt
                 print('final validation ' + metric + ': %.4f' % (final_valid_metric))
+                print('final validation top k ' + metric + ': %.4f' % (final_valid_metric_top_k))
                 print('Done validation -- epoch limit reached')
             finally:
                 coord.request_stop()
@@ -109,19 +116,23 @@ def train(model, sess, saver, train_data, valid_data, test_data, batch_size, max
             coord = tf.train.Coordinator()
             threads = tf.train.start_queue_runners(sess=_sess, coord=coord)
             final_test_metric = 0
+            final_test_metric_top_k = 0
             batch_cnt = 0
             try:
                 while not coord.should_stop():
                     images, indices = _sess.run([batch_image, batch_image_index])
                     labels = test_data.get_labels_from_indices(indices, function, difficulty)
-                    test_metric, _, _ = model.eval_metric(images, labels)
+                    test_metric, test_metric_top_k, _, _ = model.eval_metric(images, labels)
                     print('test ' + metric + ': %.4f' % (test_metric))
                     final_test_metric = final_test_metric + test_metric
+                    final_test_metric_top_k = final_test_metric_top_k + test_metric_top_k
                     batch_cnt = batch_cnt + 1
                     
             except tf.errors.OutOfRangeError:
                 final_test_metric = final_test_metric/batch_cnt
+                final_test_metric_top_k = final_test_metric_top_k/batch_cnt
                 print('final test accuracy : %.4f' % (final_test_metric))
+                print('final test top k accuracy : %.4f' % (final_test_metric_top_k))
                 print('Done testing -- epoch limit reached')
             finally:
                 coord.request_stop()
@@ -136,29 +147,34 @@ def train(model, sess, saver, train_data, valid_data, test_data, batch_size, max
                 if final_valid_metric > prev_valid_metric:
                     prev_valid_metric = final_valid_metric
                     prev_train_metric = final_train_metric
+                    prev_valid_metric_top_k = final_valid_metric_top_k
+                    prev_train_metric_top_k = final_train_metric_top_k
                     early_stop_iters = 0
                     saver.save(sess, model.model_filename)
                 elif early_stop_iters == early_stop_max_iter:
                     print("Early stopping ({} vs. {})...".format(prev_valid_metric, final_valid_metric))
                     traintime = (time.time() - t0)
                     print("total training time %ds" % traintime)
-                    return prev_train_metric, prev_valid_metric, traintime
+                    return prev_train_metric, prev_train_metric_top_k, prev_valid_metric, prev_valid_metric_top_k, traintime
             else :
                 if final_valid_metric < prev_valid_metric:
                     prev_valid_metric = final_valid_metric
                     prev_train_metric = final_train_metric
+                    prev_valid_metric_top_k = final_valid_metric_top_k
+                    prev_train_metric_top_k = final_train_metric_top_k
                     early_stop_iters = 0
                     saver.save(sess, model.model_filename)
                 elif early_stop_iters == early_stop_max_iter:
                     print("Early stopping ({} vs. {})...".format(prev_valid_metric, final_valid_metric))
                     traintime = (time.time() - t0)
                     print("total training time %ds" % traintime)
-                    return prev_train_metric, prev_valid_metric, traintime
+                    return prev_train_metric, prev_train_metric_top_k, prev_valid_metric, prev_valid_metric_top_k, traintime
         else:
             saver.save(sess, model.model_filename)
     
     prev_train_metric = final_train_metric
-    return prev_train_metric, prev_valid_metric, time.time() - t0
+    prev_train_metric_top_k = final_train_metric_top_k
+    return prev_train_metric, prev_train_metric_top_k, prev_valid_metric, prev_valid_metric_top_k, time.time() - t0
 
     # train_log.close()
 
@@ -178,24 +194,29 @@ def test(model, sess, saver, test_data, function, difficulty, batch_size, log=Tr
         coord = tf.train.Coordinator()
         threads = tf.train.start_queue_runners(sess=_sess, coord=coord)
         final_test_metric = 0
+        final_test_metric_top_k
         batch_cnt = 0
         try:
             while not coord.should_stop():
                 images, indices = _sess.run([batch_image, batch_image_index])
                 labels = test_data.get_labels_from_indices(indices, function, difficulty)
-                test_metric, _, _ = model.eval_metric(images, labels)
+                test_metric, test_metric_top_k, _, _ = model.eval_metric(images, labels)
                 print('test ' + metric + ': %.4f' % (test_metric))
+                print('test top k ' + metric + ': %.4f' % (test_metric_top_k))
                 final_test_metric = final_test_metric + test_metric
+                final_test_metric_top_k = final_test_metric_top_k + test_metric_top_k
                 batch_cnt = batch_cnt + 1
                 
         except tf.errors.OutOfRangeError:
             final_test_metric = final_test_metric/batch_cnt
+            final_test_metric_top_k = final_test_metric_top_k/batch_cnt
             print('final test accuracy : %.4f' % (final_test_metric))
+            print('final test top k accuracy : %.4f' % (final_test_metric_top_k))
             print('Done testing -- epoch limit reached')
         finally:
             coord.request_stop()
             coord.join(threads)
-        return final_test_metric
+        return final_test_metric, final_test_metric_top_k
 
 
 if __name__ == '__main__':
@@ -267,13 +288,13 @@ if __name__ == '__main__':
         valid_metric=0
         traintime=0
         if mode == 'train':
-            train_metric, valid_metric, traintime = train(model, sess, saver, train_data, validation_data, test_data, batch_size=batch_size, max_iters=max_iters,
+            train_metric, train_metric_top_k, valid_metric, valid_metric_top_k, traintime = train(model, sess, saver, train_data, validation_data, test_data, batch_size=batch_size, max_iters=max_iters,
                 use_early_stop=use_early_stop, early_stop_max_iter=early_stop_max_iter, function=function, difficulty=difficulty)
         
         print('Loading best checkpointed model')
         saver.restore(sess, model.model_filename)
-        test_metric = test(model, sess, saver, test_data, function, difficulty, batch_size)
+        test_metric, test_metric_top_k = test(model, sess, saver, test_data, function, difficulty, batch_size)
 
         results = open("results.txt", 'a')
-        results.write("train: %.4f\t valid: %.4f\t test: %.4f\t in %ds \n" % (train_metric, valid_metric, test_metric, traintime))
+        results.write("train: %.4f\t train_top_k: %.4f\t valid: %.4f\t valid_top_k: %.4f\t test: %.4f\t test_top_k: %.4f\t in %ds \n" % (train_metric, train_metric_top_k, valid_metric, valid_metric_top_k, test_metric, test_metric_top_k, traintime))
         results.close()
