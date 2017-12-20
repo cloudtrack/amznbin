@@ -111,7 +111,7 @@ class DataSet(object):
         tv_list = []
         tv = []
         for index in index_list:
-            data = self.raw_metadata[index]
+            data = self.raw_metadata[index % 1000000]
             if function == "classify":
                 if not self.asin_index_map:
                     with open(ASIN_INDEX_FILE) as asin_index_file:
