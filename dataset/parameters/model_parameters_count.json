@@ -18,5 +18,8 @@
 "vggnet_conv5_kernel": 256,
 "vggnet_fc6_kernel1": 12544,
 "vggnet_fc6_kernel2": 2048,
-"vggnet_fc7_kernel": 2048
+"vggnet_fc7_kernel": 2048,
+"fc_fc1_kernel1": 150528,
+"fc_fc1_kernel2": 1024,
+"fc_fc2_kernel": 1024
 }

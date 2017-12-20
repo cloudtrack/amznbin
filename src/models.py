@@ -441,3 +441,52 @@ class LENET(_Base):
 
         return fc4
 
+
+class FC(_Base):
+    """ LeNet model structrue """
+
+    def __init__(self, function, learning_rate, difficulty, model_filename):
+        super(LENET, self).__init__('LE', function, learning_rate, difficulty, model_filename)
+
+    @property
+    def filename(self):
+        return 'lenet'
+
+    def _init_vars(self):
+        super(LENET, self)._init_vars()
+
+    def _init_ops(self):
+        super(LENET, self)._init_ops()
+
+    def build_layers(self, image):
+        """
+        Builds layers 
+        """
+        self.variables = []
+
+        # pool1
+        pool1 = tf.nn.max_pool(image, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1], padding='VALID')
+
+        # fullyconnected1
+        kernel = tf.Variable(tf.truncated_normal([self.param['fc_fc1_kernel1'], self.param['fc_fc1_kernel2']], dtype=tf.float32, stddev=0.1), trainable=True)
+        biases = tf.Variable(tf.constant(0.1, shape=[self.param['fc_fc1_kernel2']], dtype=tf.float32), trainable=True)
+        fc1 = tf.nn.relu(tf.nn.xw_plus_b(tf.reshape(pool1, [-1, int(np.prod(pool5.get_shape()[1:]))]), kernel, biases))
+        self.variables += [kernel, biases]
+        
+        # fullyconnected2
+        kernel = tf.Variable(tf.truncated_normal([self.param['fc_fc2_kernel2'], self.param['fc_fc2_kernel']], dtype=tf.float32, stddev=0.1), trainable=True)
+        biases = tf.Variable(tf.constant(0.1, shape=[self.param['fc_fc2_kernel']], dtype=tf.float32), trainable=True)
+        fc2 = tf.nn.relu(tf.nn.xw_plus_b(fc1, kernel, biases))
+        self.variables += [kernel, biases]
+
+        # fullyconnected3
+        kernel = tf.Variable(tf.truncated_normal([self.param['fc_fc2_kernel'], self.OUTPUT], dtype=tf.float32, stddev=0.0001), trainable=True)
+        biases = tf.Variable(tf.constant(0.01, shape=[self.OUTPUT], dtype=tf.float32), trainable=True)
+        fc3 = tf.nn.xw_plus_b(fc2, kernel, biases)
+        self.variables += [kernel, biases]
+
+        return fc3
+
+
+
+
