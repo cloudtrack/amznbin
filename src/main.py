@@ -178,10 +178,7 @@ def test(model, sess, saver, test_data, function, batch_size, log=True):
     """
     batch_image, batch_image_index = test_data.get_batch_tensor(batch_size=batch_size)
 
-    if function == 'count' :
-        metric = 'rmse'
-    else:
-        metric = 'accuracy'
+    metric = 'accuracy'
 
     with tf.Session() as _sess:
         _sess.run(tf.local_variables_initializer())
