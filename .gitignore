@@ -104,11 +104,12 @@ venv.bak/
 .mypy_cache/
 
 # customized
-dataset
-mxnet-vgg16-sample
+#dataset
+#mxnet-vgg16-sample
 
 # IDE
 .idea
 connect.sh
 .DS_Store
 /model
+/sample/mnist/model

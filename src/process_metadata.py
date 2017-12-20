@@ -76,7 +76,7 @@ def make_metadata(raw_metadata, valid_images):
 def make_target_vector_map(metadata, isClustering):
     asin_index_map = {}
     index_asin_map = {}
-    index = 0
+    index = 1    # 0 is for empty bin
 #    i = 0
     for asin in metadata.keys():
 #        if i % 1000 == 0:

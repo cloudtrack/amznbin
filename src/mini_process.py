@@ -42,7 +42,7 @@ def make_metadata(raw_metadata, valid_images):
 def make_target_vector_map(metadata):
     asin_index_map = {}
     index_asin_map = {}
-    index = 0
+    index = 1  #0 is for empty bin
     for asin in metadata.keys():
         if asin not in asin_index_map.keys():
             asin_index_map[asin] = index
@@ -61,8 +61,10 @@ if __name__ == '__main__':
 
     valid_object = []
 
+    repeat_num = int(input())
+
     for asin in metadata.keys():
-        if 20 <= metadata[asin]['repeat']:
+        if repeat_num <= metadata[asin]['repeat']:
             valid_object.append(asin)
 
     valid_images = []
@@ -75,9 +77,19 @@ if __name__ == '__main__':
 
     asin_index_map, index_asin_map = make_target_vector_map(metadata)
 
+    vl = len(valid_images)
+
+    zero_cnt = 0
+    for i in range(1, len(raw_metadata)):
+        if raw_metadata[i]['TOTAL'] == 0:
+            valid_images.append(i)
+            zero_cnt = zero_cnt + 1
+            if zero_cnt * 10 >= vl:
+                break
+
 
     with open(METADATA_FILE, 'w') as metadata_file:
-        json.dump(metadata, metadata_file)
+        json.dump(metadata, metadata_file, indent=4)
 
     with open(ASIN_INDEX_FILE, 'w') as asin_index_file:
         json.dump(asin_index_map, asin_index_file)
@@ -89,4 +101,4 @@ if __name__ == '__main__':
 
     print(len(valid_images))
     print(len(asin_index_map))
-    print(len(valid_images)/len(asin_index_map))
+    print(len(valid_images)/(len(asin_index_map) + 1))
