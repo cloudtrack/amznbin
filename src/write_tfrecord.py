@@ -23,6 +23,54 @@ def _int64_feature(value):
 def make_tfrecord(random_split_json):
     for function_type in ['train', 'validation', 'test']:
         index_list = random_split_json.get(function_type)
+        if function_type == 'train' :
+            new_valid_images = []
+
+            print('Input data augmentation mode (0, 1, 2, 3)')
+            cmd = int(input())
+
+            for i in index_list:
+                if i >= 1000000:
+                    image = Image.open('%s%05d.jpg' % (IMAGE_DIR, i))
+                    if cmd >= 1:
+                        new_i = i + 1000000
+                        t_image = image.transpose(Image.FLIP_LEFT_RIGHT)
+                        t_image.save('%s%05d.jpg' % (IMAGE_DIR, new_i))
+                        new_valid_images.append(new_i)
+                    if cmd >= 2:
+                        new_i = i + 2000000
+                        t_image = image.transpose(Image.FLIP_TOP_BOTTOM)
+                        t_image.save('%s%05d.jpg' % (IMAGE_DIR, new_i))
+                        new_valid_images.append(new_i)
+
+                        new_i = i + 3000000
+                        t_image = image.transpose(Image.ROTATE_180)
+                        t_image.save('%s%05d.jpg' % (IMAGE_DIR, new_i))
+                        new_valid_images.append(new_i)
+                    if cmd >= 3:
+                        new_i = i + 4000000
+                        t_image = image.transpose(Image.ROTATE_90)
+                        t_image.save('%s%05d.jpg' % (IMAGE_DIR, new_i))
+                        new_valid_images.append(new_i)
+
+                        new_i = i + 5000000
+                        t_image = image.transpose(Image.ROTATE_270)
+                        t_image.save('%s%05d.jpg' % (IMAGE_DIR, new_i))
+                        new_valid_images.append(new_i)
+
+                        new_i = i + 6000000
+                        t_image = image.transpose(Image.FLIP_LEFT_RIGHT).transpose(Image.ROTATE_90)
+                        t_image.save('%s%05d.jpg' % (IMAGE_DIR, new_i))
+                        new_valid_images.append(new_i)
+
+                        new_i = i + 7000000
+                        t_image = image.transpose(Image.FLIP_LEFT_RIGHT).transpose(IMAGE.ROTATE_270)
+                        t_image.save('%s%05d.jpg' % (IMAGE_DIR, new_i))
+                        new_valid_images.append(new_i)
+            for i in new_valid_images:
+                index_list.append(new_valid_images)
+            random.shuffle(index_list)
+
         index_chunks = [index_list[x:x + IMAGE_CHUNK_SIZE] for x in range(0, len(index_list), IMAGE_CHUNK_SIZE)]
         for i in range(len(index_chunks)):
             filename = path.join(DATASET_DIR, '{0}_{1}.tfrecords'.format(function_type, i))

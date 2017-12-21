@@ -60,7 +60,7 @@ def train(model, sess, saver, train_data, valid_data, test_data, batch_size, max
                     #print(train_pred[1])
                     #print('predicted: ' + str(train_pred_one[1]) + ' by %.2f percent' % (train_pred[1][train_pred_one[1]] * 100))
                     #print('target:    ' + str(np.argmax(labels[1])))
-                    print('------------------------------------------------------------------------------')
+                    #print('------------------------------------------------------------------------------')
                     #train_log.write(print_string + "\n")
                     final_train_metric = final_train_metric + train_metric
                     final_train_metric_top_k = final_train_metric_top_k + train_metric_top_k

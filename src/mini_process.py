@@ -61,6 +61,7 @@ if __name__ == '__main__':
 
     valid_object = []
 
+    print('Input minimum repetition # (20 recommended)')
     repeat_num = int(input())
 
     for asin in metadata.keys():
