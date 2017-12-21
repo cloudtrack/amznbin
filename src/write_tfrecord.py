@@ -8,7 +8,7 @@ from PIL import Image
 
 from constants import VALIDATION_RATIO, TEST_RATIO, IMAGE_DIR, DATASET_DIR, VALID_IMAGES_FILE
 
-IMAGE_CHUNK_SIZE = 1000
+IMAGE_CHUNK_SIZE = 50
 
 
 def _bytes_feature(value):
@@ -29,42 +29,43 @@ def make_tfrecord(random_split_json):
             cmd = int(input())
 
             for i in index_list:
-                image = Image.open('%s%05d.jpg' % (IMAGE_DIR, i))
-                if cmd >= 1:
-                    new_i = i + 1000000
-                    t_image = image.transpose(Image.FLIP_LEFT_RIGHT)
-                    t_image.save('%s%05d.jpg' % (IMAGE_DIR, new_i))
-                    new_valid_images.append(new_i)
-                if cmd >= 2:
-                    new_i = i + 2000000
-                    t_image = image.transpose(Image.FLIP_TOP_BOTTOM)
-                    t_image.save('%s%05d.jpg' % (IMAGE_DIR, new_i))
-                    new_valid_images.append(new_i)
+                if i < 1000000:
+                    image = Image.open('%s%05d.jpg' % (IMAGE_DIR, i))
+                    if cmd >= 1:
+                        new_i = i + 1000000
+                        t_image = image.transpose(Image.FLIP_LEFT_RIGHT)
+                        t_image.save('%s%05d.jpg' % (IMAGE_DIR, new_i))
+                        new_valid_images.append(new_i)
+                    if cmd >= 2:
+                        new_i = i + 2000000
+                        t_image = image.transpose(Image.FLIP_TOP_BOTTOM)
+                        t_image.save('%s%05d.jpg' % (IMAGE_DIR, new_i))
+                        new_valid_images.append(new_i)
 
-                    new_i = i + 3000000
-                    t_image = image.transpose(Image.ROTATE_180)
-                    t_image.save('%s%05d.jpg' % (IMAGE_DIR, new_i))
-                    new_valid_images.append(new_i)
-                if cmd >= 3:
-                    new_i = i + 4000000
-                    t_image = image.transpose(Image.ROTATE_90)
-                    t_image.save('%s%05d.jpg' % (IMAGE_DIR, new_i))
-                    new_valid_images.append(new_i)
+                        new_i = i + 3000000
+                        t_image = image.transpose(Image.ROTATE_180)
+                        t_image.save('%s%05d.jpg' % (IMAGE_DIR, new_i))
+                        new_valid_images.append(new_i)
+                    if cmd >= 3:
+                        new_i = i + 4000000
+                        t_image = image.transpose(Image.ROTATE_90)
+                        t_image.save('%s%05d.jpg' % (IMAGE_DIR, new_i))
+                        new_valid_images.append(new_i)
 
-                    new_i = i + 5000000
-                    t_image = image.transpose(Image.ROTATE_270)
-                    t_image.save('%s%05d.jpg' % (IMAGE_DIR, new_i))
-                    new_valid_images.append(new_i)
+                        new_i = i + 5000000
+                        t_image = image.transpose(Image.ROTATE_270)
+                        t_image.save('%s%05d.jpg' % (IMAGE_DIR, new_i))
+                        new_valid_images.append(new_i)
 
-                    new_i = i + 6000000
-                    t_image = image.transpose(Image.FLIP_LEFT_RIGHT).transpose(Image.ROTATE_90)
-                    t_image.save('%s%05d.jpg' % (IMAGE_DIR, new_i))
-                    new_valid_images.append(new_i)
+                        new_i = i + 6000000
+                        t_image = image.transpose(Image.FLIP_LEFT_RIGHT).transpose(Image.ROTATE_90)
+                        t_image.save('%s%05d.jpg' % (IMAGE_DIR, new_i))
+                        new_valid_images.append(new_i)
 
-                    new_i = i + 7000000
-                    t_image = image.transpose(Image.FLIP_LEFT_RIGHT).transpose(IMAGE.ROTATE_270)
-                    t_image.save('%s%05d.jpg' % (IMAGE_DIR, new_i))
-                    new_valid_images.append(new_i)
+                        new_i = i + 7000000
+                        t_image = image.transpose(Image.FLIP_LEFT_RIGHT).transpose(IMAGE.ROTATE_270)
+                        t_image.save('%s%05d.jpg' % (IMAGE_DIR, new_i))
+                        new_valid_images.append(new_i)
             for i in new_valid_images:
                 index_list.append(i)
             random.shuffle(index_list)

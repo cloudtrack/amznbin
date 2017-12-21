@@ -17,7 +17,7 @@ new_valid_images = []
 cmd = int(input())
 
 for i in valid_images:
-    if i >= 1000000:
+    if i < 1000000:
         image = Image.open('%s%05d.jpg' % (IMAGE_DIR, i))
         if cmd >= 1:
             new_i = i + 1000000
