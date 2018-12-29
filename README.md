@@ -5,7 +5,7 @@ amznbin is a deep learning image recognition project using [Amazon Bin Image Dat
 
 We solve two tasks, 
 1. Count: Predict the number of items in the image
-2. Classify: Predict the what item is contained in the image 
+2. Classify: Predict what item is contained in the image 
 
 To reduce the complexity of the tasks and training time,
 1. We use images with only one kind of item. - this enables us to solve classify task as a single classification task
